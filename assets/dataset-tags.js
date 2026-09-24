@@ -67,7 +67,7 @@
     datasetImages.forEach((image) => {
       const dataset = datasetFor(image, datasets);
       if (!dataset) return;
-      if (dataset.image) image.src = dataset.image;
+      if (dataset.image) image.src = window.FluidBenchPaths.url(dataset.image);
       image.alt = `${dataset.name} benchmark visualization`;
     });
     document.querySelectorAll("[data-dataset-type]").forEach((cell) => {
@@ -83,7 +83,7 @@
     });
     document.querySelectorAll("[data-dataset-details-link]").forEach((link) => {
       const dataset = datasetFor(link, datasets);
-      if (dataset) link.href = `/pages/benchmarks.html#${encodeURIComponent(dataset.id)}`;
+      if (dataset) link.href = window.FluidBenchPaths.url(`/pages/benchmarks.html#${encodeURIComponent(dataset.id)}`);
     });
   }
 

@@ -1,3 +1,12 @@
+(() => {
+  const scriptUrl = new URL(document.currentScript.src, document.baseURI);
+  const root = scriptUrl.pathname.replace(/assets\/site\.js$/, "");
+  window.FluidBenchPaths = {
+    root,
+    url: (path) => `${root}${String(path).replace(/^\/+/, "")}`,
+  };
+})();
+
 document.addEventListener("DOMContentLoaded", () => {
   const year = document.querySelector("[data-year]");
   if (year) year.textContent = new Date().getFullYear();

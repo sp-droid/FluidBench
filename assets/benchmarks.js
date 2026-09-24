@@ -29,7 +29,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       const mach = dataset.machNumber == null ? "—" : dataset.machNumber;
       const samples = dataset.sample_count == null ? "—" : Number(dataset.sample_count).toLocaleString();
       const resolution = dataset.width == null || dataset.height == null ? "—" : `${dataset.width} × ${dataset.height}`;
-      return `<tr id="benchmark-row-${escapeHtml(dataset.id)}" data-benchmark-id="${escapeHtml(dataset.id)}" tabindex="0" aria-label="Show ${escapeHtml(dataset.name)} details" class="${selected ? "is-selected" : ""}"><td><strong>${escapeHtml(dataset.name)}</strong></td><td>${escapeHtml(dataset.compressibility || "—")}</td><td>${escapeHtml(dataset.mesh || "—")}</td><td>${escapeHtml(typeLabel(dataset.trainingType))}</td><td>${escapeHtml(typeLabel(dataset.validationType))}</td><td>${escapeHtml(reynolds)}</td><td>${escapeHtml(mach)}</td><td>${escapeHtml(samples)}</td><td>${escapeHtml(resolution)}</td><td>${escapeHtml(displaySplits(dataset.splitFractions))}</td><td><a class="text-link" href="/pages/leaderboard.html?dataset=${encodeURIComponent(dataset.id)}">View results →</a></td></tr>`;
+      return `<tr id="benchmark-row-${escapeHtml(dataset.id)}" data-benchmark-id="${escapeHtml(dataset.id)}" tabindex="0" aria-label="Show ${escapeHtml(dataset.name)} details" class="${selected ? "is-selected" : ""}"><td><strong>${escapeHtml(dataset.name)}</strong></td><td>${escapeHtml(dataset.compressibility || "—")}</td><td>${escapeHtml(dataset.mesh || "—")}</td><td>${escapeHtml(typeLabel(dataset.trainingType))}</td><td>${escapeHtml(typeLabel(dataset.validationType))}</td><td>${escapeHtml(reynolds)}</td><td>${escapeHtml(mach)}</td><td>${escapeHtml(samples)}</td><td>${escapeHtml(resolution)}</td><td>${escapeHtml(displaySplits(dataset.splitFractions))}</td><td><a class="text-link" href="${window.FluidBenchPaths.url(`/pages/leaderboard.html?dataset=${encodeURIComponent(dataset.id)}`)}">View results →</a></td></tr>`;
     }).join("");
   }
 
@@ -41,7 +41,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       element.dataset.datasetId = dataset.id;
     });
     document.querySelectorAll("[data-benchmark-results-link]").forEach((link) => {
-      link.href = `/pages/leaderboard.html?dataset=${encodeURIComponent(dataset.id)}`;
+      link.href = window.FluidBenchPaths.url(`/pages/leaderboard.html?dataset=${encodeURIComponent(dataset.id)}`);
     });
     renderRows();
     document.dispatchEvent(new CustomEvent("fluidbench:benchmark-selected", { detail: { id: dataset.id } }));

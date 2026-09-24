@@ -2,13 +2,14 @@
   const jsonCache = new Map();
 
   async function readJson(path) {
-    if (!jsonCache.has(path)) {
-      jsonCache.set(path, fetch(path).then((response) => {
-        if (!response.ok) throw new Error(`Could not load ${path} (${response.status}).`);
+    const url = window.FluidBenchPaths.url(path);
+    if (!jsonCache.has(url)) {
+      jsonCache.set(url, fetch(url).then((response) => {
+        if (!response.ok) throw new Error(`Could not load ${url} (${response.status}).`);
         return response.json();
       }));
     }
-    return jsonCache.get(path);
+    return jsonCache.get(url);
   }
 
   function safeIds(ids, label) {

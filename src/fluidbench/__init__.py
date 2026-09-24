@@ -2,12 +2,12 @@
 
 from pathlib import Path
 
-from .loader import load_dataset
+from .downloader import download_dataset
 
 
-def load(dataset_id: str) -> Path:
-    """Load a benchmark's dataset using its benchmark JSON configuration."""
-    return load_dataset(dataset_id)
+def download(dataset_id: str) -> Path:
+    """Download a benchmark's dataset using its benchmark JSON configuration."""
+    return download_dataset(dataset_id)
 
 
-__all__ = ["load"]
+__all__ = ["download"]

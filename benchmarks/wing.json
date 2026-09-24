@@ -2,7 +2,7 @@
   "id": "wing",
   "name": "Wing",
   "compressibility": "Compressible",
-  "image": "/assets/wing-flow.svg",
+  "image": "assets/wing-flow.svg",
   "trainingType": "synthetic",
   "validationType": "synthetic",
   "machNumber": 0.5,

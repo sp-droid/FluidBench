@@ -14,8 +14,8 @@ _LOADERS: dict[str, Callable[[str, str, Path], Path]] = {
 }
 
 
-def load_dataset(dataset_id: str) -> Path:
-    """Read benchmark metadata and load its data into ./<dataset_id>."""
+def download_dataset(dataset_id: str) -> Path:
+    """Read benchmark metadata and download its data into ./<dataset_id>."""
     benchmark_json = _BENCHMARKS_DIR / f"{dataset_id}.json"
     if not benchmark_json.is_file():
         raise FileNotFoundError(f"Benchmark metadata not found: {benchmark_json}")

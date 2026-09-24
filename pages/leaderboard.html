@@ -3,19 +3,19 @@
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#f5f8fc">
   <meta name="description" content="Compare reproducible FluidBench model submissions across fluid dynamics benchmarks.">
-  <title>Leaderboard — FluidBench</title><link rel="icon" href="/assets/mark.png" type="image/png"><link rel="stylesheet" href="/assets/site.css">
-  <script src="/assets/site.js" defer></script><script src="/assets/data.js" defer></script><script src="/assets/dataset-tags.js" defer></script><script src="/assets/leaderboard.js" defer></script>
+  <title>Leaderboard — FluidBench</title><link rel="icon" href="../assets/mark.png" type="image/png"><link rel="stylesheet" href="../assets/site.css">
+  <script src="../assets/site.js" defer></script><script src="../assets/data.js" defer></script><script src="../assets/dataset-tags.js" defer></script><script src="../assets/leaderboard.js" defer></script>
 </head>
 <body>
   <header class="site-header"><div class="header-inner">
-    <a class="brand" href="/" aria-label="FluidBench home"><img src="/assets/mark.png" alt="" width="50" height="40"><span>FluidBench</span></a>
+    <a class="brand" href="../index.html" aria-label="FluidBench home"><img src="../assets/mark.png" alt="" width="50" height="40"><span>FluidBench</span></a>
     <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="primary-nav" aria-label="Open navigation"><span></span><span></span><span></span></button>
     <nav class="primary-nav" id="primary-nav" aria-label="Primary navigation">
-      <a class="nav-link" href="/">Overview</a><a class="nav-link active" aria-current="page" href="/pages/leaderboard.html">Leaderboard</a><a class="nav-link" href="/pages/benchmarks.html">Benchmarks</a><a class="nav-link" href="/pages/models.html">Models</a><a class="nav-link" href="/pages/metrics.html">Metrics</a><a class="nav-link" href="/pages/docs.html">Docs</a><a class="nav-link nav-external" href="https://github.com/sp-droid/FluidBench" target="_blank" rel="noreferrer">GitHub ↗</a>
+      <a class="nav-link" href="../index.html">Overview</a><a class="nav-link active" aria-current="page" href="leaderboard.html">Leaderboard</a><a class="nav-link" href="benchmarks.html">Benchmarks</a><a class="nav-link" href="models.html">Models</a><a class="nav-link" href="metrics.html">Metrics</a><a class="nav-link" href="docs.html">Docs</a><a class="nav-link nav-external" href="https://github.com/sp-droid/FluidBench" target="_blank" rel="noreferrer">GitHub ↗</a>
     </nav>
     <div class="header-actions">
-      <form class="header-search" action="/pages/leaderboard.html" method="get" role="search"><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="6.8"></circle><path d="m16 16 4.5 4.5"></path></svg><input type="search" name="q" placeholder="Search models…" aria-label="Search models"></form>
-      <a class="button button-primary button-small" href="/pages/docs.html#submit"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 15V3m0 0L7.5 7.5M12 3l4.5 4.5M4 14v6h16v-6"></path></svg>Submit results</a>
+      <form class="header-search" action="leaderboard.html" method="get" role="search"><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="6.8"></circle><path d="m16 16 4.5 4.5"></path></svg><input type="search" name="q" placeholder="Search models…" aria-label="Search models"></form>
+      <a class="button button-primary button-small" href="docs.html#submit"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 15V3m0 0L7.5 7.5M12 3l4.5 4.5M4 14v6h16v-6"></path></svg>Submit results</a>
     </div>
   </div></header>
   <main class="shell leaderboard-shell">
@@ -23,7 +23,7 @@
     <div class="leaderboard-layout">
       <section class="leaderboard-panel" aria-label="Model leaderboard">
         <div class="filter-grid">
-          <div class="filter-field"><label for="dataset-filter">Benchmark</label><div class="dataset-select"><img class="dataset-thumb" src="/assets/cylinder-flow-dataset.png" data-dataset-image data-follow-selection alt=""><div class="select-wrap"><select id="dataset-filter" aria-label="Filter by benchmark"></select></div></div></div>
+          <div class="filter-field"><label for="dataset-filter">Benchmark</label><div class="dataset-select"><img class="dataset-thumb" src="../assets/cylinder-flow-dataset.png" data-dataset-image data-follow-selection alt=""><div class="select-wrap"><select id="dataset-filter" aria-label="Filter by benchmark"></select></div></div></div>
           <div class="filter-field"><label for="model-search">Search</label><div class="table-search-wrap"><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="6.8"></circle><path d="m16 16 4.5 4.5"></path></svg><input class="table-search" id="model-search" type="search" placeholder="Search models…"></div></div>
         </div>
         <div class="leaderboard-tabs" role="tablist" aria-label="Leaderboard views">
@@ -34,9 +34,9 @@
       </section>
       <aside class="sidebar-stack">
         <article class="surface-card benchmark-card benchmark-compact">
-          <div class="card-title-row"><span class="line-icon icon-blue" aria-hidden="true">▤</span><div><p class="eyebrow">Selected benchmark</p><h2 data-dataset-field="name" data-follow-selection>Cylinder Flow</h2></div><a class="text-link card-link" data-dataset-details-link data-follow-selection href="/pages/benchmarks.html#cylinder-flow">Details →</a></div>
+          <div class="card-title-row"><span class="line-icon icon-blue" aria-hidden="true">▤</span><div><p class="eyebrow">Selected benchmark</p><h2 data-dataset-field="name" data-follow-selection>Cylinder Flow</h2></div><a class="text-link card-link" data-dataset-details-link data-follow-selection href="benchmarks.html#cylinder-flow">Details →</a></div>
           <div class="benchmark-compact-tags"><div class="benchmark-class-tags" data-benchmark-tags data-follow-selection></div><div class="dataset-type-tags" data-dataset-tags data-follow-selection></div></div>
-          <div class="selected-benchmark-visual"><img src="/assets/cylinder-flow-dataset.png" data-dataset-image data-follow-selection alt="Selected benchmark visualization" loading="lazy"></div>
+          <div class="selected-benchmark-visual"><img src="../assets/cylinder-flow-dataset.png" data-dataset-image data-follow-selection alt="Selected benchmark visualization" loading="lazy"></div>
           <dl class="selected-benchmark-details" data-follow-selection>
             <div><dt>Reynolds numbers</dt><dd>Re = <span data-dataset-field="reynoldsNumbers">100</span></dd></div>
             <div><dt>Resolution</dt><dd data-dataset-field="resolution">64 × 32</dd></div>
@@ -49,6 +49,6 @@
       </aside>
     </div>
   </main>
-  <footer class="site-footer"><div class="shell footer-inner"><a class="brand footer-brand" href="/"><img src="/assets/mark.png" alt="" width="40" height="32"><span>FluidBench</span></a><p>Open, reproducible benchmarks for fluid dynamics ML.</p><div class="footer-links"><a href="/pages/docs.html">Documentation</a><a href="https://github.com/sp-droid/FluidBench" target="_blank" rel="noreferrer">GitHub ↗</a></div><span class="copyright">© <span data-year></span> FluidBench</span></div></footer>
+  <footer class="site-footer"><div class="shell footer-inner"><a class="brand footer-brand" href="../index.html"><img src="../assets/mark.png" alt="" width="40" height="32"><span>FluidBench</span></a><p>Open, reproducible benchmarks for fluid dynamics ML.</p><div class="footer-links"><a href="docs.html">Documentation</a><a href="https://github.com/sp-droid/FluidBench" target="_blank" rel="noreferrer">GitHub ↗</a></div><span class="copyright">© <span data-year></span> FluidBench</span></div></footer>
 </body>
 </html>
