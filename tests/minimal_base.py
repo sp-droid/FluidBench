@@ -22,6 +22,9 @@ class BaseRegressionModel(nn.Module):
         else:
             return X.to(self.device)
 
+    def _predict_step(self, X):
+        return self(X)
+
     # Train the model
     def fit(self,
         train_dataloader,
@@ -60,7 +63,7 @@ class BaseRegressionModel(nn.Module):
         self.eval()
         predictions = []
         with torch.no_grad():
-            for X in test_dataloader:
+            for X, _ in test_dataloader:
                 X = self._to_device(X)
                 pred = self._predict_step(X)
 
@@ -75,12 +78,12 @@ class BaseRegressionModel(nn.Module):
         with torch.no_grad():
             # Get scalars from all snapshots in the test dataloader
             scalars = []
-            for X, _ in test_dataloader:
-                scalars.append(X[0])
+            for inputs, _ in test_dataloader:
+                scalars.append(inputs[0])
             N = len(scalars)
 
-            X = next(iter(test_dataloader)) # Only the first snapshot is used
-            fields = self._to_device(X[1])
+            inputs, _ = next(iter(test_dataloader)) # Only the first snapshot is used
+            fields = self._to_device(inputs[1])
 
             for i in range(N):
                 scalars_i = self._to_device(scalars[i])

@@ -134,19 +134,34 @@ def _model_device(model: Any) -> torch.device:
         return torch.device("cpu")
 
 
-def _move_to_device(value: Any, device: torch.device) -> Any:
-    if isinstance(value, torch.Tensor):
-        return value.to(device)
-    if isinstance(value, tuple):
-        return tuple(_move_to_device(item, device) for item in value)
-    if isinstance(value, list):
-        return [_move_to_device(item, device) for item in value]
-    if isinstance(value, Mapping):
-        return {key: _move_to_device(item, device) for key, item in value.items()}
-    return value
+def _snapshot_metrics(prediction: torch.Tensor, target: torch.Tensor) -> dict[str, float | None]:
+    error = prediction - target
+    target_norm = torch.linalg.vector_norm(target)
+    error_norm = torch.linalg.vector_norm(error)
+    relative_l2 = (
+        float(error_norm / target_norm)
+        if target_norm.item() != 0
+        else (0.0 if error_norm.item() == 0 else None)
+    )
+    return {
+        "rmse": float(torch.square(error).mean().sqrt()),
+        "mae": float(error.abs().mean()),
+        "relativeL2": relative_l2,
+    }
 
 
-def _evaluate_test_split(model: Any, loader: DataLoader, variables: list[str]) -> dict[str, Any]:
+def _mean_metric(snapshots: Sequence[Mapping[str, Any]], key: str) -> float | None:
+    values = [snapshot[key] for snapshot in snapshots if snapshot.get(key) is not None]
+    return float(np.mean(values)) if values else None
+
+
+def _evaluate_test_split(
+    model: Any,
+    loader: DataLoader,
+    rollout_loader: DataLoader,
+    dataset: CFDataset,
+    variables: list[str],
+) -> dict[str, Any]:
     device = _model_device(model)
     use_cuda = device.type == "cuda" and torch.cuda.is_available()
     if use_cuda:
@@ -157,65 +172,61 @@ def _evaluate_test_split(model: Any, loader: DataLoader, variables: list[str]) -
     if hasattr(model, "eval"):
         model.eval()
 
-    squared_error_sum = 0.0
-    absolute_error_sum = 0.0
-    target_square_sum = 0.0
-    element_count = 0
-    sample_count = 0
-    channel_square_sums: np.ndarray | None = None
-    channel_element_counts: np.ndarray | None = None
-    inference_seconds = 0.0
     try:
+        predict = getattr(model, "predict", None)
+        predict_rollout = getattr(model, "predict_rollout", None)
+        if not callable(predict):
+            raise ValueError("model must implement predict(test_dataloader).")
+        if not callable(predict_rollout):
+            raise ValueError("model must implement predict_rollout(test_dataloader).")
+
+        if use_cuda:
+            torch.cuda.synchronize(device)
+        inference_start = time.perf_counter()
         with torch.inference_mode():
-            for inputs, targets in loader:
-                inputs = _move_to_device(inputs, device)
-                targets = _move_to_device(targets, device)
-                if use_cuda:
-                    torch.cuda.synchronize(device)
-                start = time.perf_counter()
-                predictions = model(inputs)
-                if use_cuda:
-                    torch.cuda.synchronize(device)
-                inference_seconds += time.perf_counter() - start
+            predictions = predict(loader)
+        if use_cuda:
+            torch.cuda.synchronize(device)
+        inference_seconds = time.perf_counter() - inference_start
 
-                if not isinstance(predictions, torch.Tensor):
-                    raise ValueError("model(inputs) must return a tensor for test evaluation.")
-                if predictions.shape != targets.shape:
-                    raise ValueError(
-                        "Test predictions and targets must have matching shapes; "
-                        f"got {tuple(predictions.shape)} and {tuple(targets.shape)}."
-                    )
-                if not torch.isfinite(predictions).all():
-                    raise ValueError("model produced non-finite predictions on the test split.")
-                if not torch.isfinite(targets).all():
-                    raise ValueError("Benchmark test targets contain non-finite values.")
+        if not isinstance(predictions, torch.Tensor):
+            raise ValueError("model.predict(test_dataloader) must return a tensor.")
+        predictions = predictions.detach().to(device="cpu", dtype=torch.float64)
+        targets = torch.as_tensor(dataset.targets, dtype=torch.float64, device="cpu")
+        if predictions.shape != targets.shape:
+            raise ValueError(
+                "Test predictions and targets must have matching shapes; "
+                f"got {tuple(predictions.shape)} and {tuple(targets.shape)}."
+            )
+        if not torch.isfinite(predictions).all():
+            raise ValueError("model.predict() returned non-finite test predictions.")
+        if not torch.isfinite(targets).all():
+            raise ValueError("Benchmark test targets contain non-finite values.")
 
-                errors = predictions.detach().to(device="cpu", dtype=torch.float64) - targets.detach().to(
-                    device="cpu", dtype=torch.float64
+        errors = predictions - targets
+        squared_error_sum = torch.square(errors).sum().item()
+        absolute_error_sum = torch.abs(errors).sum().item()
+        target_square_sum = torch.square(targets).sum().item()
+        element_count = errors.numel()
+        sample_count = int(errors.shape[0])
+
+        channel_square_sums: np.ndarray | None = None
+        channel_element_counts: np.ndarray | None = None
+        if errors.ndim >= 2 and variables:
+            channel_axis = 1 if errors.shape[1] == len(variables) else -1
+            if errors.shape[channel_axis] == len(variables):
+                channel_errors = errors.movedim(channel_axis, 1)
+                reduce_dims = tuple(axis for axis in range(channel_errors.ndim) if axis != 1)
+                channel_square_sums = torch.square(channel_errors).sum(dim=reduce_dims).numpy()
+                elements_per_channel = int(
+                    np.prod([size for axis, size in enumerate(channel_errors.shape) if axis != 1])
                 )
-                targets_cpu = targets.detach().to(device="cpu", dtype=torch.float64)
-                squared_error_sum += torch.square(errors).sum().item()
-                absolute_error_sum += torch.abs(errors).sum().item()
-                target_square_sum += torch.square(targets_cpu).sum().item()
-                element_count += errors.numel()
-                sample_count += int(errors.shape[0])
+                channel_element_counts = np.full(
+                    len(variables), elements_per_channel, dtype=np.int64
+                )
 
-                if errors.ndim >= 2 and variables:
-                    channel_axis = 1 if errors.shape[1] == len(variables) else -1
-                    if errors.shape[channel_axis] == len(variables):
-                        channel_errors = errors.movedim(channel_axis, 1)
-                        reduce_dims = tuple(axis for axis in range(channel_errors.ndim) if axis != 1)
-                        batch_square_sums = torch.square(channel_errors).sum(dim=reduce_dims).numpy()
-                        batch_element_counts = np.full(
-                            len(variables),
-                            int(np.prod([size for axis, size in enumerate(channel_errors.shape) if axis != 1])),
-                            dtype=np.int64,
-                        )
-                        if channel_square_sums is None:
-                            channel_square_sums = np.zeros(len(variables), dtype=np.float64)
-                            channel_element_counts = np.zeros(len(variables), dtype=np.int64)
-                        channel_square_sums += batch_square_sums
-                        channel_element_counts += batch_element_counts
+        with torch.inference_mode():
+            rollout_predictions = predict_rollout(rollout_loader)
     finally:
         if old_training_state is not None and hasattr(model, "train"):
             model.train(old_training_state)
@@ -240,6 +251,44 @@ def _evaluate_test_split(model: Any, loader: DataLoader, variables: list[str]) -
         count = int(channel_element_counts[selected].sum())
         return math.sqrt(float(channel_square_sums[selected].sum()) / count) if count else None
 
+    if isinstance(rollout_predictions, torch.Tensor):
+        rollout_predictions = list(rollout_predictions.unbind(dim=0))
+    elif not isinstance(rollout_predictions, Sequence):
+        raise ValueError("model.predict_rollout(test_dataloader) must return a sequence of tensors.")
+
+    if len(rollout_predictions) > sample_count:
+        raise ValueError("model.predict_rollout() returned more snapshots than the test targets.")
+    rollout_snapshot_metrics = []
+    for index, prediction in enumerate(rollout_predictions):
+        if not isinstance(prediction, torch.Tensor):
+            prediction = torch.as_tensor(prediction)
+        prediction = prediction.detach().to(device="cpu", dtype=torch.float64)
+        target = targets[index : index + 1]
+        if prediction.ndim == target.ndim - 1:
+            prediction = prediction.unsqueeze(0)
+        if prediction.shape != target.shape:
+            raise ValueError(
+                f"Rollout prediction {index + 1} and target shapes must match; "
+                f"got {tuple(prediction.shape)} and {tuple(target.shape)}."
+            )
+        if not torch.isfinite(prediction).all():
+            raise ValueError(f"model.predict_rollout() returned non-finite values at snapshot {index + 1}.")
+        rollout_snapshot_metrics.append(_snapshot_metrics(prediction[0], target[0]))
+
+    def rollout_metrics_at(horizon: int) -> dict[str, float | None]:
+        if len(rollout_snapshot_metrics) < horizon:
+            return {key: None for key in _ROLLOUT_METRIC_KEYS}
+        point = rollout_snapshot_metrics[horizon - 1]
+        average = rollout_snapshot_metrics[:horizon]
+        return {
+            "rmse": point["rmse"],
+            "rolloutRmse": _mean_metric(average, "rmse"),
+            "mae": point["mae"],
+            "rolloutMae": _mean_metric(average, "mae"),
+            "relativeL2": point["relativeL2"],
+            "rolloutRelativeL2": _mean_metric(average, "relativeL2"),
+        }
+
     inference_ms = inference_seconds * 1000 / sample_count
     if use_cuda:
         memory_gb = torch.cuda.max_memory_allocated(device) / 1_000_000_000
@@ -255,17 +304,17 @@ def _evaluate_test_split(model: Any, loader: DataLoader, variables: list[str]) -
         "mae": absolute_error_sum / element_count,
         "relativeL2": relative_l2,
     }
+    rollout_average = {
+        "rolloutRmse": _mean_metric(rollout_snapshot_metrics, "rmse"),
+        "rolloutMae": _mean_metric(rollout_snapshot_metrics, "mae"),
+        "rolloutRelativeL2": _mean_metric(rollout_snapshot_metrics, "relativeL2"),
+    }
     return {
         **one_step,
         "rollout": {
-            "step1": {
-                **one_step,
-                "rolloutRmse": None,
-                "rolloutMae": None,
-                "rolloutRelativeL2": None,
-            },
-            "step25": {key: None for key in _ROLLOUT_METRIC_KEYS},
-            "step100": {key: None for key in _ROLLOUT_METRIC_KEYS},
+            "step1": rollout_metrics_at(1),
+            "step25": rollout_metrics_at(25),
+            "step100": rollout_metrics_at(100),
         },
         "efficiency": {
             "inferenceMs": inference_ms,
@@ -275,9 +324,7 @@ def _evaluate_test_split(model: Any, loader: DataLoader, variables: list[str]) -
             "velocityRmse": variable_rmse({"ux", "uy", "uz", "u", "v", "w", "velocity"}),
             "pressureRmse": variable_rmse({"p", "pressure"}),
         },
-        "rolloutRmse": None,
-        "rolloutMae": None,
-        "rolloutRelativeL2": None,
+        **rollout_average,
     }
 
 
@@ -349,12 +396,19 @@ def run(model: Any, submission_config: Mapping[str, Any]) -> Any:
     )
     test_dataset = _load_split(dataset_dir, "test")
     test_loader = DataLoader(test_dataset, batch_size=_BATCH_SIZE, shuffle=False)
+    rollout_loader = DataLoader(test_dataset, batch_size=1, shuffle=False)
 
     start_time = time.perf_counter()
     history = model.fit(train_loader, validation_loader)
     training_hours = (time.perf_counter() - start_time) / 3600
     submission_history = _history_for_submission(history)
-    metrics = _evaluate_test_split(model, test_loader, _benchmark_variables(benchmark_id))
+    metrics = _evaluate_test_split(
+        model,
+        test_loader,
+        rollout_loader,
+        test_dataset,
+        _benchmark_variables(benchmark_id),
+    )
     metrics["efficiency"]["parameters"] = int(model.total_parameters)
     metrics["efficiency"]["trainingHours"] = training_hours
 
@@ -375,6 +429,6 @@ def run(model: Any, submission_config: Mapping[str, Any]) -> Any:
         json.dump(submission_history, history_file, indent=2, allow_nan=False)
         history_file.write("\n")
 
-    print(f"Submission written to {submission_path}")
+    print(f"submission written to 'submission/{benchmark_id}' folder")
     print(f"Training history written to {history_path}")
     return history

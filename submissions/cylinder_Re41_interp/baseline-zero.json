@@ -12,12 +12,12 @@
     "relativeL2": 1.0,
     "rollout": {
       "step1": {
-        "rmse": 0.5935491884984482,
-        "mae": 0.360155006255188,
+        "rmse": 0.5953248842394596,
+        "rolloutRmse": 0.5953248842394596,
+        "mae": 0.3608106297900866,
+        "rolloutMae": 0.3608106297900866,
         "relativeL2": 1.0,
-        "rolloutRmse": null,
-        "rolloutMae": null,
-        "rolloutRelativeL2": null
+        "rolloutRelativeL2": 1.0
       },
       "step25": {
         "rmse": null,
@@ -37,17 +37,17 @@
       }
     },
     "efficiency": {
-      "inferenceMs": 0.034011111387776,
-      "memoryGb": 0.000935424,
+      "inferenceMs": 0.38514444087114597,
+      "memoryGb": 4e-09,
       "parameters": 1,
-      "trainingHours": 0.00039648941666301754
+      "trainingHours": 0.00036451813890986764
     },
     "perVariable": {
       "velocityRmse": 0.7245311057931338,
       "pressureRmse": 0.0837333325376254
     },
-    "rolloutRmse": null,
-    "rolloutMae": null,
-    "rolloutRelativeL2": null
+    "rolloutRmse": 0.5935418231840228,
+    "rolloutMae": 0.3601550062551879,
+    "rolloutRelativeL2": 1.0
   }
 }

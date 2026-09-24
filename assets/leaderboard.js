@@ -186,7 +186,36 @@
     const menu = $("#score-metric-menu");
     if (!button || !menu) return;
     button.setAttribute("aria-expanded", "false");
+    if (menu.dataset.portaled === "true") {
+      button.closest(".error-picker")?.append(menu);
+      delete menu.dataset.portaled;
+      menu.removeAttribute("style");
+    }
     menu.hidden = true;
+  }
+
+  function openErrorMenu(button) {
+    const menu = $("#score-metric-menu");
+    if (!menu) return;
+    menu.hidden = false;
+    menu.dataset.portaled = "true";
+    document.body.append(menu);
+
+    const anchor = button.getBoundingClientRect();
+    const menuWidth = menu.offsetWidth;
+    const menuHeight = menu.offsetHeight;
+    const edge = 8;
+    const left = Math.max(edge, Math.min(anchor.left, window.innerWidth - menuWidth - edge));
+    let top = anchor.bottom + 6;
+    if (top + menuHeight > window.innerHeight - edge && anchor.top - menuHeight - 6 >= edge) {
+      top = anchor.top - menuHeight - 6;
+    } else {
+      top = Math.min(top, window.innerHeight - menuHeight - edge);
+    }
+    menu.style.left = `${left}px`;
+    menu.style.top = `${Math.max(edge, top)}px`;
+    button.setAttribute("aria-expanded", "true");
+    menu.querySelector("[role=menuitemradio]")?.focus();
   }
 
   function selectError(key) {
@@ -201,6 +230,7 @@
   }
 
   function render() {
+    closeErrorMenu();
     const items = filteredSubmissions().sort((a, b) => {
       if (state.sort.groupRepresentation) {
         const groupResult = compareValues(a, b, "representation", state.sort.representationDirection);
@@ -237,6 +267,11 @@
   }
 
   head.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-sort-key]");
+    if (!button) return;
+    setSort(button.dataset.sortKey);
+  });
+  document.addEventListener("click", (event) => {
     const errorOption = event.target.closest("[data-error-key]");
     if (errorOption) {
       selectError(errorOption.dataset.errorKey);
@@ -244,25 +279,21 @@
     }
     const errorButton = event.target.closest("#score-metric-button");
     if (errorButton) {
-      const menu = $("#score-metric-menu");
-      const isOpen = errorButton.getAttribute("aria-expanded") === "true";
-      errorButton.setAttribute("aria-expanded", String(!isOpen));
-      menu.hidden = isOpen;
-      if (!isOpen) menu.querySelector("[role=menuitemradio]")?.focus();
+      if (errorButton.getAttribute("aria-expanded") === "true") closeErrorMenu();
+      else openErrorMenu(errorButton);
       return;
     }
-    const button = event.target.closest("[data-sort-key]");
-    if (!button) return;
-    setSort(button.dataset.sortKey);
-  });
-  document.addEventListener("click", (event) => {
-    if (!head.contains(event.target)) closeErrorMenu();
+    if (!$("#score-metric-menu")?.contains(event.target)) closeErrorMenu();
   });
   document.addEventListener("keydown", (event) => {
     if (event.key !== "Escape" || $("#score-metric-menu")?.hidden) return;
     closeErrorMenu();
     $("#score-metric-button")?.focus();
   });
+  window.addEventListener("resize", closeErrorMenu);
+  window.addEventListener("scroll", () => {
+    if ($("#score-metric-menu")?.dataset.portaled === "true") closeErrorMenu();
+  }, true);
   document.querySelectorAll("[data-category]").forEach((button) => button.addEventListener("click", () => {
     state.category = button.dataset.category;
     state.sort.key = defaultSortKeys[state.category];
