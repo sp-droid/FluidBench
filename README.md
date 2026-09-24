@@ -1,3 +1,5 @@
+https://sp-droid.github.io/FluidBench/
+
 # FluidBench website prototype
 
 A static, multi-page benchmark site built with plain HTML, CSS, and JavaScript.
