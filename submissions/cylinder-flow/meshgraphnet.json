@@ -1,0 +1,53 @@
+{
+  "id": "meshgraphnet",
+  "model": "MeshGraphNet",
+  "authors": "Pfaff et al. (2021)",
+  "year": 2021,
+  "datasetId": "cylinder-flow",
+  "representation": "Graph",
+  "submittedAt": "2024-03-16",
+  "metrics": {
+    "relativeL2": 0.00315,
+    "rollout": {
+      "step1": {
+        "rmse": 0.00964896,
+        "rolloutRmse": 0.01311,
+        "mae": 0.008843432,
+        "rolloutMae": 0.006133348,
+        "relativeL2": 0.0017325,
+        "rolloutRelativeL2": 0.0012285
+      },
+      "step25": {
+        "rmse": 0.01364544,
+        "rolloutRmse": 0.02039375,
+        "mae": 0.01250664,
+        "rolloutMae": 0.00954084,
+        "relativeL2": 0.0039375,
+        "rolloutRelativeL2": 0.0029295
+      },
+      "step100": {
+        "rmse": 0.02519512,
+        "rolloutRmse": 0.04107875,
+        "mae": 0.02309128,
+        "rolloutMae": 0.01921842,
+        "relativeL2": 0.00756,
+        "rolloutRelativeL2": 0.0054432
+      }
+    },
+    "efficiency": {
+      "parameters": 1200000,
+      "trainingHours": 3.4,
+      "inferenceMs": 6.3,
+      "memoryGb": 3.1
+    },
+    "perVariable": {
+      "velocityRmse": 0.009219544457292887,
+      "pressureRmse": 0.005099019513592784
+    },
+    "rmse": 0.01007768,
+    "rolloutRmse": 0.04107875,
+    "mae": 0.009236388,
+    "rolloutMae": 0.01921842,
+    "rolloutRelativeL2": 0.0054432
+  }
+}

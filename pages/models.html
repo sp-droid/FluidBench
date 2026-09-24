@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#f5f8fc">
+  <meta name="description" content="Browse sample model submissions to the FluidBench leaderboard.">
+  <title>Models — FluidBench</title><link rel="icon" href="/assets/mark.png" type="image/png"><link rel="stylesheet" href="/assets/site.css"><script src="/assets/site.js" defer></script><script src="/assets/data.js" defer></script><script src="/assets/models.js" defer></script>
+</head>
+<body>
+  <header class="site-header"><div class="header-inner">
+    <a class="brand" href="/" aria-label="FluidBench home"><img src="/assets/mark.png" alt="" width="50" height="40"><span>FluidBench</span></a><button class="menu-toggle" type="button" aria-expanded="false" aria-controls="primary-nav" aria-label="Open navigation"><span></span><span></span><span></span></button>
+    <nav class="primary-nav" id="primary-nav" aria-label="Primary navigation"><a class="nav-link" href="/">Overview</a><a class="nav-link" href="/pages/leaderboard.html">Leaderboard</a><a class="nav-link" href="/pages/benchmarks.html">Benchmarks</a><a class="nav-link active" aria-current="page" href="/pages/models.html">Models</a><a class="nav-link" href="/pages/metrics.html">Metrics</a><a class="nav-link" href="/pages/docs.html">Docs</a><a class="nav-link nav-external" href="https://github.com/sp-droid/FluidBench" target="_blank" rel="noreferrer">GitHub ↗</a></nav>
+    <div class="header-actions"><form class="header-search" action="/pages/leaderboard.html" method="get" role="search"><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="6.8"></circle><path d="m16 16 4.5 4.5"></path></svg><input type="search" name="q" placeholder="Search models…" aria-label="Search models"></form><a class="button button-primary button-small" href="/pages/docs.html#submit"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 15V3m0 0L7.5 7.5M12 3l4.5 4.5M4 14v6h16v-6"></path></svg>Submit results</a></div>
+  </div></header>
+  <main class="shell">
+    <section class="page-hero"><p class="eyebrow">Sample submissions · Cylinder Flow</p><h1>Models in the <span>benchmark</span></h1><p>Browse the six illustrative submissions used in this prototype. Compare their Graph or Matrix representations, scores, and reported compute requirements.</p></section>
+    <section class="model-list-heading"><div><p class="eyebrow">Six sample entries</p><h2>Submissions</h2></div><a class="button button-outline" href="/pages/leaderboard.html">Compare rankings <span aria-hidden="true">→</span></a></section>
+    <div class="models-grid" id="model-list" aria-live="polite"><div class="content-card">Loading sample models…</div></div>
+    <div class="callout section-space"><strong>Illustrative records.</strong> Sample submissions are provided as editable JSON. Their extended rollout and efficiency values are demonstration data.</div>
+  </main>
+  <footer class="site-footer"><div class="shell footer-inner"><a class="brand footer-brand" href="/"><img src="/assets/mark.png" alt="" width="40" height="32"><span>FluidBench</span></a><p>Open, reproducible benchmarks for fluid dynamics ML.</p><div class="footer-links"><a href="/pages/docs.html">Documentation</a><a href="https://github.com/sp-droid/FluidBench" target="_blank" rel="noreferrer">GitHub ↗</a></div><span class="copyright">© <span data-year></span> FluidBench</span></div></footer>
+</body></html>

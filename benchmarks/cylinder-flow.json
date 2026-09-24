@@ -1,0 +1,30 @@
+{
+  "id": "cylinder-flow",
+  "name": "Cylinder (steady, laminar, Re=41)",
+  "trainingType": "synthetic",
+  "validationType": "synthetic",
+  "compressibility": "Incompressible",
+  "image": "/assets/cylinder-flow-dataset.png",
+  "description": "A canonical wake prediction task: use a sequence of velocity and pressure snapshots to predict the future incompressible flow around a cylinder.",
+  "mesh": "Unstructured",
+  "reynoldsNumbers": [
+    100
+  ],
+  "inputScalarNames": [
+    "Re",
+    "dt"
+  ],
+  "flowVariables": [
+    "p",
+    "Ux",
+    "Uy"
+  ],
+  "splitFractions": {
+    "train": 0.834,
+    "validation": 0.083,
+    "test": 0.083
+  },
+  "sample_count": 12000,
+  "width": 64,
+  "height": 32
+}

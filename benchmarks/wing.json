@@ -1,0 +1,33 @@
+{
+  "id": "wing",
+  "name": "Wing",
+  "compressibility": "Compressible",
+  "image": "/assets/wing-flow.svg",
+  "trainingType": "synthetic",
+  "validationType": "synthetic",
+  "machNumber": 0.5,
+  "description": "A compressible flow benchmark around a wing, with synthetic training and validation data for predicting future flow fields.",
+  "mesh": "Structured",
+  "reynoldsNumbers": [
+    1000
+  ],
+  "inputScalarNames": [
+    "Re",
+    "Mach",
+    "dt"
+  ],
+  "flowVariables": [
+    "rho",
+    "p",
+    "Ux",
+    "Uy"
+  ],
+  "splitFractions": {
+    "train": 0.834,
+    "validation": 0.083,
+    "test": 0.083
+  },
+  "sample_count": 24000,
+  "width": 128,
+  "height": 64
+}

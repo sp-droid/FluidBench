@@ -1,0 +1,7 @@
+{
+  "benchmarkIds": [
+    "cylinder-flow",
+    "wing",
+    "cylinder_Re41_interp"
+  ]
+}

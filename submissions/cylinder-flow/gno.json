@@ -1,0 +1,53 @@
+{
+  "id": "gno",
+  "model": "GNO",
+  "authors": "Li et al. (2021)",
+  "year": 2021,
+  "datasetId": "cylinder-flow",
+  "representation": "Graph",
+  "submittedAt": "2024-03-05",
+  "metrics": {
+    "relativeL2": 0.005875,
+    "rollout": {
+      "step1": {
+        "rmse": 0.0142299,
+        "rolloutRmse": 0.0173921,
+        "mae": 0.00774072,
+        "rolloutMae": 0.00806325,
+        "relativeL2": 0.00323125,
+        "rolloutRelativeL2": 0.0027495
+      },
+      "step25": {
+        "rmse": 0.0238122,
+        "rolloutRmse": 0.0320144,
+        "mae": 0.01295352,
+        "rolloutMae": 0.01484325,
+        "relativeL2": 0.00734375,
+        "rolloutRelativeL2": 0.0065565
+      },
+      "step100": {
+        "rmse": 0.0418284,
+        "rolloutRmse": 0.0613481,
+        "mae": 0.02275488,
+        "rolloutMae": 0.028443,
+        "relativeL2": 0.0141,
+        "rolloutRelativeL2": 0.0121824
+      }
+    },
+    "efficiency": {
+      "parameters": 2200000,
+      "trainingHours": 7.8,
+      "inferenceMs": 5.9,
+      "memoryGb": 4.4
+    },
+    "perVariable": {
+      "velocityRmse": 0.017663521732655695,
+      "pressureRmse": 0.005916079783099616
+    },
+    "rmse": 0.0158463,
+    "rolloutRmse": 0.0613481,
+    "mae": 0.00862056,
+    "rolloutMae": 0.028443,
+    "rolloutRelativeL2": 0.0121824
+  }
+}

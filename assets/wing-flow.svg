@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 500" role="img" aria-labelledby="title desc">
+  <title id="title">Compressible flow around a wing</title>
+  <desc id="desc">Blue and teal streamlines bend around a white wing profile, with warm pressure regions near the leading and trailing edges.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f5fbff"/><stop offset="1" stop-color="#e8f2ff"/></linearGradient>
+    <linearGradient id="wing" x1="0" y1="0" x2="1" y2=".2"><stop stop-color="#fff"/><stop offset=".5" stop-color="#f1f6ff"/><stop offset="1" stop-color="#dce9ff"/></linearGradient>
+    <linearGradient id="stream" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#0a85ec" stop-opacity=".2"/><stop offset=".35" stop-color="#1261da"/><stop offset=".72" stop-color="#17a5d1"/><stop offset="1" stop-color="#0b67cb" stop-opacity=".28"/></linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="8"/></filter>
+  </defs>
+  <rect width="900" height="500" rx="28" fill="url(#bg)"/>
+  <ellipse cx="326" cy="235" rx="90" ry="86" fill="#ff8c5b" opacity=".24" filter="url(#glow)"/>
+  <ellipse cx="629" cy="265" rx="105" ry="78" fill="#05a8eb" opacity=".18" filter="url(#glow)"/>
+  <g fill="none" stroke="url(#stream)" stroke-linecap="round">
+    <path d="M-30 92C153 89 225 129 319 164c91 34 203-24 291-36 114-16 187-18 324-23" stroke-width="5" opacity=".62"/>
+    <path d="M-30 135c167-3 244 22 333 51 96 31 195-31 291-42 116-14 197-10 330-20" stroke-width="4" opacity=".72"/>
+    <path d="M-30 180c153-1 245 4 340 31 103 29 192-35 293-44 114-11 195 1 321-11" stroke-width="4.5"/>
+    <path d="M-30 222c148 0 244-1 344 18 112 21 186-32 291-36 112-5 199 6 319-5" stroke-width="6" opacity=".85"/>
+    <path d="M-30 268c147 0 246 1 345-15 111-18 189 36 294 38 108 2 195-10 315 0" stroke-width="5.5"/>
+    <path d="M-30 312c153 2 247 0 340-26 105-30 195 32 294 44 113 13 199 4 320 16" stroke-width="4.5" opacity=".8"/>
+    <path d="M-30 356c168 5 244-21 333-51 97-33 194 32 290 46 116 17 198 11 331 26" stroke-width="4" opacity=".7"/>
+    <path d="M-30 407c183 6 249-39 343-73 92-34 204 23 292 37 114 18 188 24 319 40" stroke-width="5" opacity=".58"/>
+    <path d="M-20 57c198 5 260 71 366 97 89 21 196-35 280-49 106-18 188-24 300-34" stroke-width="2" opacity=".42"/>
+    <path d="M-20 448c187 6 261-56 363-82 98-25 202 32 288 48 104 20 187 33 295 43" stroke-width="2" opacity=".42"/>
+  </g>
+  <path d="M258 255c90-71 212-108 392-103-109 36-214 86-322 140-37 18-61 16-70-1-8-12-7-24 0-36Z" fill="url(#wing)" stroke="#164f9e" stroke-width="5" stroke-linejoin="round"/>
+  <path d="M258 255c95-17 176-17 250-7 48 7 88 5 142-4-114 37-219 87-322 139-36 18-61 16-70-1-8-12-7-24 0-36 12-25 10-54 0-91Z" fill="#dceaff" opacity=".48"/>
+  <path d="M262 255c115-39 225-62 386-103" fill="none" stroke="#ff8153" stroke-width="9" stroke-linecap="round" opacity=".85"/>
+  <path d="M328 295c105 6 195 3 275-9" fill="none" stroke="#10a2db" stroke-width="4" stroke-linecap="round" opacity=".75"/>
+  <circle cx="257" cy="255" r="8" fill="#ff714d"/>
+  <text x="46" y="472" fill="#456481" font-family="Arial, sans-serif" font-size="17" letter-spacing="2">COMPRESSIBLE WING CASE</text>
+</svg>

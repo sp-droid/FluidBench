@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5f8fc">
+  <meta name="description" content="FluidBench is an open, reproducible benchmark for machine learning in fluid dynamics.">
+  <title>Fluidbench</title>
+  <link rel="icon" href="/assets/mark.png" type="image/png">
+  <link rel="stylesheet" href="/assets/site.css">
+  <script src="/assets/site.js" defer></script><script src="/assets/data.js" defer></script><script src="/assets/top-model.js" defer></script><script src="/assets/dataset-tags.js" defer></script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="header-inner">
+      <a class="brand" href="/" aria-label="FluidBench home"><img src="/assets/mark.png" alt="" width="50" height="40"><span>FluidBench</span></a>
+      <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="primary-nav" aria-label="Open navigation"><span></span><span></span><span></span></button>
+      <nav class="primary-nav" id="primary-nav" aria-label="Primary navigation">
+        <a class="nav-link active" aria-current="page" href="/">Overview</a><a class="nav-link" href="/pages/leaderboard.html">Leaderboard</a><a class="nav-link" href="/pages/benchmarks.html">Benchmarks</a><a class="nav-link" href="/pages/models.html">Models</a><a class="nav-link" href="/pages/metrics.html">Metrics</a><a class="nav-link" href="/pages/docs.html">Docs</a><a class="nav-link nav-external" href="https://github.com/sp-droid/FluidBench" target="_blank" rel="noreferrer">GitHub ↗</a>
+      </nav>
+      <div class="header-actions">
+        <form class="header-search" action="/pages/leaderboard.html" method="get" role="search"><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="6.8"></circle><path d="m16 16 4.5 4.5"></path></svg><input type="search" name="q" placeholder="Search models…" aria-label="Search models"></form>
+        <a class="button button-primary button-small" href="/pages/docs.html#submit"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 15V3m0 0L7.5 7.5M12 3l4.5 4.5M4 14v6h16v-6"></path></svg>Submit results</a>
+      </div>
+    </div>
+  </header>
+  <main>
+    <section class="hero shell">
+      <div class="hero-copy">
+        <p class="eyebrow">Open benchmark for fluid dynamics ML</p>
+        <h1>FluidBench</h1>
+        <p class="hero-lede" id="site-submission-count">6 submissions, 6 teams</p>
+        <p class="hero-subtle" id="site-benchmark-stats">2 flow regimes, 2 datasets, 6 metrics</p>
+        <div class="feature-pills" aria-label="Platform features"><span class="feature-pill pill-green"><span class="pill-icon">&lt;/&gt;</span>Standardized API</span><span class="feature-pill pill-blue"><span class="pill-icon">▱</span>Standardized datasets</span><span class="feature-pill pill-purple"><span class="pill-icon">▥</span>Comparable metrics</span></div>
+        <div class="hero-actions"><a class="button button-primary" href="/pages/leaderboard.html">Explore leaderboard <span aria-hidden="true">→</span></a><a class="button button-quiet" href="/pages/docs.html#how-it-works">How to submit a score</a></div>
+      </div>
+      <figure class="flow-visual"><img src="/assets/cylinder-flow-hero.png" alt="Cylinder flow with a long, swirling wake"></figure>
+    </section>
+    <section class="shell top-model-section" aria-labelledby="top-model-title">
+      <div class="top-model-card">
+        <div class="top-model-copy"><div class="section-kicker"><span class="kicker-icon">♛</span> Current leader <span class="kicker-dot">·</span> <span id="top-model-dataset">Cylinder Flow</span></div><h2 id="top-model-title">MeshGraphNet</h2><p><span id="top-model-authors">Pfaff et al. (2021)</span> <span class="inline-divider">·</span> <span id="top-model-representation" class="badge badge-graph">Graph</span></p></div>
+        <div class="top-model-stat"><span>RMSE</span><strong id="top-model-rmse">1.1e-2</strong><small>↓ Best overall score</small></div>
+        <div class="top-model-stat"><span>Parameters</span><strong id="top-model-params">3.1M</strong><small>Learnable parameters</small></div>
+        <a class="text-link top-model-link" href="/pages/leaderboard.html">See all <span id="top-model-count">six submissions</span> <span aria-hidden="true">→</span></a>
+      </div>
+    </section>
+    <section class="shell section-space">
+      <article class="surface-card benchmark-card featured-benchmark-card">
+        <div class="benchmark-summary">
+          <div class="featured-benchmark-visual"><img src="/assets/cylinder-flow-dataset.png" data-dataset-image data-dataset-id="cylinder-flow" alt="Cylinder Flow benchmark visualization" loading="lazy"></div>
+          <div class="featured-benchmark-copy">
+            <div class="card-title-row"><span class="line-icon icon-blue" aria-hidden="true">▤</span><div><p class="eyebrow">Featured benchmark</p><h2 data-dataset-field="name" data-dataset-id="cylinder-flow">Cylinder Flow</h2></div><a class="text-link card-link" href="/pages/benchmarks.html#cylinder-flow">Details →</a></div>
+            <p class="featured-benchmark-description" data-dataset-field="description" data-dataset-id="cylinder-flow">A canonical wake prediction task: use a sequence of velocity and pressure snapshots to predict the future incompressible flow around a cylinder.</p>
+            <div class="featured-benchmark-tags"><div class="benchmark-class-tags" data-benchmark-tags data-dataset-id="cylinder-flow"></div><div class="dataset-type-tags" data-dataset-tags data-dataset-id="cylinder-flow"></div></div>
+            <dl class="featured-benchmark-details" data-dataset-id="cylinder-flow"><div><dt>Reynolds numbers</dt><dd>Re = <span data-dataset-field="reynoldsNumbers">100</span></dd></div><div><dt>Resolution</dt><dd data-dataset-field="resolution">64 × 32</dd></div><div><dt>Samples</dt><dd data-dataset-field="sampleCount">12,000</dd></div><div><dt>Flow variables</dt><dd data-dataset-field="flowVariables">p, Ux, Uy</dd></div><div><dt>Input scalars</dt><dd data-dataset-field="inputScalarNames">Re, dt</dd></div><div><dt>Data splits (train-val-test)</dt><dd data-dataset-field="splitFractions">83.4-8.3-8.3%</dd></div></dl>
+          </div>
+        </div>
+      </article>
+    </section>
+  </main>
+  <footer class="site-footer"><div class="shell footer-inner"><a class="brand footer-brand" href="/"><img src="/assets/mark.png" alt="" width="40" height="32"><span>FluidBench</span></a><p>Open, reproducible benchmarks for fluid dynamics ML.</p><div class="footer-links"><a href="/pages/docs.html">Documentation</a><a href="https://github.com/sp-droid/FluidBench" target="_blank" rel="noreferrer">GitHub ↗</a></div><span class="copyright">© <span data-year></span> FluidBench</span></div></footer>
+</body>
+</html>

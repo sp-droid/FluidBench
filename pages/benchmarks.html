@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#f5f8fc">
+  <meta name="description" content="Explore FluidBench benchmarks and dataset specifications.">
+  <title>FluidBench benchmarks</title><link rel="icon" href="/assets/mark.png" type="image/png"><link rel="stylesheet" href="/assets/site.css"><script src="/assets/site.js" defer></script><script src="/assets/data.js" defer></script><script src="/assets/dataset-tags.js" defer></script><script src="/assets/benchmarks.js" defer></script>
+</head>
+<body>
+  <header class="site-header"><div class="header-inner">
+    <a class="brand" href="/" aria-label="FluidBench home"><img src="/assets/mark.png" alt="" width="50" height="40"><span>FluidBench</span></a><button class="menu-toggle" type="button" aria-expanded="false" aria-controls="primary-nav" aria-label="Open navigation"><span></span><span></span><span></span></button>
+    <nav class="primary-nav" id="primary-nav" aria-label="Primary navigation"><a class="nav-link" href="/">Overview</a><a class="nav-link" href="/pages/leaderboard.html">Leaderboard</a><a class="nav-link active" aria-current="page" href="/pages/benchmarks.html">Benchmarks</a><a class="nav-link" href="/pages/models.html">Models</a><a class="nav-link" href="/pages/metrics.html">Metrics</a><a class="nav-link" href="/pages/docs.html">Docs</a><a class="nav-link nav-external" href="https://github.com/sp-droid/FluidBench" target="_blank" rel="noreferrer">GitHub ↗</a></nav>
+    <div class="header-actions"><form class="header-search" action="/pages/leaderboard.html" method="get" role="search"><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="6.8"></circle><path d="m16 16 4.5 4.5"></path></svg><input type="search" name="q" placeholder="Search models…" aria-label="Search models"></form><a class="button button-primary button-small" href="/pages/docs.html#submit"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 15V3m0 0L7.5 7.5M12 3l4.5 4.5M4 14v6h16v-6"></path></svg>Submit results</a></div>
+  </div></header>
+  <main class="shell benchmark-page">
+    <section class="page-hero"><p class="eyebrow">Shared data · Consistent splits</p><h1>FluidBench <span>benchmarks</span></h1><p>Explore the benchmark specifications used to compare model submissions.</p></section>
+    <section class="section-space surface-card benchmark-directory" aria-labelledby="benchmark-directory-title">
+      <div class="section-heading"><div><p class="eyebrow">Benchmark suite</p><h2 id="benchmark-directory-title">All benchmarks</h2></div></div>
+      <div class="table-wrap"><table class="info-table benchmark-directory-table"><thead><tr><th>Benchmark</th><th>Flow regime</th><th>Mesh</th><th>Training</th><th>Validation</th><th>Reynolds numbers</th><th>Mach</th><th>Samples</th><th>Resolution</th><th>Data splits (train-val-test)</th><th>Results</th></tr></thead><tbody id="benchmark-directory-body" aria-live="polite"><tr><td colspan="11">Loading benchmarks…</td></tr></tbody></table></div>
+    </section>
+    <article class="surface-card benchmark-card featured-benchmark-card" id="cylinder-flow" data-selected-benchmark>
+      <div class="benchmark-summary">
+        <div class="featured-benchmark-visual"><img src="/assets/cylinder-flow-dataset.png" data-dataset-image data-dataset-id="cylinder-flow" alt="Cylinder Flow benchmark visualization" loading="lazy"></div>
+        <div class="featured-benchmark-copy">
+          <div class="card-title-row"><span class="line-icon icon-blue" aria-hidden="true">▤</span><div><p class="eyebrow">Selected benchmark</p><h2 data-dataset-field="name" data-dataset-id="cylinder-flow">Cylinder Flow</h2></div><a class="text-link card-link" href="#benchmark-specifications">Details →</a></div>
+          <p class="featured-benchmark-description" data-dataset-field="description" data-dataset-id="cylinder-flow">A canonical wake prediction task: use a sequence of velocity and pressure snapshots to predict the future incompressible flow around a cylinder.</p>
+          <div class="featured-benchmark-tags"><div class="benchmark-class-tags" data-benchmark-tags data-dataset-id="cylinder-flow"></div><div class="dataset-type-tags" data-dataset-tags data-dataset-id="cylinder-flow"></div></div>
+          <dl class="featured-benchmark-details" data-dataset-id="cylinder-flow"><div><dt>Reynolds numbers</dt><dd>Re = <span data-dataset-field="reynoldsNumbers">100</span></dd></div><div><dt>Resolution</dt><dd data-dataset-field="resolution">64 × 32</dd></div><div><dt>Samples</dt><dd data-dataset-field="sampleCount">12,000</dd></div><div><dt>Flow variables</dt><dd data-dataset-field="flowVariables">p, Ux, Uy</dd></div><div><dt>Input scalars</dt><dd data-dataset-field="inputScalarNames">Re, dt</dd></div><div><dt>Data splits (train-val-test)</dt><dd data-dataset-field="splitFractions">83.4-8.3-8.3%</dd></div></dl>
+        </div>
+      </div>
+    </article>
+    <section class="section-space benchmark-spec-grid">
+      <article class="surface-card content-card"><div class="card-icon">▦</div><p class="eyebrow">Dataset mesh</p><h2><span data-dataset-field="mesh" data-dataset-id="cylinder-flow">Unstructured</span></h2><p>Each model submission identifies its representation as Graph or Matrix, independently of the dataset mesh type.</p></article>
+      <article class="surface-card content-card"><div class="card-icon">∿</div><p class="eyebrow">Flow regime</p><h2><span data-dataset-field="compressibility" data-dataset-id="cylinder-flow">Incompressible</span></h2><p>Reynolds numbers: <strong data-dataset-field="reynoldsNumbers" data-dataset-id="cylinder-flow">100</strong></p></article>
+      <article class="surface-card content-card"><div class="card-icon">◷</div><p class="eyebrow">Data types</p><h2><span data-dataset-type="training" data-dataset-id="cylinder-flow">Synthetic</span> training</h2><p><span data-dataset-type="validation" data-dataset-id="cylinder-flow">Synthetic</span> validation data supports consistent model comparison.</p></article>
+    </section>
+    <section class="section-space surface-card benchmark-table-card" id="benchmark-specifications" data-dataset-id="cylinder-flow">
+      <div class="section-heading"><div><p class="eyebrow"><span data-dataset-field="name">Cylinder Flow</span> · sample metadata</p><h2>Benchmark details</h2></div><a class="text-link" data-benchmark-results-link href="/pages/leaderboard.html?dataset=cylinder-flow">View results →</a></div>
+      <div class="table-wrap"><table class="info-table"><thead><tr><th>Property</th><th>Specification</th></tr></thead><tbody>
+        <tr><td>Compressibility</td><td title="Flow regime" data-dataset-field="compressibility">Incompressible</td></tr>
+        <tr><td>Mesh</td><td title="Dataset mesh type" data-dataset-field="mesh">Unstructured</td></tr>
+        <tr><td>Reynolds numbers</td><td title="Reference flow conditions" data-dataset-field="reynoldsNumbers">100</td></tr>
+        <tr><td>Training type</td><td title="Data used to train submitted models" data-dataset-type="training">Synthetic</td></tr>
+        <tr><td>Validation type</td><td title="Data used for validation" data-dataset-type="validation">Synthetic</td></tr>
+        <tr><td>Mach number</td><td title="Available for compressible benchmarks" data-dataset-field="machNumber">—</td></tr>
+        <tr><td>Flow variables</td><td title="Predicted fields in each sample" data-dataset-field="flowVariables">p, Ux, Uy</td></tr>
+        <tr><td>Input scalars</td><td title="Scalar conditions provided to models" data-dataset-field="inputScalarNames">Re, dt</td></tr>
+        <tr><td>Data splits (train-val-test)</td><td title="Train, validation, and test fractions" data-dataset-field="splitFractions">83.4-8.3-8.3%</td></tr>
+        <tr><td>Samples</td><td title="Total samples in this dataset record" data-dataset-field="sampleCount">12,000</td></tr>
+        <tr><td>Resolution</td><td title="Width × height for structured grids" data-dataset-field="resolution">64 × 32</td></tr>
+      </tbody></table></div>
+    </section>
+    <div class="callout section-space"><strong>Sample site data.</strong> Cylinder Flow and Wing are editable benchmark records in the benchmarks folder.</div>
+  </main>
+  <footer class="site-footer"><div class="shell footer-inner"><a class="brand footer-brand" href="/"><img src="/assets/mark.png" alt="" width="40" height="32"><span>FluidBench</span></a><p>Open, reproducible benchmarks for fluid dynamics ML.</p><div class="footer-links"><a href="/pages/docs.html">Documentation</a><a href="https://github.com/sp-droid/FluidBench" target="_blank" rel="noreferrer">GitHub ↗</a></div><span class="copyright">© <span data-year></span> FluidBench</span></div></footer>
+</body></html>

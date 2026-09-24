@@ -1,0 +1,53 @@
+{
+  "id": "fno-v2",
+  "model": "Fourier Neural Operator v2",
+  "authors": "Guibas et al. (2022)",
+  "year": 2022,
+  "datasetId": "cylinder-flow",
+  "representation": "Matrix",
+  "submittedAt": "2024-02-27",
+  "metrics": {
+    "relativeL2": 0.00918,
+    "rollout": {
+      "step1": {
+        "rmse": 0.0178296,
+        "rolloutRmse": 0.01929792,
+        "mae": 0.0185432,
+        "rolloutMae": 0.0092716,
+        "relativeL2": 0.005049,
+        "rolloutRelativeL2": 0.004862
+      },
+      "step25": {
+        "rmse": 0.0315758,
+        "rolloutRmse": 0.03759396,
+        "mae": 0.0328393,
+        "rolloutMae": 0.01806155,
+        "relativeL2": 0.011475,
+        "rolloutRelativeL2": 0.011594
+      },
+      "step100": {
+        "rmse": 0.05495505,
+        "rolloutRmse": 0.07137728,
+        "mae": 0.0571532,
+        "rolloutMae": 0.03429205,
+        "relativeL2": 0.022032,
+        "rolloutRelativeL2": 0.0215424
+      }
+    },
+    "efficiency": {
+      "parameters": 13800000,
+      "trainingHours": 2.8,
+      "inferenceMs": 4.6,
+      "memoryGb": 5.2
+    },
+    "perVariable": {
+      "velocityRmse": 0.019672315572906,
+      "pressureRmse": 0.010392304845413263
+    },
+    "rmse": 0.0193834,
+    "rolloutRmse": 0.07137728,
+    "mae": 0.0201591,
+    "rolloutMae": 0.03429205,
+    "rolloutRelativeL2": 0.0215424
+  }
+}
