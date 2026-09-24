@@ -1,0 +1,53 @@
+{
+  "datasetId": "cylinder_Re41_interp",
+  "id": "baseline-zero",
+  "model": "Baseline Zero",
+  "authors": "Pablo A.C.",
+  "year": 2026,
+  "representation": "Matrix",
+  "submittedAt": "2026-09-24",
+  "metrics": {
+    "rmse": 0.5935491884984482,
+    "mae": 0.360155006255188,
+    "relativeL2": 1.0,
+    "rollout": {
+      "step1": {
+        "rmse": 0.5935491884984482,
+        "mae": 0.360155006255188,
+        "relativeL2": 1.0,
+        "rolloutRmse": null,
+        "rolloutMae": null,
+        "rolloutRelativeL2": null
+      },
+      "step25": {
+        "rmse": null,
+        "rolloutRmse": null,
+        "mae": null,
+        "rolloutMae": null,
+        "relativeL2": null,
+        "rolloutRelativeL2": null
+      },
+      "step100": {
+        "rmse": null,
+        "rolloutRmse": null,
+        "mae": null,
+        "rolloutMae": null,
+        "relativeL2": null,
+        "rolloutRelativeL2": null
+      }
+    },
+    "efficiency": {
+      "inferenceMs": 0.034011111387776,
+      "memoryGb": 0.000935424,
+      "parameters": 1,
+      "trainingHours": 0.00039648941666301754
+    },
+    "perVariable": {
+      "velocityRmse": 0.7245311057931338,
+      "pressureRmse": 0.0837333325376254
+    },
+    "rolloutRmse": null,
+    "rolloutMae": null,
+    "rolloutRelativeL2": null
+  }
+}

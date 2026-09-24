@@ -214,6 +214,7 @@ h1, h2, h3 { font-family: Manrope, "Segoe UI", Arial, sans-serif; }
 .info-table th, .info-table td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #e7edf5; }
 .info-table th { color: #697a95; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
 .info-table td { color: #314664; }
+.info-table td.benchmark-id-value { color: #1858bd; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 11px; font-weight: 650; }
 .info-table tr:last-child td { border-bottom: 0; }
 .callout { padding: 16px 18px; border: 1px solid #d6e5fa; border-radius: 10px; background: linear-gradient(110deg,#f3f8ff,#fff); color: #385273; font-size: 12px; }
 .callout strong { color: #183d76; }

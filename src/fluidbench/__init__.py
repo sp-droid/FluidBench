@@ -2,6 +2,7 @@
 
 from pathlib import Path
 
+from .bench import run
 from .downloader import download_dataset
 
 
@@ -10,4 +11,4 @@ def download(dataset_id: str) -> Path:
     return download_dataset(dataset_id)
 
 
-__all__ = ["download"]
+__all__ = ["download", "run"]

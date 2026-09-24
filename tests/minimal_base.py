@@ -55,28 +55,7 @@ class BaseRegressionModel(nn.Module):
             history["train_epochs"].append(epoch)
 
         return history
-    
-    # Validate the model
-    def validate(self, val_dataloader, reduced_error=True):
-        self.eval()
-        if reduced_error: val_loss = 0
-        else: val_loss = np.zeros_like(next(iter(val_dataloader))[1].numpy())
-        with torch.no_grad():
-            for X, y in val_dataloader:
-                X, y = self._to_device(X), self._to_device(y)
 
-                if self._is_rollout_batch(X, y):
-                    scalars_seq, q0 = X
-                    pred = self.rollout(scalars_seq, q0)
-                else:
-                    pred = self._predict_step(X)
-                
-                if reduced_error: val_loss += self.loss(pred, y).item()
-                else: val_loss += self.loss_unreduced(pred, y).cpu().numpy()
-        val_loss /= len(val_dataloader)
-        return val_loss
-
-    # Make predictions    
     def predict(self, test_dataloader):
         self.eval()
         predictions = []
@@ -89,17 +68,23 @@ class BaseRegressionModel(nn.Module):
         predictions = torch.cat(predictions, dim=0)
         return predictions
 
-    def predict_autoregressive(self, test_dataloader, n_snaps, progress_bar=True):
+    def predict_rollout(self, test_dataloader):
         self.eval()
         predictions_snaps = []
 
         with torch.no_grad():
-            X = next(iter(test_dataloader)) # Only the first snapshot is used
-            scalars, fields = self._to_device(X)
+            # Get scalars from all snapshots in the test dataloader
+            scalars = []
+            for X, _ in test_dataloader:
+                scalars.append(X[0])
+            N = len(scalars)
 
-            progress_bar = tqdm(range(n_snaps), desc="Autoregressive prediction", unit="Snapshot", disable=not progress_bar)
-            for _ in progress_bar:
-                X_snap = (scalars, fields)
+            X = next(iter(test_dataloader)) # Only the first snapshot is used
+            fields = self._to_device(X[1])
+
+            for i in range(N):
+                scalars_i = self._to_device(scalars[i])
+                X_snap = (scalars_i, fields)
                 pred = self._predict_step(X_snap)
                 
                 fields = pred

@@ -42,24 +42,39 @@
     return 12 + (1 - normalized) * 164;
   }
 
-  function chartPath(points, field, logScale) {
+  function epochBounds(points) {
+    const epochs = points.map((point) => Number(point.epoch)).filter(Number.isFinite);
+    return epochs.length ? { min: Math.min(...epochs), max: Math.max(...epochs) } : { min: 0, max: 0 };
+  }
+
+  function formatEpoch(epoch) {
+    return Number.isInteger(epoch) ? String(epoch) : String(Number(epoch.toPrecision(3)));
+  }
+
+  function epochTicks(maxEpoch) {
+    if (maxEpoch <= 0) return [0];
+    const divisions = Math.min(4, Math.max(1, Math.ceil(maxEpoch)));
+    return Array.from({ length: divisions + 1 }, (_, index) => formatEpoch((maxEpoch * index) / divisions));
+  }
+
+  function chartPath(points, field, logScale, maxEpoch) {
     const left = 55;
     const right = 12;
     const width = 440;
     const plotWidth = width - left - right;
     return points.map((point, index) => {
-      const x = left + (point.epoch / 100) * plotWidth;
+      const x = left + (Number(point.epoch) / maxEpoch) * plotWidth;
       const y = chartY(point[field], logScale);
       return `${index ? "L" : "M"}${x.toFixed(1)} ${y.toFixed(1)}`;
     }).join(" ");
   }
 
-  function chartMarkers(points, field, logScale, label) {
+  function chartMarkers(points, field, logScale, label, maxEpoch) {
     const left = 55;
     const plotWidth = 373;
     const markerClass = field === "trainingLoss" ? "chart-point-training" : "chart-point-validation";
     return points.map((point) => {
-      const x = left + (point.epoch / 100) * plotWidth;
+      const x = left + (Number(point.epoch) / maxEpoch) * plotWidth;
       const y = chartY(point[field], logScale);
       const exactValue = String(Number(point[field]));
       const hoverInfo = `Epoch ${point.epoch} · ${label} loss: ${exactValue}`;
@@ -70,20 +85,22 @@
   function trainingChart(item, logScale) {
     const points = item.trainingHistory?.points || [];
     if (!points.length) return `<div class="compare-chart-empty">No training history provided.</div>`;
+    const { max: dataMaxEpoch } = epochBounds(points);
+    const maxEpoch = dataMaxEpoch > 0 ? dataMaxEpoch : 1;
     const gridLines = Array.from({ length: logScale.maxExponent - logScale.minExponent + 1 }, (_, index) => logScale.maxExponent - index).map((exponent) => {
       const y = chartY(10 ** exponent, logScale);
       const value = 10 ** exponent;
       return `<g class="chart-gridline"><line x1="55" y1="${y}" x2="428" y2="${y}"/><text x="48" y="${y + 3}" text-anchor="end">${formatLoss(value)}</text></g>`;
     }).join("");
-    const xTicks = [0, 25, 50, 75, 100].map((epoch) => {
-      const x = 55 + (epoch / 100) * 373;
+    const xTicks = epochTicks(dataMaxEpoch).map((epoch) => {
+      const x = 55 + (Number(epoch) / maxEpoch) * 373;
       return `<g class="chart-tick"><line x1="${x}" y1="176" x2="${x}" y2="180"/><text x="${x}" y="195" text-anchor="middle">${epoch}</text></g>`;
     }).join("");
     const label = `${item.model} ${item.trainingHistory.lossName || "RMSE"} training and validation loss by epoch`;
     return `<div class="training-chart-wrap"><svg class="training-chart" viewBox="0 0 440 210" role="img" aria-label="${escapeHtml(label)}" preserveAspectRatio="xMidYMid meet">
       ${gridLines}${xTicks}<line class="chart-axis" x1="55" y1="12" x2="55" y2="176"/><line class="chart-axis" x1="55" y1="176" x2="428" y2="176"/>
-      <path class="chart-series chart-training-line" d="${chartPath(points, "trainingLoss", logScale)}"></path><path class="chart-series chart-validation-line" d="${chartPath(points, "validationLoss", logScale)}"></path>
-      ${chartMarkers(points, "trainingLoss", logScale, "Training")}${chartMarkers(points, "validationLoss", logScale, "Validation")}
+      <path class="chart-series chart-training-line" d="${chartPath(points, "trainingLoss", logScale, maxEpoch)}"></path><path class="chart-series chart-validation-line" d="${chartPath(points, "validationLoss", logScale, maxEpoch)}"></path>
+      ${chartMarkers(points, "trainingLoss", logScale, "Training", maxEpoch)}${chartMarkers(points, "validationLoss", logScale, "Validation", maxEpoch)}
       <g class="chart-legend-in-graph"><rect x="277" y="17" width="147" height="32" rx="5"/><line class="chart-legend-training" x1="286" y1="28" x2="302" y2="28"/><text x="307" y="31">Training</text><line class="chart-legend-validation" x1="354" y1="28" x2="370" y2="28"/><text x="375" y="31">Validation</text><text class="chart-legend-loss-name" x="286" y="43">${escapeHtml(item.trainingHistory.lossName || "RMSE")} loss</text></g>
       <text class="chart-axis-label chart-y-label" transform="translate(13 95) rotate(-90)" text-anchor="middle">Loss · log scale</text>
       <text class="chart-axis-label" x="241" y="208" text-anchor="middle">Training epoch</text>
@@ -138,9 +155,14 @@
 
   function renderPanel(item, other, dataset, side, logScale, submissions, leftId) {
     const controls = side === "right" ? modelPicker(submissions, leftId, item.id) : `<span class="compare-fixed-label">Selected from leaderboard</span>`;
+    const points = item.trainingHistory?.points || [];
+    const range = epochBounds(points);
+    const rangeLabel = points.length
+      ? (range.min === range.max ? `Epoch ${formatEpoch(range.min)}` : `Epoch ${formatEpoch(range.min)}–${formatEpoch(range.max)}`)
+      : "No epoch data";
     return `<div class="compare-panel-top"><div class="compare-model-title"><span class="compare-side-label">${side === "left" ? "Model A" : "Model B"}</span><h2>${escapeHtml(item.model)}</h2><p>${escapeHtml(item.authors)} · ${item.year}</p></div>${controls}</div>
       <div class="compare-section"><h3>Submission details</h3>${modelFacts(item, other, dataset)}</div>
-      <div class="compare-section"><div class="compare-section-title"><div><h3>Training loss</h3><p>Epoch versus ${escapeHtml(item.trainingHistory?.lossName || "RMSE")} loss</p></div><span class="chart-range">Epoch 1–100 · log scale</span></div>${trainingChart(item, logScale)}</div>
+      <div class="compare-section"><div class="compare-section-title"><div><h3>Training loss</h3><p>Epoch versus ${escapeHtml(item.trainingHistory?.lossName || "RMSE")} loss</p></div><span class="chart-range">${rangeLabel} · log scale</span></div>${trainingChart(item, logScale)}</div>
       <div class="compare-section"><div class="compare-section-title"><div><h3>Evaluation losses</h3><p>Lower is better</p></div></div>${overallLosses(item, other)}</div>
       <div class="compare-section"><div class="compare-section-title"><div><h3>Rollout losses</h3><p>Errors across prediction horizons</p></div></div>${rolloutTable(item, other)}</div>
       <div class="compare-section"><div class="compare-section-title"><div><h3>Per-variable losses</h3><p>Velocity and pressure fields</p></div></div>${variableLosses(item, other)}</div>`;
