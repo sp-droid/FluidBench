@@ -15,7 +15,7 @@ _LOADERS: dict[str, Callable[[str, str, Path], Path]] = {
 
 
 def download_dataset(dataset_id: str) -> Path:
-    """Read benchmark metadata and download its data into ./<dataset_id>."""
+    """Read benchmark metadata and download its data into ./downloads/<dataset_id>."""
     benchmark_json = _BENCHMARKS_DIR / f"{dataset_id}.json"
     if not benchmark_json.is_file():
         raise FileNotFoundError(f"Benchmark metadata not found: {benchmark_json}")
@@ -37,4 +37,4 @@ def download_dataset(dataset_id: str) -> Path:
         raise ValueError(
             f"Unsupported dataset loader {loader_name!r}. Supported loaders: {supported}"
         ) from None
-    return loader(source, dataset_id, Path.cwd() / dataset_id)
+    return loader(source, dataset_id, Path.cwd() / "downloads" / dataset_id)
