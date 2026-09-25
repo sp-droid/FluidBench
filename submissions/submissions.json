@@ -1,16 +1,8 @@
 {
   "submissionsByBenchmark": {
-    "cylinder-flow": [
-      "fno",
-      "fno-v2",
-      "gno",
-      "meshgraphnet",
-      "transformer",
-      "unet"
-    ],
     "cylinder_Re41_interp": [
+      "baseline-same",
       "baseline-zero"
-    ],
-    "wing": []
+    ]
   }
 }

@@ -1,0 +1,53 @@
+{
+  "datasetId": "cylinder_Re41_interp",
+  "id": "baseline-same",
+  "model": "Baseline Same",
+  "authors": "Pablo A.C.",
+  "year": 2026,
+  "representation": "Matrix",
+  "submittedAt": "2026-09-24",
+  "metrics": {
+    "rmse": 0.0021982465403556375,
+    "mae": 0.0006160648398735003,
+    "relativeL2": 0.0037035625403123345,
+    "rollout": {
+      "step1": {
+        "rmse": 0.0003231235053899177,
+        "rolloutRmse": 0.0003231235053899177,
+        "mae": 0.00019327486863873755,
+        "rolloutMae": 0.00019327486863873755,
+        "relativeL2": 0.0005427683504322437,
+        "rolloutRelativeL2": 0.0005427683504322437
+      },
+      "step25": {
+        "rmse": null,
+        "rolloutRmse": null,
+        "mae": null,
+        "rolloutMae": null,
+        "relativeL2": null,
+        "rolloutRelativeL2": null
+      },
+      "step100": {
+        "rmse": null,
+        "rolloutRmse": null,
+        "mae": null,
+        "rolloutMae": null,
+        "relativeL2": null,
+        "rolloutRelativeL2": null
+      }
+    },
+    "efficiency": {
+      "inferenceMs": 0.2394666662439704,
+      "memoryGb": 0.000395264,
+      "parameters": 1,
+      "trainingHours": 0.0003931528888642788
+    },
+    "perVariable": {
+      "velocityRmse": 0.002554511277444832,
+      "pressureRmse": 0.0012024174912944883
+    },
+    "rolloutRmse": 0.020137260324558467,
+    "rolloutMae": 0.01029328836534475,
+    "rolloutRelativeL2": 0.03415629230775392
+  }
+}

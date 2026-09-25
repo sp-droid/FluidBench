@@ -430,5 +430,4 @@ def run(model: Any, submission_config: Mapping[str, Any]) -> Any:
         history_file.write("\n")
 
     print(f"submission written to 'submission/{benchmark_id}' folder")
-    print(f"Training history written to {history_path}")
     return history

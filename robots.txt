@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://sp-droid.github.io/FluidBench/sitemap.xml

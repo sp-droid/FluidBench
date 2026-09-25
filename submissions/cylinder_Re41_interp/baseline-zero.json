@@ -37,10 +37,10 @@
       }
     },
     "efficiency": {
-      "inferenceMs": 0.38514444087114597,
-      "memoryGb": 4e-09,
+      "inferenceMs": 0.26800000988360906,
+      "memoryGb": 0.000591872,
       "parameters": 1,
-      "trainingHours": 0.00036451813890986764
+      "trainingHours": 0.00040002830556154045
     },
     "perVariable": {
       "velocityRmse": 0.7245311057931338,

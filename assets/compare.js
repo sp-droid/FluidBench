@@ -31,9 +31,11 @@
     return "is-tied";
   };
 
-  function modelPicker(submissions, leftId, selectedId = "") {
-    const options = submissions.filter((submission) => submission.id !== leftId).map((submission) => `<option value="${escapeHtml(submission.id)}"${submission.id === selectedId ? " selected" : ""}>${escapeHtml(submission.model)}</option>`).join("");
-    return `<label class="compare-model-select"><span>Compare against</span><select id="compare-model-select" aria-label="Choose a different model"><option value=""${selectedId ? "" : " selected"}>Choose a model…</option>${options}</select></label>`;
+  function modelPicker(submissions, leftId, benchmarkId, selectedId = "") {
+    const candidates = submissions.filter((submission) => submission.id !== leftId && submission.datasetId === benchmarkId);
+    const options = candidates.map((submission) => `<option value="${escapeHtml(submission.id)}"${submission.id === selectedId ? " selected" : ""}>${escapeHtml(submission.model)}</option>`).join("");
+    const placeholder = candidates.length ? "Choose a model…" : "No other submissions yet";
+    return `<label class="compare-model-select"><span>Compare against</span><select id="compare-model-select" aria-label="Choose a different model"${candidates.length ? "" : " disabled"}><option value=""${selectedId ? "" : " selected"}>${placeholder}</option>${options}</select></label>`;
   }
 
   function chartY(value, logScale) {
@@ -154,7 +156,7 @@
   }
 
   function renderPanel(item, other, dataset, side, logScale, submissions, leftId) {
-    const controls = side === "right" ? modelPicker(submissions, leftId, item.id) : `<span class="compare-fixed-label">Selected from leaderboard</span>`;
+    const controls = side === "right" ? modelPicker(submissions, leftId, item.datasetId, item.id) : `<span class="compare-fixed-label">Selected from leaderboard</span>`;
     const points = item.trainingHistory?.points || [];
     const range = epochBounds(points);
     const rangeLabel = points.length
@@ -168,8 +170,12 @@
       <div class="compare-section"><div class="compare-section-title"><div><h3>Per-variable losses</h3><p>Velocity and pressure fields</p></div></div>${variableLosses(item, other)}</div>`;
   }
 
-  function emptyComparePanel(submissions, leftId) {
-    return `<div class="compare-panel-top"><div class="compare-model-title"><span class="compare-side-label">Model B</span><h2>No model selected</h2><p>Choose a submission to compare against Model A.</p></div>${modelPicker(submissions, leftId)}</div><div class="compare-empty-state"><span class="compare-empty-icon" aria-hidden="true">↔</span><h3>Ready to compare</h3><p>Pick a different model above to see its training curve and losses alongside the selected submission.</p></div>`;
+  function emptyComparePanel(submissions, leftId, benchmarkId) {
+    const hasCandidates = submissions.some((submission) => submission.id !== leftId && submission.datasetId === benchmarkId);
+    const guidance = hasCandidates
+      ? "Pick another submission from this benchmark to compare its curves and losses."
+      : "There are no other submissions for this benchmark yet.";
+    return `<div class="compare-panel-top"><div class="compare-model-title"><span class="compare-side-label">Model B</span><h2>No model selected</h2><p>${guidance}</p></div>${modelPicker(submissions, leftId, benchmarkId)}</div><div class="compare-empty-state"><span class="compare-empty-icon" aria-hidden="true">↔</span><h3>Ready to compare</h3><p>${guidance}</p></div>`;
   }
 
   function updateUrl(left, right) {
@@ -243,7 +249,7 @@
     if (submissions.length < 2) throw new Error("Add at least two submissions to compare models.");
     const sortedByRmse = submissions.slice().sort((a, b) => a.metrics.rmse - b.metrics.rmse);
     const left = submissions.find((item) => item.id === requestedLeft) || sortedByRmse[0];
-    const rightCandidates = submissions.filter((item) => item.id !== left.id);
+    const rightCandidates = submissions.filter((item) => item.id !== left.id && item.datasetId === left.datasetId);
     let right = rightCandidates.find((item) => item.id === requestedRight) || null;
     const datasets = data.datasets || [];
 
@@ -266,7 +272,7 @@
       leftPanel.innerHTML = renderPanel(left, right, datasets.find((dataset) => dataset.id === left.datasetId), "left", logScale, submissions, left.id);
       rightPanel.innerHTML = right
         ? renderPanel(right, left, datasets.find((dataset) => dataset.id === right.datasetId), "right", logScale, submissions, left.id)
-        : emptyComparePanel(submissions, left.id);
+        : emptyComparePanel(submissions, left.id, left.datasetId);
       bindChartTooltips(leftPanel);
       bindChartTooltips(rightPanel);
       document.querySelector("#compare-model-select")?.addEventListener("change", (event) => {
