@@ -6,7 +6,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   const escapeHtml = (value) => String(value ?? "").replace(/[&<>"']/g, (char) => ({
     "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
   })[char]);
-  const typeLabel = (value) => ({ synthetic: "Synthetic", real: "Real", "synthetic-real": "Synthetic & real" })[value] || "Unknown";
   const displayList = (value) => Array.isArray(value) ? value.join(", ") : "—";
   const displaySplits = (splits) => {
     if (!splits || typeof splits !== "object") return "—";
@@ -26,10 +25,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     tableBody.innerHTML = datasets.map((dataset) => {
       const selected = dataset.id === selectedId;
       const reynolds = displayList(dataset.reynoldsNumbers);
-      const mach = dataset.machNumber == null ? "—" : dataset.machNumber;
       const samples = dataset.sample_count == null ? "—" : Number(dataset.sample_count).toLocaleString();
       const resolution = dataset.width == null || dataset.height == null ? "—" : `${dataset.width} × ${dataset.height}`;
-      return `<tr id="benchmark-row-${escapeHtml(dataset.id)}" data-benchmark-id="${escapeHtml(dataset.id)}" tabindex="0" aria-label="Show ${escapeHtml(dataset.name)} details" class="${selected ? "is-selected" : ""}"><td><strong>${escapeHtml(dataset.name)}</strong></td><td>${escapeHtml(dataset.compressibility || "—")}</td><td>${escapeHtml(dataset.mesh || "—")}</td><td>${escapeHtml(typeLabel(dataset.trainingType))}</td><td>${escapeHtml(typeLabel(dataset.validationType))}</td><td>${escapeHtml(reynolds)}</td><td>${escapeHtml(mach)}</td><td>${escapeHtml(samples)}</td><td>${escapeHtml(resolution)}</td><td>${escapeHtml(displaySplits(dataset.splitFractions))}</td><td><a class="text-link" href="${window.FluidBenchPaths.url(`/pages/leaderboard.html?dataset=${encodeURIComponent(dataset.id)}`)}">View results →</a></td></tr>`;
+      const originCategory = window.FluidBenchDataOrigins.classify(dataset.dataOrigin);
+      return `<tr id="benchmark-row-${escapeHtml(dataset.id)}" data-benchmark-id="${escapeHtml(dataset.id)}" tabindex="0" aria-label="Show ${escapeHtml(dataset.name)} details" class="${selected ? "is-selected" : ""}"><td><strong>${escapeHtml(dataset.name)}</strong></td><td>${escapeHtml(dataset.problem || "—")}</td><td>${escapeHtml(dataset.compressibility || "—")}</td><td>${escapeHtml(dataset.mesh || "—")}</td><td>${escapeHtml(dataset.boundary || "—")}</td><td title="${escapeHtml(originCategory.description)}">${escapeHtml(originCategory.name)}</td><td>${escapeHtml(reynolds)}</td><td>${dataset.machNumber == null ? "—" : escapeHtml(dataset.machNumber)}</td><td>${escapeHtml(samples)}</td><td>${escapeHtml(resolution)}</td><td>${escapeHtml(displaySplits(dataset.splitFractions))}</td><td><a class="text-link" href="${window.FluidBenchPaths.url(`/pages/leaderboard.html?dataset=${encodeURIComponent(dataset.id)}`)}">View results →</a></td></tr>`;
     }).join("");
   }
 
@@ -63,15 +62,15 @@ document.addEventListener("DOMContentLoaded", async () => {
   try {
     datasets = await window.FluidBenchData.loadBenchmarks();
     if (!datasets.length) {
-      tableBody.innerHTML = `<tr><td colspan="11">No benchmarks are available.</td></tr>`;
+      tableBody.innerHTML = `<tr><td colspan="12">No benchmarks are available.</td></tr>`;
       return;
     }
-    const requestedId = decodeURIComponent(window.location.hash.slice(1));
+    const requestedId = new URLSearchParams(window.location.search).get("dataset") || window.location.hash.slice(1);
     const initialId = datasets.some((dataset) => dataset.id === requestedId)
       ? requestedId
-      : datasets.find((dataset) => dataset.id === "cylinder-flow")?.id || datasets[0].id;
+      : datasets[0].id;
     selectBenchmark(initialId);
   } catch (error) {
-    tableBody.innerHTML = `<tr><td colspan="11">${escapeHtml(error.message)}</td></tr>`;
+    tableBody.innerHTML = `<tr><td colspan="12">${escapeHtml(error.message)}</td></tr>`;
   }
 });

@@ -4,7 +4,7 @@
   "model": "Baseline Zero",
   "authors": "Pablo A.C.",
   "year": 2026,
-  "representation": "Matrix",
+  "representation": "Grid",
   "submittedAt": "2026-09-24",
   "metrics": {
     "rmse": 0.5935491884984482,

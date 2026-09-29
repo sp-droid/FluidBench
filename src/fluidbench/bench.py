@@ -62,8 +62,8 @@ def _validate_config(config: Mapping[str, Any]) -> dict[str, Any]:
     if isinstance(config["year"], bool) or not isinstance(config["year"], int):
         raise ValueError("Config field 'year' must be an integer.")
     representation = config["representation"]
-    if not isinstance(representation, str) or representation not in {"Graph", "Matrix"}:
-        raise ValueError("Config field 'representation' must be 'Graph' or 'Matrix'.")
+    if not isinstance(representation, str) or representation not in {"Graph", "Grid"}:
+        raise ValueError("Config field 'representation' must be 'Graph' or 'Grid'.")
 
     return config
 

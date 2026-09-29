@@ -1,0 +1,49 @@
+{
+  "problems": {
+    "Rollout": {
+      "description": "Error and metric paths are relative to a submission's metrics object. overallMetrics selects the metric IDs shown beside the selected error.",
+      "defaultCategory": "testRollout",
+      "overallMetrics": ["parameters", "inferenceMs"],
+      "categories": [
+        {
+          "id": "trainSet",
+          "label": "Train set",
+          "kind": "single",
+          "defaultError": "rmse",
+          "errors": [
+            { "id": "rmse", "label": "RMSE", "path": "trainSet.rmse" },
+            { "id": "mae", "label": "MAE", "path": "trainSet.mae" },
+            { "id": "relativeL2", "label": "Rel. L₂", "path": "trainSet.relativeL2" }
+          ]
+        },
+        {
+          "id": "validationSet",
+          "label": "Val. set",
+          "kind": "single",
+          "defaultError": "rmse",
+          "errors": [
+            { "id": "rmse", "label": "RMSE", "path": "validationSet.rmse" },
+            { "id": "mae", "label": "MAE", "path": "validationSet.mae" },
+            { "id": "relativeL2", "label": "Rel. L₂", "path": "validationSet.relativeL2" }
+          ]
+        },
+        {
+          "id": "testRollout",
+          "label": "Test rollout",
+          "defaultError": "rmse",
+          "errors": [
+            { "id": "rmse", "label": "RMSE", "path": "rolloutRmse" },
+            { "id": "mae", "label": "MAE", "path": "rolloutMae" },
+            { "id": "relativeL2", "label": "Rel. L₂", "path": "rolloutRelativeL2" }
+          ]
+        }
+      ],
+      "metrics": [
+        { "id": "parameters", "label": "Params", "path": "efficiency.parameters", "format": "count" },
+        { "id": "trainingHours", "label": "Training time", "path": "efficiency.trainingHours", "format": "hours" },
+        { "id": "inferenceMs", "label": "Inference / sample", "path": "efficiency.inferenceMs", "format": "milliseconds" },
+        { "id": "memoryGb", "label": "GPU memory", "path": "efficiency.memoryGb", "format": "gigabytes" }
+      ]
+    }
+  }
+}

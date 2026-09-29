@@ -5,7 +5,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const data = await window.FluidBenchData.load();
     const rows = data.submissions.slice().sort((a, b) => a.metrics.rmse - b.metrics.rmse);
     list.innerHTML = rows.map((item, index) => {
-      const badge = item.representation === "Graph" ? "badge-graph" : "badge-matrix";
+      const badge = item.representation === "Graph" ? "badge-graph" : "badge-grid";
       const params = (item.metrics.efficiency.parameters / 1000000).toFixed(1) + "M";
       const rmse = item.metrics.rmse.toExponential(1);
       const l2 = item.metrics.relativeL2.toExponential(1);

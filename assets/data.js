@@ -44,6 +44,10 @@
     return { submissions, datasets };
   }
 
+  async function loadOptions() {
+    return readJson("/assets/options.json");
+  }
+
   async function loadTrainingHistory(id, benchmarkId) {
     if (!/^[a-z0-9_-]+$/i.test(id)) throw new Error("The submission ID is invalid.");
     if (!/^[a-z0-9_-]+$/i.test(benchmarkId || "")) throw new Error("The benchmark ID is invalid.");
@@ -64,5 +68,5 @@
     };
   }
 
-  window.FluidBenchData = { load, loadSubmissions, loadBenchmarks, loadTrainingHistory };
+  window.FluidBenchData = { load, loadSubmissions, loadBenchmarks, loadOptions, loadTrainingHistory };
 })();

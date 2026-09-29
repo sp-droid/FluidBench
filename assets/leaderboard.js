@@ -1,21 +1,13 @@
 (() => {
-  const errorMetrics = {
-    rmse: { label: "RMSE", rolloutKey: "rmse", value: (item) => item.metrics.rmse },
-    rolloutRmse: { label: "Rollout RMSE", rolloutKey: "rolloutRmse", value: (item) => item.metrics.rolloutRmse },
-    mae: { label: "MAE", rolloutKey: "mae", value: (item) => item.metrics.mae },
-    rolloutMae: { label: "Rollout MAE", rolloutKey: "rolloutMae", value: (item) => item.metrics.rolloutMae },
-    relativeL2: { label: "Rel. L₂", rolloutKey: "relativeL2", value: (item) => item.metrics.relativeL2 },
-    rolloutRelativeL2: { label: "Rollout Rel. L₂", rolloutKey: "rolloutRelativeL2", value: (item) => item.metrics.rolloutRelativeL2 },
-  };
   const state = {
     data: null,
-    category: "overall",
-    errorKey: "rmse",
+    options: null,
+    dataCategory: null,
+    errorKey: null,
     representationFilter: "all",
     query: new URLSearchParams(window.location.search).get("q") || "",
     sort: { key: "score", direction: "asc", groupRepresentation: false, representationDirection: "asc" },
   };
-  const defaultSortKeys = { overall: "score", rollout: "step100", efficiency: "parameters", perVariable: "velocityRmse" };
   const defaultDirections = { submitted: "desc" };
   const $ = (selector) => document.querySelector(selector);
   const head = $("#leaderboard-head");
@@ -28,13 +20,51 @@
   const escapeHtml = (value) => String(value ?? "").replace(/[&<>"']/g, (char) => ({
     "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
   })[char]);
-  const formatError = (value) => Number(value).toExponential(1).replace("e-0", "e-").replace("e+0", "e+");
-  const formatCount = (value) => new Intl.NumberFormat("en-US", { notation: "compact", maximumFractionDigits: 1 }).format(value);
+  const formatError = (value) => {
+    if (value === null || value === undefined || !Number.isFinite(Number(value))) return "—";
+    return Number(value).toExponential(1).replace("e-0", "e-").replace("e+0", "e+");
+  };
+  const formatCount = (value) => value === null || value === undefined || !Number.isFinite(Number(value))
+    ? "—"
+    : new Intl.NumberFormat("en-US", { notation: "compact", maximumFractionDigits: 1 }).format(value);
   const formatDate = (value) => new Date(`${value}T00:00:00`).toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" });
-  const currentError = () => errorMetrics[state.errorKey];
 
   function selectedDataset() {
     return state.data.datasets.find((dataset) => dataset.id === datasetFilter.value) || state.data.datasets[0];
+  }
+
+  function problemOptions() {
+    const problem = selectedDataset()?.problem;
+    return state.options?.problems?.[problem] || null;
+  }
+
+  function activeDataCategory() {
+    const categories = problemOptions()?.categories || [];
+    return categories.find((category) => category.id === state.dataCategory) || null;
+  }
+
+  function activeErrors() {
+    return activeDataCategory()?.errors || [];
+  }
+
+  function currentError() {
+    const errors = activeErrors();
+    return errors.find((error) => error.id === state.errorKey) || errors[0] || null;
+  }
+
+  function activeMetrics() {
+    const definitions = problemOptions()?.metrics || [];
+    const ids = problemOptions()?.overallMetrics || [];
+    return ids.map((id) => definitions.find((metric) => metric.id === id)).filter(Boolean);
+  }
+
+  function getPath(source, path) {
+    if (!source || typeof path !== "string") return null;
+    return path.split(".").reduce((value, part) => value?.[part], source) ?? null;
+  }
+
+  function metricSortKey(metric) {
+    return `metric:${metric.id}`;
   }
 
   function fillDatasetFilter() {
@@ -43,9 +73,28 @@
     if (state.data.datasets.some((dataset) => dataset.id === requestedDataset)) datasetFilter.value = requestedDataset;
   }
 
+  function syncDataCategory(reset = false) {
+    const config = problemOptions();
+    const categories = config?.categories || [];
+    if (reset || !categories.some((category) => category.id === state.dataCategory)) {
+      state.dataCategory = config?.defaultCategory && categories.some((category) => category.id === config.defaultCategory)
+        ? config.defaultCategory
+        : categories[0]?.id || null;
+    }
+    if (reset || !activeErrors().some((error) => error.id === state.errorKey)) {
+      state.errorKey = activeDataCategory()?.defaultError || activeErrors()[0]?.id || null;
+    }
+  }
+
   function scoreControl() {
-    const options = Object.entries(errorMetrics).map(([key, metric]) => `<button type="button" role="menuitemradio" aria-checked="${key === state.errorKey}" class="error-picker-option${key === state.errorKey ? " is-selected" : ""}" data-error-key="${key}"><span>${escapeHtml(metric.label)}</span><span class="error-picker-check" aria-hidden="true">${key === state.errorKey ? "✓" : ""}</span></button>`).join("");
-    return `<div class="error-picker"><button type="button" id="score-metric-button" class="error-picker-button" aria-haspopup="menu" aria-expanded="false" aria-controls="score-metric-menu"><span class="error-picker-caption">Error</span><span class="error-picker-value">${escapeHtml(currentError().label)}</span></button><div id="score-metric-menu" class="error-picker-menu" role="menu" aria-label="Choose error metric" hidden>${options}</div></div>`;
+    const category = activeDataCategory();
+    const selected = currentError();
+    if (!category) return "";
+    const categoryOptions = (problemOptions()?.categories || []).map((option) => `<button type="button" role="menuitemradio" aria-checked="${option.id === category.id}" class="error-picker-option${option.id === category.id ? " is-selected" : ""}" data-picker-kind="category" data-picker-value="${escapeHtml(option.id)}"><span>${escapeHtml(option.label)}</span><span class="error-picker-check" aria-hidden="true">${option.id === category.id ? "✓" : ""}</span></button>`).join("");
+    const errorOptions = activeErrors().map((metric) => `<button type="button" role="menuitemradio" aria-checked="${metric.id === selected?.id}" class="error-picker-option${metric.id === selected?.id ? " is-selected" : ""}" data-picker-kind="error" data-picker-value="${escapeHtml(metric.id)}"><span>${escapeHtml(metric.label)}</span><span class="error-picker-check" aria-hidden="true">${metric.id === selected?.id ? "✓" : ""}</span></button>`).join("");
+    const categoryPicker = `<div class="error-picker"><button type="button" id="data-category-button" class="error-picker-button" aria-label="Choose data category" aria-haspopup="menu" aria-expanded="false" aria-controls="data-category-menu" data-picker-button data-menu-id="data-category-menu"><span class="error-picker-value">${escapeHtml(category.label)}</span></button><div id="data-category-menu" class="error-picker-menu" role="menu" aria-label="Choose data category" hidden>${categoryOptions}</div></div>`;
+    const errorPicker = selected ? `<div class="error-picker"><button type="button" id="score-metric-button" class="error-picker-button" aria-label="Choose error metric" aria-haspopup="menu" aria-expanded="false" aria-controls="score-metric-menu" data-picker-button data-menu-id="score-metric-menu"><span class="error-picker-value">${escapeHtml(selected.label)}</span></button><div id="score-metric-menu" class="error-picker-menu" role="menu" aria-label="Choose error metric for ${escapeHtml(category.label)}" hidden>${errorOptions}</div></div>` : "";
+    return `<div class="score-picker">${categoryPicker}${errorPicker}</div>`;
   }
 
   function sortHeader(label, key) {
@@ -56,86 +105,93 @@
     const ariaSort = direction ? ` aria-sort="${direction === "asc" ? "ascending" : "descending"}"` : "";
     const sortIndicator = key === "representation" ? "" : `<span class="sort-arrow" aria-hidden="true">${arrow}</span>`;
     const ariaLabel = key === "representation"
-      ? `Representation filter: ${state.representationFilter === "all" ? "all submissions" : `${state.representationFilter} only`}. Click to cycle through all, Graph, and Matrix.`
+      ? `Representation filter: ${state.representationFilter === "all" ? "all submissions" : `${state.representationFilter} only`}. Click to cycle through all, Graph, and Grid.`
       : `Sort by ${label}`;
-    return `<th scope="col" class="sortable-heading"${ariaSort}><button type="button" class="sort-button${key === "representation" ? " representation-sort-button" : ""}" data-sort-key="${key}" aria-label="${escapeHtml(ariaLabel)}"><span>${escapeHtml(label)}</span>${sortIndicator}</button></th>`;
+    return `<th scope="col" class="sortable-heading"${ariaSort}><button type="button" class="sort-button${key === "representation" ? " representation-sort-button" : ""}" data-sort-key="${escapeHtml(key)}" aria-label="${escapeHtml(ariaLabel)}"><span>${escapeHtml(label)}</span>${sortIndicator}</button></th>`;
   }
 
   function scoreHeader() {
     const ariaSort = state.sort.key === "score" ? ` aria-sort="${state.sort.direction === "asc" ? "ascending" : "descending"}"` : "";
-    return `<th scope="col" class="score-heading"${ariaSort}>${scoreControl()}</th>`;
+    const control = scoreControl();
+    return `<th scope="col" class="score-heading"${ariaSort}>${control || "Metric"}</th>`;
+  }
+
+  function metricDefinitions() {
+    return activeMetrics();
   }
 
   function columns() {
     const common = ["<th scope=\"col\">#</th>", sortHeader("Model", "model"), sortHeader("Representation", "representation")];
-    if (state.category === "overall") {
-      return [...common, scoreHeader(), sortHeader("Inference / sample", "inference"), sortHeader("Params", "parameters"), sortHeader("Submitted", "submitted"), "<th scope=\"col\" aria-label=\"Details\"></th>"].join("");
-    }
-    if (state.category === "rollout") {
-      return [...common, sortHeader("Step 1", "step1"), sortHeader("Step 25", "step25"), sortHeader("Step 100", "step100"), sortHeader("Submitted", "submitted"), "<th scope=\"col\" aria-label=\"Details\"></th>"].join("");
-    }
-    if (state.category === "efficiency") {
-      return [...common, sortHeader("Params", "parameters"), sortHeader("Training time", "trainingHours"), sortHeader("Inference / sample", "inference"), sortHeader("GPU memory", "memoryGb"), sortHeader("Submitted", "submitted"), "<th scope=\"col\" aria-label=\"Details\"></th>"].join("");
-    }
-    return [...common, sortHeader("Velocity RMSE", "velocityRmse"), sortHeader("Pressure RMSE", "pressureRmse"), sortHeader("Submitted", "submitted"), "<th scope=\"col\" aria-label=\"Details\"></th>"].join("");
+    const metrics = metricDefinitions();
+    const content = [...common, scoreHeader()];
+    for (const metric of metrics) content.push(sortHeader(metric.label, metricSortKey(metric)));
+    content.push(sortHeader("Submitted", "submitted"));
+    return { html: content.join(""), count: content.length };
+  }
+
+  function errorValue(item, error = currentError()) {
+    if (!error) return null;
+    return getPath(item.metrics, error.path);
   }
 
   function valueFor(item, key) {
-    if (key === "score") return errorMetrics[state.errorKey].value(item);
+    if (key === "score") return errorValue(item);
     if (key === "model") return item.model;
     if (key === "representation") return item.representation;
-    if (key === "inference") return item.metrics.efficiency.inferenceMs;
-    if (key === "parameters") return item.metrics.efficiency.parameters;
     if (key === "submitted") return new Date(`${item.submittedAt}T00:00:00`).getTime();
-    if (key === "trainingHours") return item.metrics.efficiency.trainingHours;
-    if (key === "memoryGb") return item.metrics.efficiency.memoryGb;
-    if (key.startsWith("step")) return item.metrics.rollout[key][errorMetrics[state.errorKey].rolloutKey];
-    if (key === "velocityRmse") return item.metrics.perVariable.velocityRmse;
-    if (key === "pressureRmse") return item.metrics.perVariable.pressureRmse;
-    return 0;
+    if (key.startsWith("metric:")) {
+      const id = key.slice("metric:".length);
+      const metric = (problemOptions()?.metrics || []).find((entry) => entry.id === id);
+      return metric ? getPath(item.metrics, metric.path) : null;
+    }
+    return null;
   }
 
   function errorCell(score, label, max) {
+    if (score === null || score === undefined || !Number.isFinite(Number(score))) {
+      return `<td class="metric-value" title="${escapeHtml(label)}: unavailable">—</td>`;
+    }
     const width = max > 0 ? Math.max(12, (score / max) * 58) : 12;
     const title = `${label}: ${formatError(score)}`;
     return `<td class="metric-value" title="${escapeHtml(title)}">${formatError(score)}<span class="metric-bar" role="img" aria-label="${escapeHtml(title)}" title="${escapeHtml(title)}"><span style="width:${width}px"></span></span></td>`;
   }
 
-  function row(item, index) {
+  function formattedValue(value, format) {
+    if (value === null || value === undefined || !Number.isFinite(Number(value))) return "—";
+    const number = Number(value);
+    if (format === "error") return formatError(number);
+    if (format === "count") return formatCount(number);
+    if (format === "milliseconds") return `${number.toFixed(1)} ms`;
+    if (format === "hours") return `${number.toFixed(1)} h`;
+    if (format === "gigabytes") return `${number.toFixed(1)} GB`;
+    if (format === "percent") return `${number.toFixed(1)}%`;
+    return new Intl.NumberFormat("en-US", { maximumFractionDigits: 3 }).format(number);
+  }
+
+  function metricCell(item, metric, items) {
+    const value = getPath(item.metrics, metric.path);
+    if (metric.format === "error") {
+      const max = Math.max(0, ...items.map((submission) => Number(getPath(submission.metrics, metric.path))).filter(Number.isFinite));
+      return errorCell(value, metric.label, max);
+    }
+    const rendered = formattedValue(value, metric.format);
+    return `<td${value == null ? "" : ` title=\"${escapeHtml(`${metric.label}: ${rendered}`)}\"`}>${rendered}</td>`;
+  }
+
+  function row(item, index, items) {
     const model = escapeHtml(item.model);
     const authors = escapeHtml(item.authors);
-    const detailHref = window.FluidBenchPaths.url(`/pages/models.html#${encodeURIComponent(item.id)}`);
     const compareHref = window.FluidBenchPaths.url(`/pages/compare.html?model=${encodeURIComponent(item.id)}`);
     const medal = index < 3 ? `<span class="medal" aria-label="Rank ${index + 1}">${["🥇", "🥈", "🥉"][index]}</span>` : index + 1;
-    const modelCell = `<td><a class="model-name" href="${detailHref}">${model}</a><span class="model-author">${authors}</span></td>`;
-    const representationCell = `<td><span class="representation-badge ${item.representation.toLowerCase()}">${escapeHtml(item.representation)}</span></td>`;
+    const modelCell = `<td><span class="model-name">${model}</span><span class="model-author">${authors}</span></td>`;
+    const representationCell = `<td><span class="representation-badge ${escapeHtml(String(item.representation || "").toLowerCase())}">${escapeHtml(item.representation)}</span></td>`;
     let metricCells = "";
-    if (state.category === "overall") {
-      const value = currentError().value(item);
-      const max = Math.max(...state.data.submissions.map(currentError().value));
-      metricCells += errorCell(value, currentError().label, max);
-      metricCells += `<td>${Number(item.metrics.efficiency.inferenceMs).toFixed(1)} ms</td>`;
-      metricCells += `<td>${formatCount(item.metrics.efficiency.parameters)}</td>`;
-    } else if (state.category === "rollout") {
-      const selected = currentError();
-      for (const step of ["step1", "step25", "step100"]) {
-        const value = item.metrics.rollout[step][selected.rolloutKey];
-        const title = `${selected.label} at ${step.replace("step", "Step ")}: ${formatError(value)}`;
-        const max = Math.max(...state.data.submissions.map((submission) => submission.metrics.rollout[step][selected.rolloutKey]));
-        const width = max > 0 ? Math.max(12, (value / max) * 58) : 12;
-        metricCells += `<td class="metric-value" title="${escapeHtml(title)}">${formatError(value)}<span class="metric-bar" role="img" aria-label="${escapeHtml(title)}" title="${escapeHtml(title)}"><span style="width:${width}px"></span></span></td>`;
-      }
-    } else if (state.category === "efficiency") {
-      metricCells += `<td>${formatCount(item.metrics.efficiency.parameters)}</td><td>${Number(item.metrics.efficiency.trainingHours).toFixed(1)} h</td><td>${Number(item.metrics.efficiency.inferenceMs).toFixed(1)} ms</td><td>${Number(item.metrics.efficiency.memoryGb).toFixed(1)} GB</td>`;
-    } else {
-      const velocity = item.metrics.perVariable.velocityRmse;
-      const pressure = item.metrics.perVariable.pressureRmse;
-      const maxVelocity = Math.max(...state.data.submissions.map((submission) => submission.metrics.perVariable.velocityRmse));
-      const maxPressure = Math.max(...state.data.submissions.map((submission) => submission.metrics.perVariable.pressureRmse));
-      metricCells += errorCell(velocity, "Velocity RMSE", maxVelocity);
-      metricCells += errorCell(pressure, "Pressure RMSE", maxPressure);
-    }
-    return `<tr><td class="rank-cell">${medal}</td>${modelCell}${representationCell}${metricCells}<td>${formatDate(item.submittedAt)}</td><td><a class="table-arrow" href="${compareHref}" aria-label="Compare ${model} with another model">›</a></td></tr>`;
+    const selected = currentError();
+    const scope = activeDataCategory()?.label || "Metric";
+    const maxScore = Math.max(0, ...items.map((submission) => Number(errorValue(submission))).filter(Number.isFinite));
+    metricCells += errorCell(errorValue(item), `${scope} ${selected?.label || ""}`, maxScore);
+    for (const metric of metricDefinitions()) metricCells += metricCell(item, metric, items);
+    return `<tr class="submission-row" data-href="${escapeHtml(compareHref)}" tabindex="0" aria-label="Open comparison for ${model}"><td class="rank-cell">${medal}</td>${modelCell}${representationCell}${metricCells}<td>${formatDate(item.submittedAt)}</td></tr>`;
   }
 
   function filteredSubmissions() {
@@ -152,6 +208,9 @@
   function compareValues(a, b, key, direction) {
     const first = valueFor(a, key);
     const second = valueFor(b, key);
+    const firstMissing = first === null || first === undefined || (typeof first === "number" && !Number.isFinite(first));
+    const secondMissing = second === null || second === undefined || (typeof second === "number" && !Number.isFinite(second));
+    if (firstMissing || secondMissing) return firstMissing === secondMissing ? 0 : firstMissing ? 1 : -1;
     const comparison = typeof first === "number" && typeof second === "number"
       ? first - second
       : String(first).localeCompare(String(second), undefined, { sensitivity: "base", numeric: true });
@@ -162,7 +221,7 @@
     if (key === "representation") {
       state.representationFilter = state.representationFilter === "all"
         ? "Graph"
-        : state.representationFilter === "Graph" ? "Matrix" : "all";
+        : state.representationFilter === "Graph" ? "Grid" : "all";
       state.sort.groupRepresentation = true;
       state.sort.representationDirection = "asc";
       render();
@@ -181,24 +240,26 @@
     render();
   }
 
-  function closeErrorMenu() {
-    const button = $("#score-metric-button");
-    const menu = $("#score-metric-menu");
-    if (!button || !menu) return;
-    button.setAttribute("aria-expanded", "false");
-    if (menu.dataset.portaled === "true") {
-      button.closest(".error-picker")?.append(menu);
-      delete menu.dataset.portaled;
-      menu.removeAttribute("style");
-    }
-    menu.hidden = true;
+  function closePickerMenus() {
+    document.querySelectorAll(".error-picker-menu").forEach((menu) => {
+      const button = document.getElementById(menu.dataset.buttonId || "");
+      button?.setAttribute("aria-expanded", "false");
+      if (menu.dataset.portaled === "true") {
+        button?.closest(".error-picker")?.append(menu);
+        delete menu.dataset.portaled;
+        delete menu.dataset.buttonId;
+        menu.removeAttribute("style");
+      }
+      menu.hidden = true;
+    });
   }
 
-  function openErrorMenu(button) {
-    const menu = $("#score-metric-menu");
+  function openPickerMenu(button, menu) {
     if (!menu) return;
+    closePickerMenus();
     menu.hidden = false;
     menu.dataset.portaled = "true";
+    menu.dataset.buttonId = button.id;
     document.body.append(menu);
 
     const anchor = button.getBoundingClientRect();
@@ -219,9 +280,9 @@
   }
 
   function selectError(key) {
-    if (!errorMetrics[key]) return;
+    if (!activeErrors().some((error) => error.id === key)) return;
     state.errorKey = key;
-    state.sort.key = state.category === "rollout" ? "step100" : "score";
+    state.sort.key = "score";
     state.sort.direction = "asc";
     state.sort.groupRepresentation = false;
     state.representationFilter = "all";
@@ -229,40 +290,59 @@
     $("#score-metric-button")?.focus();
   }
 
+  function selectDataCategory(key) {
+    const category = (problemOptions()?.categories || []).find((entry) => entry.id === key);
+    if (!category) return;
+    state.dataCategory = category.id;
+    state.errorKey = category.defaultError || category.errors?.[0]?.id || null;
+    state.sort.key = "score";
+    state.sort.direction = "asc";
+    state.sort.groupRepresentation = false;
+    state.representationFilter = "all";
+    render();
+    $("#data-category-button")?.focus();
+  }
+
+  function sortLabel(key) {
+    if (key === "score") return `${activeDataCategory()?.label || "Metric"} ${currentError()?.label || ""}`.trim();
+    if (key.startsWith("metric:")) {
+      return (problemOptions()?.metrics || []).find((metric) => metric.id === key.slice(7))?.label || key;
+    }
+    return ({ model: "Model", representation: "Representation", submitted: "Submitted" })[key] || key;
+  }
+
+  function isErrorSort(key) {
+    if (key === "score") return true;
+    if (!key.startsWith("metric:")) return false;
+    return (problemOptions()?.metrics || []).find((metric) => metric.id === key.slice(7))?.format === "error";
+  }
+
   function render() {
-    closeErrorMenu();
-    const items = filteredSubmissions().sort((a, b) => {
+    closePickerMenus();
+    const visibleItems = filteredSubmissions();
+    const items = visibleItems.sort((a, b) => {
       if (state.sort.groupRepresentation) {
         const groupResult = compareValues(a, b, "representation", state.sort.representationDirection);
         if (groupResult) return groupResult;
       }
       return compareValues(a, b, state.sort.key, state.sort.direction);
     });
-    head.innerHTML = `<tr>${columns()}</tr>`;
-    body.innerHTML = items.length ? items.map(row).join("") : `<tr><td class="empty-state" colspan="9">No submissions match these filters.</td></tr>`;
-    const sortLabels = {
-      model: "Model",
-      representation: "Representation",
-      inference: "Inference / sample",
-      parameters: "Params",
-      submitted: "Submitted",
-      trainingHours: "Training time",
-      memoryGb: "GPU memory",
-      velocityRmse: "Velocity RMSE",
-      pressureRmse: "Pressure RMSE",
-    };
-    let sortLabel = sortLabels[state.sort.key] || state.sort.key;
-    if (state.sort.key === "score") sortLabel = currentError().label;
-    if (state.sort.key.startsWith("step")) sortLabel = `${state.sort.key.replace("step", "Step ")} ${currentError().label}`;
-    const errorSort = ["score", "step1", "step25", "step100", "velocityRmse", "pressureRmse"].includes(state.sort.key);
-    let orderLabel = errorSort
-      ? (state.sort.direction === "asc" ? "best to worst" : "worst to best")
-      : (state.sort.direction === "asc" ? "smallest to largest" : "largest to smallest");
-    if (state.sort.key === "model") orderLabel = state.sort.direction === "asc" ? "A to Z" : "Z to A";
-    if (state.sort.key === "submitted") orderLabel = state.sort.direction === "desc" ? "newest first" : "oldest first";
+    const tableColumns = columns();
+    head.innerHTML = `<tr>${tableColumns.html}</tr>`;
+    body.innerHTML = items.length
+      ? items.map((item, index) => row(item, index, items)).join("")
+      : `<tr><td class="empty-state" colspan="${tableColumns.count}">No submissions match these filters.</td></tr>`;
+    const label = sortLabel(state.sort.key);
+    const orderLabel = state.sort.key === "model"
+      ? (state.sort.direction === "asc" ? "A to Z" : "Z to A")
+      : state.sort.key === "submitted"
+        ? (state.sort.direction === "desc" ? "newest first" : "oldest first")
+        : isErrorSort(state.sort.key)
+          ? (state.sort.direction === "asc" ? "best to worst" : "worst to best")
+          : (state.sort.direction === "asc" ? "smallest to largest" : "largest to smallest");
     const sortDescription = state.sort.groupRepresentation
-      ? `Representation: ${state.representationFilter === "all" ? "all submissions" : `${state.representationFilter} only`} · ${sortLabel} ${orderLabel}`
-      : `${sortLabel} · ${orderLabel}`;
+      ? `Representation: ${state.representationFilter === "all" ? "all submissions" : `${state.representationFilter} only`} · ${label} ${orderLabel}`
+      : `${label} · ${orderLabel}`;
     resultCount.textContent = `${items.length} submissions · ${sortDescription} ${state.sort.direction === "asc" ? "↑" : "↓"}`;
   }
 
@@ -271,53 +351,68 @@
     if (!button) return;
     setSort(button.dataset.sortKey);
   });
+  body.addEventListener("click", (event) => {
+    const row = event.target.closest("tr.submission-row[data-href]");
+    if (!row || event.target.closest("a, button, input, select, textarea")) return;
+    window.location.href = row.dataset.href;
+  });
+  body.addEventListener("keydown", (event) => {
+    const row = event.target.closest("tr.submission-row[data-href]");
+    if (!row || event.target !== row || (event.key !== "Enter" && event.key !== " ")) return;
+    event.preventDefault();
+    window.location.href = row.dataset.href;
+  });
   document.addEventListener("click", (event) => {
-    const errorOption = event.target.closest("[data-error-key]");
-    if (errorOption) {
-      selectError(errorOption.dataset.errorKey);
+    const pickerOption = event.target.closest("[data-picker-kind][data-picker-value]");
+    if (pickerOption) {
+      if (pickerOption.dataset.pickerKind === "category") selectDataCategory(pickerOption.dataset.pickerValue);
+      else selectError(pickerOption.dataset.pickerValue);
       return;
     }
-    const errorButton = event.target.closest("#score-metric-button");
-    if (errorButton) {
-      if (errorButton.getAttribute("aria-expanded") === "true") closeErrorMenu();
-      else openErrorMenu(errorButton);
+    const pickerButton = event.target.closest("[data-picker-button]");
+    if (pickerButton) {
+      const menu = document.getElementById(pickerButton.dataset.menuId);
+      if (pickerButton.getAttribute("aria-expanded") === "true") closePickerMenus();
+      else openPickerMenu(pickerButton, menu);
       return;
     }
-    if (!$("#score-metric-menu")?.contains(event.target)) closeErrorMenu();
+    if (!event.target.closest(".error-picker-menu")) closePickerMenus();
   });
   document.addEventListener("keydown", (event) => {
-    if (event.key !== "Escape" || $("#score-metric-menu")?.hidden) return;
-    closeErrorMenu();
-    $("#score-metric-button")?.focus();
+    if (event.key !== "Escape") return;
+    const openMenu = document.querySelector(".error-picker-menu[data-portaled='true']");
+    if (!openMenu) return;
+    const button = document.getElementById(openMenu.dataset.buttonId || "");
+    closePickerMenus();
+    button?.focus();
   });
-  window.addEventListener("resize", closeErrorMenu);
+  window.addEventListener("resize", closePickerMenus);
   window.addEventListener("scroll", () => {
-    if ($("#score-metric-menu")?.dataset.portaled === "true") closeErrorMenu();
+    if (document.querySelector(".error-picker-menu[data-portaled='true']")) closePickerMenus();
   }, true);
-  document.querySelectorAll("[data-category]").forEach((button) => button.addEventListener("click", () => {
-    state.category = button.dataset.category;
-    state.sort.key = defaultSortKeys[state.category];
-    state.sort.direction = "asc";
-    state.sort.groupRepresentation = false;
-    state.sort.representationDirection = "asc";
-    state.representationFilter = "all";
-    document.querySelectorAll("[data-category]").forEach((tab) => tab.setAttribute("aria-selected", String(tab === button)));
-    render();
-  }));
   datasetFilter.addEventListener("change", () => {
     state.representationFilter = "all";
+    state.sort.groupRepresentation = false;
+    state.sort.representationDirection = "asc";
+    syncDataCategory(true);
+    state.sort.key = "score";
+    state.sort.direction = "asc";
+    document.dispatchEvent(new CustomEvent("fluidbench:benchmark-selected", { detail: { id: datasetFilter.value } }));
     render();
   });
   searchInput.addEventListener("input", () => { state.query = searchInput.value; render(); });
 
-  window.FluidBenchData.load().then((data) => {
+  Promise.all([window.FluidBenchData.load(), window.FluidBenchData.loadOptions()]).then(([data, options]) => {
     state.data = data;
+    state.options = options;
     fillDatasetFilter();
+    syncDataCategory(true);
+    state.sort.key = "score";
     document.dispatchEvent(new CustomEvent("fluidbench:benchmark-selected", { detail: { id: datasetFilter.value } }));
     render();
   }).catch((error) => {
     head.innerHTML = "";
-    body.innerHTML = `<tr><td class="empty-state" colspan="9">${escapeHtml(error.message)}</td></tr>`;
+    body.innerHTML = `<tr><td class="empty-state" colspan="8">${escapeHtml(error.message)}</td></tr>`;
     resultCount.textContent = "Submissions could not be loaded.";
   });
 })();

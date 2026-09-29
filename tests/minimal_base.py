@@ -22,9 +22,6 @@ class BaseRegressionModel(nn.Module):
         else:
             return X.to(self.device)
 
-    def _predict_step(self, X):
-        return self(X)
-
     # Train the model
     def fit(self,
         train_dataloader,
@@ -65,7 +62,7 @@ class BaseRegressionModel(nn.Module):
         with torch.no_grad():
             for X, _ in test_dataloader:
                 X = self._to_device(X)
-                pred = self._predict_step(X)
+                pred = self(X)
 
                 predictions.append(pred.cpu())
         predictions = torch.cat(predictions, dim=0)
@@ -88,7 +85,7 @@ class BaseRegressionModel(nn.Module):
             for i in range(N):
                 scalars_i = self._to_device(scalars[i])
                 X_snap = (scalars_i, fields)
-                pred = self._predict_step(X_snap)
+                pred = self(X_snap)
                 
                 fields = pred
                 predictions_snaps.append(pred.cpu())

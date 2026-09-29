@@ -42,8 +42,8 @@
       <div class="hero-copy">
         <p class="eyebrow">Open benchmark for fluid dynamics ML</p>
         <h1>FluidBench</h1>
-        <p class="hero-lede" id="site-submission-count">6 submissions, 6 teams</p>
-        <p class="hero-subtle" id="site-benchmark-stats">2 flow regimes, 2 datasets, 6 metrics</p>
+        <p class="hero-lede" id="site-submission-count">2 submissions, 1 team</p>
+        <p class="hero-subtle" id="site-benchmark-stats">1 flow regime, 1 dataset, 6 metrics</p>
         <div class="feature-pills" aria-label="Platform features"><span class="feature-pill pill-green"><span class="pill-icon">&lt;/&gt;</span>Standardized API</span><span class="feature-pill pill-blue"><span class="pill-icon">▱</span>Standardized datasets</span><span class="feature-pill pill-purple"><span class="pill-icon">▥</span>Comparable metrics</span></div>
         <div class="hero-actions"><a class="button button-primary" href="pages/leaderboard.html">Explore leaderboard <span aria-hidden="true">→</span></a><a class="button button-quiet" href="pages/docs.html#how-it-works">How to submit a score</a></div>
       </div>
@@ -51,21 +51,21 @@
     </section>
     <section class="shell top-model-section" aria-labelledby="top-model-title">
       <div class="top-model-card">
-        <div class="top-model-copy"><div class="section-kicker"><span class="kicker-icon">♛</span> Current leader <span class="kicker-dot">·</span> <span id="top-model-dataset">Cylinder Flow</span></div><h2 id="top-model-title">MeshGraphNet</h2><p><span id="top-model-authors">Pfaff et al. (2021)</span> <span class="inline-divider">·</span> <span id="top-model-representation" class="badge badge-graph">Graph</span></p></div>
+        <div class="top-model-copy"><div class="section-kicker"><span class="kicker-icon">♛</span> Current leader <span class="kicker-dot">·</span> <span id="top-model-dataset">2D Cylinder</span></div><h2 id="top-model-title">MeshGraphNet</h2><p><span id="top-model-authors">Pfaff et al. (2021)</span> <span class="inline-divider">·</span> <span id="top-model-representation" class="badge badge-graph">Graph</span></p></div>
         <div class="top-model-stat"><span>RMSE</span><strong id="top-model-rmse">1.1e-2</strong><small>↓ Best overall score</small></div>
         <div class="top-model-stat"><span>Parameters</span><strong id="top-model-params">3.1M</strong><small>Learnable parameters</small></div>
-        <a class="text-link top-model-link" href="pages/leaderboard.html">See all <span id="top-model-count">six submissions</span> <span aria-hidden="true">→</span></a>
+        <a class="text-link top-model-link" href="pages/leaderboard.html">See all <span id="top-model-count">2 submissions</span> <span aria-hidden="true">→</span></a>
       </div>
     </section>
     <section class="shell section-space">
       <article class="surface-card benchmark-card featured-benchmark-card">
         <div class="benchmark-summary">
-          <div class="featured-benchmark-visual"><img src="assets/cylinder-flow-dataset.png" data-dataset-image data-dataset-id="cylinder-flow" alt="Cylinder Flow benchmark visualization" loading="lazy"></div>
+          <div class="featured-benchmark-visual"><img src="assets/cylinder-flow-dataset.png" data-dataset-image data-dataset-id="cylinder_Re41_interp" alt="2D Cylinder benchmark visualization" loading="lazy"></div>
           <div class="featured-benchmark-copy">
-            <div class="card-title-row"><span class="line-icon icon-blue" aria-hidden="true">▤</span><div><p class="eyebrow">Featured benchmark</p><h2 data-dataset-field="name" data-dataset-id="cylinder-flow">Cylinder Flow</h2></div><a class="text-link card-link" href="pages/benchmarks.html#cylinder-flow">Details →</a></div>
-            <p class="featured-benchmark-description" data-dataset-field="description" data-dataset-id="cylinder-flow">A canonical wake prediction task: use a sequence of velocity and pressure snapshots to predict the future incompressible flow around a cylinder.</p>
-            <div class="featured-benchmark-tags"><div class="benchmark-class-tags" data-benchmark-tags data-dataset-id="cylinder-flow"></div><div class="dataset-type-tags" data-dataset-tags data-dataset-id="cylinder-flow"></div></div>
-            <dl class="featured-benchmark-details" data-dataset-id="cylinder-flow"><div><dt>Reynolds numbers</dt><dd>Re = <span data-dataset-field="reynoldsNumbers">100</span></dd></div><div><dt>Resolution</dt><dd data-dataset-field="resolution">64 × 32</dd></div><div><dt>Samples</dt><dd data-dataset-field="sampleCount">12,000</dd></div><div><dt>Flow variables</dt><dd data-dataset-field="flowVariables">p, Ux, Uy</dd></div><div><dt>Input scalars</dt><dd data-dataset-field="inputScalarNames">Re, dt</dd></div><div><dt>Data splits (train-val-test)</dt><dd data-dataset-field="splitFractions">83.4-8.3-8.3%</dd></div></dl>
+            <div class="card-title-row"><span class="line-icon icon-blue" aria-hidden="true">▤</span><div><p class="eyebrow">Featured benchmark</p><h2 data-dataset-field="name" data-dataset-id="cylinder_Re41_interp">2D Cylinder</h2></div><a class="text-link card-link" data-dataset-details-link data-dataset-id="cylinder_Re41_interp" href="pages/benchmarks.html?dataset=cylinder_Re41_interp#benchmark-details">Details →</a></div>
+            <p class="featured-benchmark-description" data-dataset-field="description" data-dataset-id="cylinder_Re41_interp">A canonical wake prediction task: use a sequence of velocity and pressure snapshots to predict the future incompressible flow around a cylinder.</p>
+            <div class="featured-benchmark-tags"><div class="benchmark-class-tags" data-benchmark-tags data-dataset-id="cylinder_Re41_interp"></div><div class="dataset-origin-tags" data-origin-category data-dataset-id="cylinder_Re41_interp"><span class="dataset-origin-badge dataset-origin-fully-synthetic" title="Training, validation, and test data are synthetic; pretraining data is absent or synthetic.">Fully synthetic</span></div></div>
+            <dl class="featured-benchmark-details" data-dataset-id="cylinder_Re41_interp"><div><dt>Reynolds numbers</dt><dd>Re = <span data-dataset-field="reynoldsNumbers">41</span></dd></div><div><dt>Resolution</dt><dd data-dataset-field="resolution">64 × 32</dd></div><div><dt>Samples</dt><dd data-dataset-field="sampleCount">99</dd></div><div><dt>Flow variables</dt><dd data-dataset-field="flowVariables">p, Ux, Uy</dd></div><div><dt>Input scalars</dt><dd data-dataset-field="inputScalarNames">Re, dt</dd></div><div><dt>Data splits (train-val-test)</dt><dd data-dataset-field="splitFractions">83.4-8.3-8.3%</dd></div></dl>
           </div>
         </div>
       </article>

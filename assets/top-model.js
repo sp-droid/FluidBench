@@ -18,7 +18,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const flowRegimeCount = new Set(data.datasets.map((item) => item.compressibility).filter(Boolean)).size;
     document.getElementById("site-benchmark-stats").textContent = `${flowRegimeCount} flow regime${flowRegimeCount === 1 ? "" : "s"}, ${data.datasets.length} datasets, 6 metrics`;
     representation.textContent = leader.representation;
-    representation.className = "badge " + (leader.representation === "Graph" ? "badge-graph" : "badge-matrix");
+    representation.className = "badge " + (leader.representation === "Graph" ? "badge-graph" : "badge-grid");
   } catch {
     // The static fallback content remains visible if sample data is unavailable.
   }
