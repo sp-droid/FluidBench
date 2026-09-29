@@ -45,7 +45,7 @@
   }
 
   async function loadOptions() {
-    return readJson("/assets/options.json");
+    return readJson("/benchmarks/options.json");
   }
 
   async function loadTrainingHistory(id, benchmarkId) {

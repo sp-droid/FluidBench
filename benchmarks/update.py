@@ -7,13 +7,14 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
 MANIFEST = ROOT / "benchmarks.json"
+OPTIONS = ROOT / "options.json"
 VALID_ID = re.compile(r"[a-z0-9_-]+\Z", re.IGNORECASE)
 
 
 def main():
     benchmark_ids = []
     for record in ROOT.glob("*.json"):
-        if record == MANIFEST or not record.is_file():
+        if record in (MANIFEST, OPTIONS) or not record.is_file():
             continue
         if not VALID_ID.fullmatch(record.stem):
             raise SystemExit(f"Invalid benchmark ID in filename: {record.name}")
