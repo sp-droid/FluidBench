@@ -407,6 +407,47 @@ h1, h2, h3 { font-family: Manrope, "Segoe UI", Arial, sans-serif; }
 .compare-facts dt { margin-bottom: 3px; color: #7a89a0; font-size: 8px; }
 .compare-facts dd { margin: 0; color: #1d3557; font-size: 10px; font-weight: 650; overflow-wrap: anywhere; }
 .compare-chart-empty { padding: 30px 12px; border: 1px dashed #d7e0ec; border-radius: 8px; color: #77869c; font-size: 10px; text-align: center; }
+.rollout-analysis-controls { display: grid; grid-template-columns: minmax(105px,.7fr) minmax(0,1.3fr); gap: 7px; margin: 9px 0 11px; }
+.rollout-analysis-controls label { min-width: 0; display: grid; gap: 4px; color: #657590; font-size: 8px; font-weight: 650; }
+.rollout-analysis-controls select { width: 100%; min-width: 0; height: 31px; padding: 0 8px; border: 1px solid #d4dfec; border-radius: 6px; color: #173b72; background: #fff; font: inherit; font-size: 9px; }
+.rollout-spectrum-controls { width: min(100%, 225px); margin: 7px 0 8px; }
+.rollout-spectrum-controls label { min-width: 0; display: grid; gap: 4px; color: #657590; font-size: 8px; font-weight: 650; }
+.rollout-spectrum-controls select { width: 100%; min-width: 0; height: 31px; padding: 0 8px; border: 1px solid #d4dfec; border-radius: 6px; color: #173b72; background: #fff; font: inherit; font-size: 9px; }
+.rollout-chart-block { min-width: 0; margin-top: 9px; padding: 9px; border: 1px solid #e7edf5; border-radius: 8px; background: #fbfcfe; }
+.rollout-chart-block h4 { margin: 0 0 5px; color: #314765; font-size: 9px; font-weight: 700; }
+.rollout-chart-wrap { width: 100%; min-width: 0; overflow: hidden; }
+.rollout-chart { width: 100%; height: auto; display: block; overflow: visible; }
+.rollout-gridline line { stroke: #e8edf4; stroke-width: 1; }
+.rollout-gridline text, .rollout-tick text { fill: #7888a0; font-family: inherit; font-size: 8px; }
+.rollout-tick line, .rollout-axis { stroke: #bac8d9; stroke-width: 1; }
+.rollout-comparison-segment { fill: none; stroke-width: 3; stroke-linecap: butt; pointer-events: stroke; }
+.rollout-comparison-segment.is-better { stroke: #20a477; }
+.rollout-comparison-segment.is-worse { stroke: #d76d52; }
+.rollout-comparison-segment.is-tied { stroke: #9aa9bb; }
+.rollout-axis-label { fill: #6f8098; font-family: inherit; font-size: 8px; }
+.rollout-y-axis-label { font-size: 7px; }
+.rollout-line { fill: none; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2.2; }
+.rollout-error-line, .rollout-prediction-line { stroke: var(--curve-color); }
+.rollout-reference-line { stroke: #8493a8; stroke-dasharray: 5 3; }
+.rollout-band { stroke: none; }
+.rollout-band-model { fill: var(--curve-color); opacity: .14; }
+.rollout-band-reference { fill: #8493a8; opacity: .15; }
+.rollout-band-edge { fill: none; stroke-width: .8; opacity: .78; stroke-linecap: round; stroke-linejoin: round; }
+.rollout-band-edge-model { stroke: var(--curve-color); }
+.rollout-band-edge-reference { stroke: #8493a8; stroke-dasharray: 4 3; }
+.rollout-error-point, .rollout-spectrum-point { stroke: #fff; stroke-width: 1; }
+.rollout-error-point, .rollout-prediction-point { fill: var(--curve-color); }
+.rollout-target-point { fill: #8493a8; }
+.rollout-in-graph-legend rect { fill: rgba(255,255,255,.95); stroke: #dfe7f1; stroke-width: .8; }
+.rollout-in-graph-legend text { fill: #526782; font-family: inherit; font-size: 7px; }
+.rollout-in-graph-legend line { stroke-width: 2; }
+.rollout-in-graph-legend .rollout-legend-mean-band { fill: var(--curve-color); opacity: .18; stroke: var(--curve-color); stroke-width: .5; }
+.rollout-in-graph-legend .rollout-legend-mean { stroke: var(--curve-color); }
+.rollout-in-graph-legend .rollout-legend-reference { stroke: #8493a8; stroke-dasharray: 4 3; }
+.rollout-in-graph-legend .rollout-legend-prediction { stroke: var(--curve-color); }
+.rollout-in-graph-legend .rollout-legend-reference-band { fill: #8493a8; opacity: .18; stroke: #8493a8; stroke-width: .5; }
+.rollout-in-graph-legend .rollout-legend-prediction-band { fill: var(--curve-color); opacity: .18; stroke: var(--curve-color); stroke-width: .5; }
+.rollout-chart-note { margin: 3px 1px 0; color: #8793a5; font-size: 7px; }
 .training-chart-wrap { width: 100%; overflow: hidden; position: relative; }
 .training-chart { width: 100%; height: auto; display: block; overflow: visible; }
 .chart-gridline line { stroke: #e8edf4; stroke-width: 1; }
@@ -436,27 +477,34 @@ h1, h2, h3 { font-family: Manrope, "Segoe UI", Arial, sans-serif; }
 .compare-loss-item { display: flex; align-items: center; justify-content: space-between; gap: 7px; min-width: 0; padding: 8px 9px; border: 1px solid #e8edf4; border-radius: 7px; background: #fafcff; }
 .compare-loss-item dt { min-width: 0; color: #6d7d95; font-size: 8px; }
 .compare-loss-item dd { margin: 0; color: #173b72; font-size: 9px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.compare-loss-item.is-better, .variable-loss-grid > .is-better { border-color: #bfe6d7; background: #edfaf4; }
-.compare-loss-item.is-better dd, .variable-loss-grid > .is-better strong { color: #117256; }
-.compare-loss-item.is-worse, .variable-loss-grid > .is-worse { border-color: #f0c9bc; background: #fff2ed; }
-.compare-loss-item.is-worse dd, .variable-loss-grid > .is-worse strong { color: #ad4b31; }
-.compare-loss-item.is-tied, .variable-loss-grid > .is-tied { border-color: #dce5f0; background: #f2f6fb; }
-.compare-loss-table td.is-better { color: #117256; background: #edfaf4; font-weight: 700; }
-.compare-loss-table td.is-worse { color: #ad4b31; background: #fff2ed; font-weight: 700; }
-.compare-loss-table td.is-tied { color: #526a86; background: #f2f6fb; }
-.compare-table-scroll { overflow-x: auto; border: 1px solid #e7edf4; border-radius: 7px; }
-.compare-loss-table { width: 100%; min-width: 400px; border-collapse: collapse; background: #fff; font-size: 8px; }
-.compare-loss-table th, .compare-loss-table td { padding: 7px 8px; border-bottom: 1px solid #edf1f6; text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.compare-loss-table thead th { color: #556a87; background: #f7f9fc; font-weight: 650; }
-.compare-loss-table th:first-child { text-align: left; }
-.compare-loss-table tbody th { color: #526681; font-weight: 550; }
-.compare-loss-table td { color: #193b68; }
-.compare-loss-table tbody tr:last-child th, .compare-loss-table tbody tr:last-child td { border-bottom: 0; }
-.variable-loss-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 7px; margin-top: 9px; }
-.variable-loss-grid > div { display: grid; gap: 4px; padding: 9px; border: 1px solid #e8edf4; border-radius: 7px; background: #fafcff; }
-.variable-loss-grid span { color: #6d7d95; font-size: 8px; }
-.variable-loss-grid strong { color: #173b72; font-size: 10px; font-variant-numeric: tabular-nums; }
-.variable-loss-grid small { color: #8390a4; font-size: 8px; }
+.compare-loss-item.is-better { border-color: #bfe6d7; background: #edfaf4; }
+.compare-loss-item.is-better dd { color: #117256; }
+.compare-loss-item.is-worse { border-color: #f0c9bc; background: #fff2ed; }
+.compare-loss-item.is-worse dd { color: #ad4b31; }
+.compare-loss-item.is-tied { border-color: #dce5f0; background: #f2f6fb; }
+.evaluation-loss-scroll { overflow-x: auto; margin-top: 9px; border: 1px solid #e7edf4; border-radius: 7px; }
+.evaluation-loss-table { width: 100%; min-width: 360px; border-collapse: collapse; background: #fff; font-size: 8px; }
+.evaluation-loss-table th, .evaluation-loss-table td { padding: 8px 9px; border-bottom: 1px solid #edf1f6; text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.evaluation-loss-table thead th { color: #526681; background: #f7f9fc; font-weight: 700; }
+.evaluation-loss-table thead th:first-child, .evaluation-loss-table tbody th { text-align: left; }
+.evaluation-loss-table tbody th { color: #526681; font-weight: 650; }
+.evaluation-loss-table tbody td { color: #193b68; font-weight: 700; }
+.evaluation-loss-table tbody td.is-better { color: #117256; background: #edfaf4; }
+.evaluation-loss-table tbody td.is-worse { color: #ad4b31; background: #fff2ed; }
+.evaluation-loss-table tbody td.is-tied { color: #526681; background: #f2f6fb; }
+.evaluation-loss-table tbody tr:last-child th, .evaluation-loss-table tbody tr:last-child td { border-bottom: 0; }
+.rollout-checkpoint-scroll { overflow-x: auto; margin: 0 0 8px; border: 1px solid #e7edf4; border-radius: 7px; }
+.rollout-checkpoint-table { width: 100%; min-width: 330px; table-layout: fixed; border-collapse: collapse; background: #fff; font-size: 8px; }
+.rollout-checkpoint-table th, .rollout-checkpoint-table td { padding: 6px 4px; border-bottom: 1px solid #edf1f6; text-align: center; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.rollout-checkpoint-table thead th { color: #526681; background: #f7f9fc; font-weight: 700; }
+.rollout-checkpoint-table thead th span, .rollout-checkpoint-table thead th small { display: block; }
+.rollout-checkpoint-table thead th small { margin-top: 2px; color: #8996a8; font-size: 7px; font-weight: 500; }
+.rollout-checkpoint-table tbody td { color: #193b68; font-weight: 700; }
+.rollout-checkpoint-table tbody td.is-better { color: #117256; background: #edfaf4; }
+.rollout-checkpoint-table tbody td.is-worse { color: #ad4b31; background: #fff2ed; }
+.rollout-checkpoint-table tbody td.is-tied { color: #526681; background: #f2f6fb; }
+.rollout-checkpoint-table tbody tr:last-child td { border-bottom: 0; }
+.rollout-checkpoint-empty { padding: 9px 8px; margin-bottom: 8px; }
 .compare-error { padding: 24px 12px; color: #6b7c95; font-size: 11px; text-align: center; }
 .compare-note { display: flex; justify-content: space-between; gap: 10px; margin: 10px 2px 0; color: #8290a5; font-size: 9px; }
 .compare-color-key { display: flex; align-items: center; flex-wrap: wrap; gap: 7px 12px; }
@@ -517,6 +565,8 @@ h1, h2, h3 { font-family: Manrope, "Segoe UI", Arial, sans-serif; }
   .compare-panel { padding: 13px; }
   .compare-panel-top { min-height: 0; flex-direction: column; }
   .compare-model-select, .compare-model-select select { width: 100%; max-width: none; }
+  .rollout-analysis-controls { grid-template-columns: 1fr; }
+  .rollout-spectrum-controls { width: 100%; max-width: none; }
   .compare-note { flex-direction: column; }
   .compare-history-note { text-align: left; }
   .compare-panel-right.is-unselected .compare-empty-state { flex: 0; min-height: 250px; }

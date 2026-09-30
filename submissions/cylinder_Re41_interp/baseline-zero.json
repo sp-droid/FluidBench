@@ -12,28 +12,28 @@
     "relativeL2": 1.0,
     "rollout": {
       "step1": {
-        "rmse": 0.5953248842394596,
-        "rolloutRmse": 0.5953248842394596,
-        "mae": 0.3608106297900866,
-        "rolloutMae": 0.3608106297900866,
-        "relativeL2": 1.0,
-        "rolloutRelativeL2": 1.0
+        "rmse": 0.5939368633333334,
+        "rolloutRmse": 0.5939368633333334,
+        "mae": 0.36230148666666667,
+        "rolloutMae": 0.36230148666666667,
+        "relativeL2": 1.0279866566666667,
+        "rolloutRelativeL2": 1.0279866566666667
       },
       "step25": {
-        "rmse": null,
-        "rolloutRmse": null,
-        "mae": null,
-        "rolloutMae": null,
-        "relativeL2": null,
-        "rolloutRelativeL2": null
+        "rmse": 0.62169537,
+        "rolloutRmse": 0.6066414653333332,
+        "mae": 0.3792341733333333,
+        "rolloutMae": 0.37005129426666666,
+        "relativeL2": 1.06322049,
+        "rolloutRelativeL2": 1.0451690862666667
       },
       "step100": {
-        "rmse": null,
-        "rolloutRmse": null,
-        "mae": null,
-        "rolloutMae": null,
-        "relativeL2": null,
-        "rolloutRelativeL2": null
+        "rmse": 0.7693126466666667,
+        "rolloutRmse": 0.6749323978000004,
+        "mae": 0.46928071666666665,
+        "rolloutMae": 0.41170876273333307,
+        "relativeL2": 1.21627868,
+        "rolloutRelativeL2": 1.1200767355333336
       }
     },
     "efficiency": {
@@ -46,8 +46,26 @@
       "velocityRmse": 0.7245311057931338,
       "pressureRmse": 0.0837333325376254
     },
-    "rolloutRmse": 0.5935418231840228,
-    "rolloutMae": 0.3601550062551879,
-    "rolloutRelativeL2": 1.0
+    "rolloutRmse": 0.6749323978000004,
+    "rolloutMae": 0.41170876273333307,
+    "rolloutRelativeL2": 1.1200767355333336,
+    "rolloutAnalysis": {
+      "trajectoryCount": 3,
+      "snapshotCountByTrajectory": [
+        100,
+        100,
+        100
+      ],
+      "errorMetricIds": [
+        "rmse",
+        "mae",
+        "relativeL2"
+      ],
+      "hasKineticEnergySpectrum": true
+    }
+  },
+  "artifacts": {
+    "trainingHistory": "training-history.json",
+    "rolloutAnalysis": "rollout-analysis.json"
   }
 }

@@ -127,6 +127,25 @@ def _benchmark_variables(benchmark_id: str) -> list[str]:
     return variables
 
 
+def _benchmark_scalar_names(benchmark_id: str) -> list[str]:
+    metadata_path = (
+        Path(__file__).resolve().parents[2] / "benchmarks" / f"{benchmark_id}.json"
+    )
+    try:
+        with metadata_path.open(encoding="utf-8") as metadata_file:
+            metadata = json.load(metadata_file)
+    except (OSError, json.JSONDecodeError) as exc:
+        raise ValueError(f"Could not read benchmark metadata: {metadata_path}") from exc
+
+    names = metadata.get("inputScalarNames", [])
+    if not isinstance(names, list) or not all(isinstance(name, str) for name in names):
+        raise ValueError(
+            "Benchmark metadata must define an 'inputScalarNames' string list: "
+            f"{metadata_path}"
+        )
+    return names
+
+
 def _model_device(model: Any) -> torch.device:
     try:
         return next(model.parameters()).device
@@ -155,13 +174,115 @@ def _mean_metric(snapshots: Sequence[Mapping[str, Any]], key: str) -> float | No
     return float(np.mean(values)) if values else None
 
 
+def radial_kinetic_energy_spectrum(
+    fields: np.ndarray,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Compute radial spectra for independent scalar snapshots shaped (..., H, W)."""
+    fields = np.asarray(fields, dtype=np.float64)
+    if fields.ndim < 2:
+        raise ValueError("fields must have shape (..., height, width)")
+
+    height, width = fields.shape[-2:]
+    snapshots = fields.reshape(-1, height, width)
+    if not len(snapshots):
+        raise ValueError("fields must contain at least one snapshot")
+
+    snapshots = snapshots - snapshots.mean(axis=(-2, -1), keepdims=True)
+    velocity_hat = np.fft.fft2(snapshots, axes=(-2, -1))
+    modal_energy = 0.5 * np.abs(velocity_hat) ** 2 / (height * width) ** 2
+
+    ky = np.fft.fftfreq(height) * height
+    kx = np.fft.fftfreq(width) * width
+    radial_bins = np.floor(np.hypot(ky[:, None], kx[None, :]) + 0.5).astype(int)
+
+    max_k = min(height, width) // 2
+    wavenumbers = np.arange(1, max_k + 1)
+    snapshot_spectra = np.zeros((len(snapshots), len(wavenumbers)), dtype=np.float64)
+    for index, wavenumber in enumerate(wavenumbers):
+        shell = radial_bins == wavenumber
+        snapshot_spectra[:, index] = modal_energy[:, shell].sum(axis=1)
+
+    return wavenumbers, snapshot_spectra.mean(axis=0), snapshot_spectra
+
+
+def _channel_first_trajectory(
+    fields: np.ndarray,
+    variables: Sequence[str],
+) -> np.ndarray | None:
+    """Return [time, channel, height, width] fields when the layout is recognizable."""
+    fields = np.asarray(fields, dtype=np.float64)
+    if fields.ndim != 4:
+        return None
+    if fields.shape[1] == len(variables):
+        return fields
+    if fields.shape[-1] == len(variables):
+        return np.moveaxis(fields, -1, 1)
+    return None
+
+
+def _trajectory_spectrum(
+    fields: np.ndarray,
+    variables: Sequence[str],
+) -> dict[str, Any] | None:
+    channel_first = _channel_first_trajectory(fields, variables)
+    if channel_first is None:
+        return None
+
+    velocity_aliases = {
+        "u", "v", "w", "ux", "uy", "uz", "vx", "vy", "vz",
+        "velocity", "velocityx", "velocityy", "velocityz",
+    }
+    velocity_channels = [
+        index for index, name in enumerate(variables)
+        if (
+            name.casefold().replace("_", "").replace("-", "").replace(" ", "")
+            in velocity_aliases
+        )
+    ]
+    if not velocity_channels:
+        return None
+
+    wavenumbers: np.ndarray | None = None
+    component_spectra = []
+    for channel in velocity_channels:
+        current_wavenumbers, _, spectra = radial_kinetic_energy_spectrum(
+            channel_first[:, channel, :, :]
+        )
+        if wavenumbers is None:
+            wavenumbers = current_wavenumbers
+        elif not np.array_equal(wavenumbers, current_wavenumbers):
+            raise ValueError("Velocity components produced inconsistent wavenumber bins.")
+        component_spectra.append(spectra)
+
+    snapshot_spectra = np.sum(np.stack(component_spectra, axis=0), axis=0)
+    return {
+        "wavenumbers": wavenumbers.tolist() if wavenumbers is not None else [],
+        "mean": snapshot_spectra.mean(axis=0).tolist(),
+        "standardDeviation": snapshot_spectra.std(axis=0).tolist(),
+        "snapshotCount": int(snapshot_spectra.shape[0]),
+    }
+
+
+def _test_case_conditions(scalars: Any, scalar_names: Sequence[str]) -> dict[str, Any]:
+    values = np.asarray(scalars)
+    if values.ndim > 1:
+        values = values[0]
+    values = values.reshape(-1)
+    return {
+        name: _as_json_value(values[index])
+        for index, name in enumerate(scalar_names)
+        if index < len(values)
+    }
+
+
 def _evaluate_test_split(
     model: Any,
     loader: DataLoader,
     rollout_loader: DataLoader,
     dataset: CFDataset,
     variables: list[str],
-) -> dict[str, Any]:
+    scalar_names: list[str],
+) -> tuple[dict[str, Any], dict[str, Any]]:
     device = _model_device(model)
     use_cuda = device.type == "cuda" and torch.cuda.is_available()
     if use_cuda:
@@ -213,8 +334,14 @@ def _evaluate_test_split(
         channel_square_sums: np.ndarray | None = None
         channel_element_counts: np.ndarray | None = None
         if errors.ndim >= 2 and variables:
-            channel_axis = 1 if errors.shape[1] == len(variables) else -1
-            if errors.shape[channel_axis] == len(variables):
+            channel_axis = None
+            if errors.ndim >= 5 and errors.shape[2] == len(variables):
+                channel_axis = 2
+            elif errors.shape[1] == len(variables):
+                channel_axis = 1
+            elif errors.shape[-1] == len(variables):
+                channel_axis = errors.ndim - 1
+            if channel_axis is not None:
                 channel_errors = errors.movedim(channel_axis, 1)
                 reduce_dims = tuple(axis for axis in range(channel_errors.ndim) if axis != 1)
                 channel_square_sums = torch.square(channel_errors).sum(dim=reduce_dims).numpy()
@@ -252,40 +379,114 @@ def _evaluate_test_split(
         return math.sqrt(float(channel_square_sums[selected].sum()) / count) if count else None
 
     if isinstance(rollout_predictions, torch.Tensor):
-        rollout_predictions = list(rollout_predictions.unbind(dim=0))
-    elif not isinstance(rollout_predictions, Sequence):
-        raise ValueError("model.predict_rollout(test_dataloader) must return a sequence of tensors.")
+        rollout_predictions = rollout_predictions.detach().to(device="cpu", dtype=torch.float64)
+        if sample_count == 1 and rollout_predictions.shape == targets[0].shape:
+            rollout_predictions = [rollout_predictions]
+        elif rollout_predictions.ndim >= 2:
+            rollout_predictions = list(rollout_predictions.unbind(dim=0))
+        else:
+            raise ValueError(
+                "model.predict_rollout(test_dataloader) must return one trajectory per test case."
+            )
+    elif isinstance(rollout_predictions, np.ndarray):
+        if sample_count == 1 and rollout_predictions.shape == tuple(targets[0].shape):
+            rollout_predictions = [rollout_predictions]
+        elif rollout_predictions.ndim >= 2:
+            rollout_predictions = list(rollout_predictions)
+        else:
+            raise ValueError(
+                "model.predict_rollout(test_dataloader) must return one trajectory per test case."
+            )
+    elif isinstance(rollout_predictions, Sequence) and not isinstance(
+        rollout_predictions, (str, bytes, bytearray)
+    ):
+        rollout_predictions = list(rollout_predictions)
+    else:
+        raise ValueError(
+            "model.predict_rollout(test_dataloader) must return one trajectory per test case."
+        )
 
-    if len(rollout_predictions) > sample_count:
-        raise ValueError("model.predict_rollout() returned more snapshots than the test targets.")
-    rollout_snapshot_metrics = []
-    for index, prediction in enumerate(rollout_predictions):
+    if len(rollout_predictions) != sample_count:
+        raise ValueError(
+            "model.predict_rollout(test_dataloader) must return exactly one trajectory "
+            f"for each of the {sample_count} test cases; got {len(rollout_predictions)}."
+        )
+
+    rollout_snapshot_metrics_by_case: list[list[dict[str, float | None]]] = []
+    trajectory_records = []
+    common_wavenumbers: list[int] | None = None
+    for case_index, prediction in enumerate(rollout_predictions):
         if not isinstance(prediction, torch.Tensor):
             prediction = torch.as_tensor(prediction)
         prediction = prediction.detach().to(device="cpu", dtype=torch.float64)
-        target = targets[index : index + 1]
-        if prediction.ndim == target.ndim - 1:
-            prediction = prediction.unsqueeze(0)
+        target = targets[case_index]
+        if prediction.ndim == target.ndim + 1 and prediction.shape[0] == 1:
+            prediction = prediction.squeeze(0)
         if prediction.shape != target.shape:
             raise ValueError(
-                f"Rollout prediction {index + 1} and target shapes must match; "
+                f"Rollout trajectory {case_index + 1} and its test snapshots must match; "
                 f"got {tuple(prediction.shape)} and {tuple(target.shape)}."
             )
+        if target.ndim < 3 or target.shape[0] == 0:
+            raise ValueError(
+                f"Test case {case_index + 1} must contain a non-empty time sequence of snapshots."
+            )
         if not torch.isfinite(prediction).all():
-            raise ValueError(f"model.predict_rollout() returned non-finite values at snapshot {index + 1}.")
-        rollout_snapshot_metrics.append(_snapshot_metrics(prediction[0], target[0]))
+            raise ValueError(
+                f"model.predict_rollout() returned non-finite values in test case {case_index + 1}."
+            )
+
+        snapshot_metrics = [
+            _snapshot_metrics(prediction[time_index], target[time_index])
+            for time_index in range(int(target.shape[0]))
+        ]
+        rollout_snapshot_metrics_by_case.append(snapshot_metrics)
+        prediction_spectrum = _trajectory_spectrum(prediction.numpy(), variables)
+        target_spectrum = _trajectory_spectrum(target.numpy(), variables)
+        if prediction_spectrum is not None and target_spectrum is not None:
+            if prediction_spectrum["wavenumbers"] != target_spectrum["wavenumbers"]:
+                raise ValueError(
+                    f"Prediction and reference spectra differ in test case {case_index + 1}."
+                )
+            if common_wavenumbers is None:
+                common_wavenumbers = target_spectrum["wavenumbers"]
+            elif common_wavenumbers != target_spectrum["wavenumbers"]:
+                raise ValueError("Test cases produced inconsistent wavenumber bins.")
+
+        trajectory_records.append(
+            {
+                "id": f"trajectory-{case_index + 1}",
+                "label": f"Test case {case_index + 1}",
+                "conditions": _test_case_conditions(dataset.scalars[case_index], scalar_names),
+                "errors": {
+                    key: [snapshot[key] for snapshot in snapshot_metrics]
+                    for key in ("rmse", "mae", "relativeL2")
+                },
+                "kineticEnergySpectrum": (
+                    {"target": target_spectrum, "prediction": prediction_spectrum}
+                    if target_spectrum is not None and prediction_spectrum is not None
+                    else None
+                ),
+            }
+        )
 
     def rollout_metrics_at(horizon: int) -> dict[str, float | None]:
-        if len(rollout_snapshot_metrics) < horizon:
-            return {key: None for key in _ROLLOUT_METRIC_KEYS}
-        point = rollout_snapshot_metrics[horizon - 1]
-        average = rollout_snapshot_metrics[:horizon]
+        point = [
+            case_metrics[horizon - 1]
+            for case_metrics in rollout_snapshot_metrics_by_case
+            if len(case_metrics) >= horizon
+        ]
+        average = [
+            snapshot
+            for case_metrics in rollout_snapshot_metrics_by_case
+            for snapshot in case_metrics[:horizon]
+        ]
         return {
-            "rmse": point["rmse"],
+            "rmse": _mean_metric(point, "rmse"),
             "rolloutRmse": _mean_metric(average, "rmse"),
-            "mae": point["mae"],
+            "mae": _mean_metric(point, "mae"),
             "rolloutMae": _mean_metric(average, "mae"),
-            "relativeL2": point["relativeL2"],
+            "relativeL2": _mean_metric(point, "relativeL2"),
             "rolloutRelativeL2": _mean_metric(average, "relativeL2"),
         }
 
@@ -304,12 +505,25 @@ def _evaluate_test_split(
         "mae": absolute_error_sum / element_count,
         "relativeL2": relative_l2,
     }
+    all_rollout_snapshots = [
+        snapshot
+        for case_metrics in rollout_snapshot_metrics_by_case
+        for snapshot in case_metrics
+    ]
     rollout_average = {
-        "rolloutRmse": _mean_metric(rollout_snapshot_metrics, "rmse"),
-        "rolloutMae": _mean_metric(rollout_snapshot_metrics, "mae"),
-        "rolloutRelativeL2": _mean_metric(rollout_snapshot_metrics, "relativeL2"),
+        "rolloutRmse": _mean_metric(all_rollout_snapshots, "rmse"),
+        "rolloutMae": _mean_metric(all_rollout_snapshots, "mae"),
+        "rolloutRelativeL2": _mean_metric(all_rollout_snapshots, "relativeL2"),
     }
-    return {
+    rollout_analysis = {
+        "schemaVersion": 1,
+        "trajectoryCount": len(trajectory_records),
+        "timeSteps": list(range(1, max(map(len, rollout_snapshot_metrics_by_case)) + 1)),
+        "errorMetricIds": ["rmse", "mae", "relativeL2"],
+        "wavenumbers": common_wavenumbers or [],
+        "trajectories": trajectory_records,
+    }
+    metrics = {
         **one_step,
         "rollout": {
             "step1": rollout_metrics_at(1),
@@ -324,8 +538,15 @@ def _evaluate_test_split(
             "velocityRmse": variable_rmse({"ux", "uy", "uz", "u", "v", "w", "velocity"}),
             "pressureRmse": variable_rmse({"p", "pressure"}),
         },
+        "rolloutAnalysis": {
+            "trajectoryCount": len(trajectory_records),
+            "snapshotCountByTrajectory": [len(case_metrics) for case_metrics in rollout_snapshot_metrics_by_case],
+            "errorMetricIds": ["rmse", "mae", "relativeL2"],
+            "hasKineticEnergySpectrum": bool(common_wavenumbers),
+        },
         **rollout_average,
     }
+    return metrics, rollout_analysis
 
 
 def _history_for_submission(history: Any) -> dict[str, list[Any]]:
@@ -402,24 +623,31 @@ def run(model: Any, submission_config: Mapping[str, Any]) -> Any:
     history = model.fit(train_loader, validation_loader)
     training_hours = (time.perf_counter() - start_time) / 3600
     submission_history = _history_for_submission(history)
-    metrics = _evaluate_test_split(
+    metrics, rollout_analysis = _evaluate_test_split(
         model,
         test_loader,
         rollout_loader,
         test_dataset,
         _benchmark_variables(benchmark_id),
+        _benchmark_scalar_names(benchmark_id),
     )
     metrics["efficiency"]["parameters"] = int(model.total_parameters)
     metrics["efficiency"]["trainingHours"] = training_hours
 
     submission = deepcopy(config)
     submission.pop("metrics", None)
+    submission.pop("artifacts", None)
     submission["datasetId"] = benchmark_id
     submission["submittedAt"] = date.today().isoformat()
     submission["metrics"] = metrics
+    submission["artifacts"] = {
+        "trainingHistory": "training-history.json",
+        "rolloutAnalysis": "rollout-analysis.json",
+    }
 
     root = _submission_root() / benchmark_id
     history_path = root / config["id"] / "training-history.json"
+    rollout_analysis_path = root / config["id"] / "rollout-analysis.json"
     submission_path = root / f"{config['id']}.json"
     history_path.parent.mkdir(parents=True, exist_ok=True)
     with submission_path.open("w", encoding="utf-8") as submission_file:
@@ -428,6 +656,9 @@ def run(model: Any, submission_config: Mapping[str, Any]) -> Any:
     with history_path.open("w", encoding="utf-8") as history_file:
         json.dump(submission_history, history_file, indent=2, allow_nan=False)
         history_file.write("\n")
+    with rollout_analysis_path.open("w", encoding="utf-8") as analysis_file:
+        json.dump(rollout_analysis, analysis_file, indent=2, allow_nan=False)
+        analysis_file.write("\n")
 
     print(f"submission written to 'submission/{benchmark_id}' folder")
     return history

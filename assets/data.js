@@ -5,7 +5,11 @@
     const url = window.FluidBenchPaths.url(path);
     if (!jsonCache.has(url)) {
       jsonCache.set(url, fetch(url).then((response) => {
-        if (!response.ok) throw new Error(`Could not load ${url} (${response.status}).`);
+        if (!response.ok) {
+          const error = new Error(`Could not load ${url} (${response.status}).`);
+          error.status = response.status;
+          throw error;
+        }
         return response.json();
       }));
     }
@@ -48,10 +52,18 @@
     return readJson("/benchmarks/options.json");
   }
 
-  async function loadTrainingHistory(id, benchmarkId) {
+  function artifactPath(id, benchmarkId, artifact, fallback) {
     if (!/^[a-z0-9_-]+$/i.test(id)) throw new Error("The submission ID is invalid.");
     if (!/^[a-z0-9_-]+$/i.test(benchmarkId || "")) throw new Error("The benchmark ID is invalid.");
-    const history = await readJson(`/submissions/${encodeURIComponent(benchmarkId)}/${encodeURIComponent(id)}/training-history.json`);
+    const filename = artifact || fallback;
+    if (typeof filename !== "string" || !/^[a-z0-9_-]+(?:\.[a-z0-9_-]+)*$/i.test(filename)) {
+      throw new Error(`The artifact filename for ${id} is invalid.`);
+    }
+    return `/submissions/${encodeURIComponent(benchmarkId)}/${encodeURIComponent(id)}/${encodeURIComponent(filename)}`;
+  }
+
+  async function loadTrainingHistory(id, benchmarkId, artifact) {
+    const history = await readJson(artifactPath(id, benchmarkId, artifact, "training-history.json"));
     if (!Array.isArray(history.epochs) || !Array.isArray(history.trainingLosses) || !Array.isArray(history.validationLosses)) {
       throw new Error(`The training history for ${id} is incomplete.`);
     }
@@ -68,5 +80,18 @@
     };
   }
 
-  window.FluidBenchData = { load, loadSubmissions, loadBenchmarks, loadOptions, loadTrainingHistory };
+  async function loadRolloutAnalysis(id, benchmarkId, artifact) {
+    try {
+      const analysis = await readJson(artifactPath(id, benchmarkId, artifact, "rollout-analysis.json"));
+      if (!Array.isArray(analysis.trajectories) || !Array.isArray(analysis.timeSteps)) {
+        throw new Error(`The rollout analysis for ${id} is incomplete.`);
+      }
+      return analysis;
+    } catch (error) {
+      if (error.status === 404) return null;
+      throw error;
+    }
+  }
+
+  window.FluidBenchData = { load, loadSubmissions, loadBenchmarks, loadOptions, loadTrainingHistory, loadRolloutAnalysis };
 })();
