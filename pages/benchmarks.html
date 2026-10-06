@@ -5,7 +5,7 @@
   <meta name="description" content="Explore FluidBench benchmarks and dataset specifications.">
   <link rel="canonical" href="https://sp-droid.github.io/FluidBench/pages/benchmarks.html">
   <meta property="og:type" content="website"><meta property="og:site_name" content="FluidBench"><meta property="og:title" content="FluidBench benchmarks"><meta property="og:description" content="Explore FluidBench benchmarks and dataset specifications."><meta property="og:url" content="https://sp-droid.github.io/FluidBench/pages/benchmarks.html"><meta property="og:image" content="https://sp-droid.github.io/FluidBench/assets/mark.png"><meta property="og:image:alt" content="FluidBench blue and cyan flowing swirl mark"><meta name="twitter:card" content="summary"><meta name="twitter:title" content="FluidBench benchmarks"><meta name="twitter:description" content="Explore FluidBench benchmarks and dataset specifications."><meta name="twitter:image" content="https://sp-droid.github.io/FluidBench/assets/mark.png"><meta name="twitter:image:alt" content="FluidBench blue and cyan flowing swirl mark">
-  <title>FluidBench benchmarks</title><link rel="icon" href="../assets/mark.png" type="image/png"><link rel="stylesheet" href="../assets/site.css"><script src="../assets/site.js" defer></script><script src="../assets/data.js" defer></script><script src="../assets/dataset-tags.js" defer></script><script src="../assets/benchmarks.js" defer></script>
+  <title>FluidBench benchmarks</title><link rel="icon" href="../assets/mark.png" type="image/png"><link rel="stylesheet" href="../assets/site.css"><script src="../assets/site.js" defer></script><script src="../assets/data.js" defer></script><script src="../assets/dataset-tags.js" defer></script><script src="../assets/benchmarks.js" defer></script><script src="../assets/geo.js" defer></script><script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}</script><script type="module" src="../assets/geometry-viewer.js"></script>
 </head>
 <body>
   <header class="site-header"><div class="header-inner">
@@ -17,14 +17,9 @@
     <section class="page-hero"><p class="eyebrow">Shared data · Consistent splits</p><h1>FluidBench <span>benchmarks</span></h1><p>Explore the benchmark specifications used to compare model submissions.</p></section>
     <section class="section-space surface-card benchmark-directory" aria-labelledby="benchmark-directory-title">
       <div class="section-heading"><div><p class="eyebrow">Benchmark suite</p><h2 id="benchmark-directory-title">All benchmarks</h2></div></div>
-      <div class="table-wrap"><table class="info-table benchmark-directory-table"><thead><tr><th>Benchmark</th><th>Problem category</th><th>Flow regime</th><th>Mesh</th><th>Boundary</th><th>Data origin</th><th>Reynolds numbers</th><th>Mach</th><th>Samples</th><th>Resolution</th><th>Data splits (train-val-test)</th><th>Results</th></tr></thead><tbody id="benchmark-directory-body" aria-live="polite"><tr><td colspan="12">Loading benchmarks…</td></tr></tbody></table></div>
+      <div class="table-wrap"><table class="info-table benchmark-directory-table"><thead><tr><th>Benchmark</th><th>Problem category</th><th>Flow regime</th><th>Mesh</th><th>Boundary</th><th>Data origin</th><th>Reynolds numbers</th><th>Mach</th><th>Samples</th><th>Data splits (train-val-test)</th><th>Results</th></tr></thead><tbody id="benchmark-directory-body" aria-live="polite"><tr><td colspan="11">Loading benchmarks…</td></tr></tbody></table></div>
     </section>
-    <details class="callout section-space data-origin-guide"><summary><strong>Data-origin categories</strong> · How these labels are assigned</summary><ul>
-      <li><strong>Fully synthetic:</strong> Training, validation, and test data are synthetic; pretraining is absent or synthetic.</li>
-      <li><strong>Simulated training:</strong> Training data is synthetic and test data is real; validation may be synthetic or real.</li>
-      <li><strong>Real training:</strong> Training, validation, and test data are real; any pretraining data is real too.</li>
-      <li><strong>Real finetuning:</strong> Pretraining data is synthetic; training, validation, and test data are real.</li>
-    </ul></details>
+    <div class="section-space benchmark-overview-row">
     <article class="surface-card benchmark-card featured-benchmark-card" id="benchmark-details" data-selected-benchmark>
       <div class="benchmark-summary">
         <div class="featured-benchmark-visual"><img src="../assets/cylinder-flow-dataset.png" data-dataset-image data-dataset-id="cylinder_Re41_interp" alt="2D Cylinder benchmark visualization" loading="lazy"></div>
@@ -32,10 +27,16 @@
           <div class="card-title-row"><span class="line-icon icon-blue" aria-hidden="true">▤</span><div><p class="eyebrow">Selected benchmark</p><h2 data-dataset-field="name" data-dataset-id="cylinder_Re41_interp">2D Cylinder</h2></div><a class="text-link card-link" href="#benchmark-specifications">Details →</a></div>
           <p class="featured-benchmark-description" data-dataset-field="description" data-dataset-id="cylinder_Re41_interp">A canonical wake prediction task: use a sequence of velocity and pressure snapshots to predict the future incompressible flow around a cylinder.</p>
           <div class="featured-benchmark-tags"><div class="benchmark-class-tags" data-benchmark-tags data-dataset-id="cylinder_Re41_interp"></div><div class="dataset-origin-tags" data-origin-category data-dataset-id="cylinder_Re41_interp"><span class="dataset-origin-badge dataset-origin-fully-synthetic" title="Training, validation, and test data are synthetic; pretraining data is absent or synthetic.">Fully synthetic</span></div></div>
-          <dl class="featured-benchmark-details" data-dataset-id="cylinder_Re41_interp"><div><dt>Reynolds numbers</dt><dd>Re = <span data-dataset-field="reynoldsNumbers">41</span></dd></div><div><dt>Resolution</dt><dd data-dataset-field="resolution">64 × 32</dd></div><div><dt>Samples</dt><dd data-dataset-field="sampleCount">99</dd></div><div><dt>Flow variables</dt><dd data-dataset-field="flowVariables">p, Ux, Uy</dd></div><div><dt>Input scalars</dt><dd data-dataset-field="inputScalarNames">Re, dt</dd></div><div><dt>Data splits (train-val-test)</dt><dd data-dataset-field="splitFractions">83.4-8.3-8.3%</dd></div></dl>
+          <dl class="featured-benchmark-details" data-dataset-id="cylinder_Re41_interp"><div><dt>Reynolds numbers</dt><dd>Re = <span data-dataset-field="reynoldsNumbers">41</span></dd></div><div><dt>Samples</dt><dd data-dataset-field="sampleCount">99</dd></div><div><dt>Flow variables</dt><dd data-dataset-field="flowVariables">p, Ux, Uy</dd></div><div><dt>Input scalars</dt><dd data-dataset-field="inputScalarNames">Re, dt</dd></div><div><dt>Data splits (train-val-test)</dt><dd data-dataset-field="splitFractions">83.4-8.3-8.3%</dd></div></dl>
         </div>
       </div>
     </article>
+    <section class="surface-card geometry-card" data-geometry-viewer data-dataset-id="cylinder_Re41_interp" aria-labelledby="geometry-title">
+      <div class="geometry-heading"><div><p class="eyebrow">Geometry</p><h2 id="geometry-title">Domain and mesh</h2></div><div class="geometry-actions"><button class="button button-small button-outline" type="button" data-geometry-mesh aria-pressed="false">Mesh it</button><button class="button button-small button-quiet" type="button" data-geometry-reset>Reset 2D view</button></div></div>
+      <div class="geometry-stage" data-geometry-stage><p class="geometry-status" data-geometry-status aria-live="polite">Loading geometry…</p></div>
+      <p class="geometry-hint">Hover for coordinates · drag to rotate · right-drag to pan · scroll to zoom</p>
+    </section>
+    </div>
     <section class="section-space benchmark-spec-grid">
       <article class="surface-card content-card"><div class="card-icon">▦</div><p class="eyebrow">Dataset mesh</p><h2><span data-dataset-field="mesh" data-dataset-id="cylinder_Re41_interp">Structured</span></h2><p>Each model submission identifies its representation as Graph or Grid, independently of the dataset mesh type.</p></article>
       <article class="surface-card content-card"><div class="card-icon">∿</div><p class="eyebrow">Flow regime</p><h2><span data-dataset-field="compressibility" data-dataset-id="cylinder_Re41_interp">Incompressible</span></h2><p>Reynolds numbers: <strong data-dataset-field="reynoldsNumbers" data-dataset-id="cylinder_Re41_interp">41</strong></p></article>
@@ -59,10 +60,8 @@
         <tr><td>Input scalars</td><td title="Scalar conditions provided to models" data-dataset-field="inputScalarNames">Re, dt</td></tr>
         <tr><td>Data splits (train-val-test)</td><td title="Train, validation, and test fractions" data-dataset-field="splitFractions">83.4-8.3-8.3%</td></tr>
         <tr><td>Samples</td><td title="Total samples in this dataset record" data-dataset-field="sampleCount">99</td></tr>
-        <tr><td>Resolution</td><td title="Width × height for structured grids" data-dataset-field="resolution">64 × 32</td></tr>
       </tbody></table></div>
     </section>
-    <div class="callout section-space"><strong>Sample site data.</strong> Benchmark records are editable in the benchmarks folder.</div>
   </main>
   <footer class="site-footer"><div class="shell footer-inner"><a class="brand footer-brand" href="../index.html"><img src="../assets/mark.png" alt="" width="40" height="32"><span>FluidBench</span></a><p>Open, reproducible benchmarks for fluid dynamics ML.</p><div class="footer-links"><a href="docs.html">Documentation</a><a href="https://github.com/sp-droid/FluidBench" target="_blank" rel="noreferrer">GitHub ↗</a></div><span class="copyright">© <span data-year></span> FluidBench</span></div></footer>
 </body></html>

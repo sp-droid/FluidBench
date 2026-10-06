@@ -14,6 +14,7 @@
   "compressibility": "Incompressible",
   "boundary": "Fixed",
   "image": "assets/cylinder-flow-dataset.png",
+  "geometry": "assets/meshes/cylinder8000_uniform.geo",
   "description": "A canonical wake prediction task: use a sequence of velocity and pressure snapshots to predict the future incompressible flow around a cylinder.",
   "reynoldsNumbers": [
     41
@@ -28,11 +29,9 @@
     "Uy"
   ],
   "splitFractions": {
-    "train": 0.834,
-    "validation": 0.083,
-    "test": 0.083
+    "train": 0.455,
+    "validation": 0.045,
+    "test": 0.5
   },
-  "sample_count": 99,
-  "width": 64,
-  "height": 32
+  "sample_count": 198
 }

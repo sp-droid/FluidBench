@@ -69,7 +69,6 @@
   };
   function fieldValue(dataset, key) {
     if (key === "sampleCount") return dataset.sample_count == null ? "—" : Number(dataset.sample_count).toLocaleString();
-    if (key === "resolution") return dataset.width == null || dataset.height == null ? "—" : `${dataset.width} × ${dataset.height}`;
     if (key === "splitFractions") return formatSplits(dataset.splitFractions);
     const value = dataset[key];
     if (value == null) return "—";
