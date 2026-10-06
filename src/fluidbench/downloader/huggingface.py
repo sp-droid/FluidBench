@@ -5,7 +5,9 @@ from __future__ import annotations
 from pathlib import Path
 from urllib.parse import urlparse
 
-from huggingface_hub import hf_hub_download
+from huggingface_hub import snapshot_download
+
+_SPLITS = ("train", "validation", "test")
 
 
 def _hub_dataset_id(source: str) -> str:
@@ -19,34 +21,33 @@ def _hub_dataset_id(source: str) -> str:
     return "/".join(parts[1:3])
 
 
+def _split_complete(split_dir: Path) -> bool:
+    """A split folder holds constants.h5 plus at least one case file."""
+    return (split_dir / "constants.h5").is_file() and any(
+        path.name != "constants.h5" for path in split_dir.glob("*.h5")
+    )
+
+
 def download_dataset(source: str, dataset_id: str, dataset_dir: Path) -> Path:
-    """Download only the three split files into the dataset's local folder."""
+    """Download only the three split folders into the dataset's local folder."""
     hub_dataset_id = _hub_dataset_id(source)
-    expected_files = {
-        split: dataset_dir / f"{split}.h5"
-        for split in ("train", "validation", "test")
-    }
-    missing_splits = [
-        split for split, path in expected_files.items() if not path.is_file()
-    ]
-    if not missing_splits:
+    if all(_split_complete(dataset_dir / split) for split in _SPLITS):
         return dataset_dir
 
     dataset_dir.mkdir(parents=True, exist_ok=True)
-    for split in missing_splits:
-        hf_hub_download(
-            repo_id=hub_dataset_id,
-            filename=f"{split}.h5",
-            repo_type="dataset",
-            local_dir=dataset_dir,
-        )
+    snapshot_download(
+        repo_id=hub_dataset_id,
+        repo_type="dataset",
+        allow_patterns=[f"{split}/*.h5" for split in _SPLITS],
+        local_dir=dataset_dir,
+    )
 
-    missing_files = [
-        path.name for path in expected_files.values() if not path.is_file()
+    missing_splits = [
+        split for split in _SPLITS if not _split_complete(dataset_dir / split)
     ]
-    if missing_files:
+    if missing_splits:
         raise FileNotFoundError(
-            f"Dataset {hub_dataset_id} is missing expected split files: "
-            f"{', '.join(missing_files)}"
+            f"Dataset {hub_dataset_id} is missing expected split folders: "
+            f"{', '.join(missing_splits)}"
         )
     return dataset_dir
