@@ -5,56 +5,50 @@
   "authors": "Pablo A.C.",
   "year": 2026,
   "representation": "Grid",
-  "submittedAt": "2026-09-24",
+  "submittedAt": "2026-10-07",
   "metrics": {
-    "rmse": 0.0021982465403556375,
-    "mae": 0.0006160648398735003,
-    "relativeL2": 0.0037035625403123345,
+    "rmse": 0.0034731632409161096,
+    "mae": 0.0008421476295814245,
+    "relativeL2": 0.005858478327365308,
     "rollout": {
       "step1": {
-        "rmse": 0.0015492099999999999,
-        "rolloutRmse": 0.0015492099999999999,
-        "mae": 0.0008985433333333334,
-        "rolloutMae": 0.0008985433333333334,
-        "relativeL2": 0.0026336566666666666,
-        "rolloutRelativeL2": 0.0026336566666666666
+        "rmse": 0.014929292985428711,
+        "rolloutRmse": 0.014929292985428711,
+        "mae": 0.0044945125099993604,
+        "rolloutMae": 0.0044945125099993604,
+        "relativeL2": 0.025636580631428818,
+        "rolloutRelativeL2": 0.025636580631428818
       },
       "step25": {
-        "rmse": 0.010476193333333333,
-        "rolloutRmse": 0.005998017866666668,
-        "mae": 0.006076193333333334,
-        "rolloutMae": 0.003478850933333334,
-        "relativeL2": 0.01780952666666667,
-        "rolloutRelativeL2": 0.010196631466666667
+        "rmse": 0.0982634377953799,
+        "rolloutRmse": 0.07137007674608996,
+        "mae": 0.046715924381732256,
+        "rolloutMae": 0.02958914152271262,
+        "relativeL2": 0.16626217363908324,
+        "rolloutRelativeL2": 0.12135316505256377
       },
       "step100": {
-        "rmse": 0.03913391,
-        "rolloutRmse": 0.020257905033333325,
-        "mae": 0.02269766666666666,
-        "rolloutMae": 0.0117495851,
-        "relativeL2": 0.06652764333333333,
-        "rolloutRelativeL2": 0.03443843843333332
+        "rmse": null,
+        "rolloutRmse": 0.10437827051203886,
+        "mae": null,
+        "rolloutMae": 0.0522015843726637,
+        "relativeL2": null,
+        "rolloutRelativeL2": 0.17584189793734378
       }
     },
     "efficiency": {
-      "inferenceMs": 0.2394666662439704,
-      "memoryGb": 0.000395264,
-      "parameters": 1,
-      "trainingHours": 0.0003931528888642788
+      "inferenceMs": 0.30739191917213377,
+      "memoryGb": 0.00059136,
+      "parameters": 1
     },
     "perVariable": {
-      "velocityRmse": 0.002554511277444832,
-      "pressureRmse": 0.0012024174912944883
+      "velocityRmse": 0.003921668207688928,
+      "pressureRmse": 0.0023301557097663034
     },
-    "rolloutRmse": 0.020257905033333325,
-    "rolloutMae": 0.0117495851,
-    "rolloutRelativeL2": 0.03443843843333332,
     "rolloutAnalysis": {
-      "trajectoryCount": 3,
+      "trajectoryCount": 1,
       "snapshotCountByTrajectory": [
-        100,
-        100,
-        100
+        99
       ],
       "errorMetricIds": [
         "rmse",
@@ -62,10 +56,12 @@
         "relativeL2"
       ],
       "hasKineticEnergySpectrum": true
-    }
+    },
+    "rolloutRmse": 0.10437827051203886,
+    "rolloutMae": 0.0522015843726637,
+    "rolloutRelativeL2": 0.17584189793734378
   },
   "artifacts": {
-    "trainingHistory": "training-history.json",
     "rolloutAnalysis": "rollout-analysis.json"
   }
 }

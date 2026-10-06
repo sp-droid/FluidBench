@@ -40,7 +40,6 @@
       ],
       "metrics": [
         { "id": "parameters", "label": "Params", "path": "efficiency.parameters", "format": "count" },
-        { "id": "trainingHours", "label": "Training time", "path": "efficiency.trainingHours", "format": "hours" },
         { "id": "inferenceMs", "label": "Inference / sample", "path": "efficiency.inferenceMs", "format": "milliseconds" },
         { "id": "memoryGb", "label": "GPU memory", "path": "efficiency.memoryGb", "format": "gigabytes" }
       ]

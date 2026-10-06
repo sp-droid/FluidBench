@@ -12,9 +12,11 @@ class BaseRegressionModel(nn.Module):
         
         self.device = torch.accelerator.current_accelerator().type if torch.accelerator.is_available() else "cpu"
 
-    @property
-    def total_parameters(self):
-        return sum(p.numel() for p in self.parameters())
+    def save_weights(self, path):
+        torch.save(self.state_dict(), path)
+
+    def load_weights(self, path):
+        self.load_state_dict(torch.load(path, map_location=self.device))
 
     def _to_device(self, X):
         if isinstance(X, tuple) or isinstance(X, list):

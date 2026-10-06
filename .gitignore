@@ -1,5 +1,6 @@
 __pycache__/
 submission/
 downloads/
+weights/
 CLAUDE.md
 uv.lock

@@ -448,31 +448,20 @@ h1, h2, h3 { font-family: Manrope, "Segoe UI", Arial, sans-serif; }
 .rollout-in-graph-legend .rollout-legend-reference-band { fill: #8493a8; opacity: .18; stroke: #8493a8; stroke-width: .5; }
 .rollout-in-graph-legend .rollout-legend-prediction-band { fill: var(--curve-color); opacity: .18; stroke: var(--curve-color); stroke-width: .5; }
 .rollout-chart-note { margin: 3px 1px 0; color: #8793a5; font-size: 7px; }
-.training-chart-wrap { width: 100%; overflow: hidden; position: relative; }
-.training-chart { width: 100%; height: auto; display: block; overflow: visible; }
 .chart-gridline line { stroke: #e8edf4; stroke-width: 1; }
 .chart-gridline text, .chart-tick text { fill: #7888a0; font-family: inherit; font-size: 8px; }
 .chart-tick line, .chart-axis { stroke: #bac8d9; stroke-width: 1; }
 .chart-axis-label { fill: #6f8098; font-family: inherit; font-size: 8px; }
 .chart-y-label { font-size: 7px; }
 .chart-series { fill: none; stroke: var(--curve-color); stroke-linecap: round; stroke-linejoin: round; stroke-width: 2.5; }
-.chart-validation-line { stroke-dasharray: 5 4; opacity: .58; stroke-width: 2; }
 .chart-point { stroke: var(--curve-color); stroke-width: 1.2; cursor: crosshair; }
-.chart-point-training { fill: var(--curve-color); }
-.chart-point-validation { fill: #fff; }
 .chart-point:hover { r: 5; stroke-width: 2; }
 .chart-hover-tooltip { position: absolute; z-index: 4; max-width: min(260px, calc(100% - 12px)); padding: 6px 8px; border: 1px solid #c9d7e9; border-radius: 6px; color: #193455; background: rgba(255,255,255,.97); box-shadow: 0 5px 16px rgba(26,54,92,.14); font-size: 9px; line-height: 1.35; font-variant-numeric: tabular-nums; white-space: nowrap; pointer-events: none; }
 .chart-hover-tooltip[hidden] { display: none; }
 .chart-legend-in-graph rect { fill: rgba(255,255,255,.94); stroke: #dfe7f1; stroke-width: .8; }
 .chart-legend-in-graph text { fill: #526782; font-family: inherit; font-size: 7px; }
-.chart-legend-in-graph .chart-legend-loss-name { fill: #8793a5; font-size: 6.5px; }
-.chart-legend-training, .chart-legend-validation { stroke: var(--curve-color); stroke-width: 1.8; }
-.chart-legend-validation { stroke-dasharray: 4 3; opacity: .62; }
-.training-chart-legend { display: flex; align-items: center; flex-wrap: wrap; gap: 7px 13px; color: #566a86; font-size: 8px; }
-.training-chart-legend > span { display: inline-flex; align-items: center; gap: 5px; }
 .legend-line { width: 16px; height: 0; border-top: 2px solid var(--curve-color); }
 .legend-line-dashed { border-top-style: dashed; opacity: .65; }
-.training-chart-legend .chart-loss-name { margin-left: auto; color: #7b8ba2; }
 .compare-loss-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 6px; margin: 9px 0 0; }
 .compare-loss-item { display: flex; align-items: center; justify-content: space-between; gap: 7px; min-width: 0; padding: 8px 9px; border: 1px solid #e8edf4; border-radius: 7px; background: #fafcff; }
 .compare-loss-item dt { min-width: 0; color: #6d7d95; font-size: 8px; }
@@ -512,7 +501,6 @@ h1, h2, h3 { font-family: Manrope, "Segoe UI", Arial, sans-serif; }
 .compare-color-key i { width: 9px; height: 9px; display: inline-block; border: 1px solid; border-radius: 3px; }
 .compare-color-key .better-key { border-color: #bfe6d7; background: #edfaf4; }
 .compare-color-key .worse-key { border-color: #f0c9bc; background: #fff2ed; }
-.compare-history-note { text-align: right; }
 
 .docs-main { padding-bottom: 20px; }
 .docs-toc { position: sticky; top: 62px; z-index: 5; display: flex; gap: 4px; overflow-x: auto; padding: 8px 10px; border: 1px solid var(--line); border-radius: 9px; background: rgba(249,251,254,.94); backdrop-filter: blur(12px); }
@@ -568,7 +556,6 @@ h1, h2, h3 { font-family: Manrope, "Segoe UI", Arial, sans-serif; }
   .rollout-analysis-controls { grid-template-columns: 1fr; }
   .rollout-spectrum-controls { width: 100%; max-width: none; }
   .compare-note { flex-direction: column; }
-  .compare-history-note { text-align: left; }
   .compare-panel-right.is-unselected .compare-empty-state { flex: 0; min-height: 250px; }
   .docs-toc { top: 58px; width: calc(100% + 12px); margin-left: -6px; }
   .docs-section { padding: 15px 13px; scroll-margin-top: 105px; }

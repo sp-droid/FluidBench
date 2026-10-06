@@ -1,4 +1,4 @@
-"""Training and submission workflow for FluidBench benchmarks."""
+"""Evaluation and submission workflow for FluidBench benchmarks."""
 
 from __future__ import annotations
 
@@ -15,7 +15,7 @@ from typing import Any
 import h5py
 import numpy as np
 import torch
-from torch.utils.data import DataLoader
+from torch.utils.data import ConcatDataset, DataLoader
 
 from .cfdataset import CFDataset
 from .downloader import download_dataset
@@ -68,34 +68,42 @@ def _validate_config(config: Mapping[str, Any]) -> dict[str, Any]:
     return config
 
 
-def _load_split(dataset_dir: Path, split: str) -> CFDataset:
-    split_path = dataset_dir / f"{split}.h5"
-    if not split_path.is_file():
-        raise FileNotFoundError(f"Benchmark split file not found: {split_path}")
-
+def _load_case(case_path: Path) -> CFDataset:
     try:
-        with h5py.File(split_path, "r") as split_file:
-            scalars = split_file["inputs/scalars"][:]
-            fields = split_file["inputs/fields"][:]
-            targets = split_file["targets/fields"][:]
+        with h5py.File(case_path, "r") as case_file:
+            scalars = case_file["inputs/scalars"][:]
+            fields = case_file["inputs/fields"][:]
+            targets = case_file["targets/fields"][:]
     except KeyError as exc:
         raise ValueError(
-            f"Benchmark split {split_path} must contain inputs/scalars, "
+            f"Benchmark case {case_path} must contain inputs/scalars, "
             "inputs/fields, and targets/fields."
         ) from exc
     except OSError as exc:
-        raise ValueError(f"Could not read benchmark split file: {split_path}") from exc
+        raise ValueError(f"Could not read benchmark case file: {case_path}") from exc
 
     lengths = (len(scalars), len(fields), len(targets))
     if len(set(lengths)) != 1:
         raise ValueError(
-            f"Benchmark split {split_path} has mismatched sample counts: "
+            f"Benchmark case {case_path} has mismatched sample counts: "
             f"scalars={lengths[0]}, fields={lengths[1]}, targets={lengths[2]}."
         )
     if not targets.size:
-        raise ValueError(f"Benchmark split {split_path} contains no samples.")
+        raise ValueError(f"Benchmark case {case_path} contains no samples.")
 
     return CFDataset(scalars, fields, targets, np.arange(len(targets)))
+
+
+def _load_split(dataset_dir: Path, split: str) -> list[CFDataset]:
+    """Load a split folder as one chronological dataset per case."""
+    split_dir = dataset_dir / split
+    case_paths = sorted(
+        (path for path in split_dir.glob("*.h5") if path.stem.isdigit()),
+        key=lambda path: int(path.stem),
+    )
+    if not case_paths:
+        raise FileNotFoundError(f"Benchmark split folder has no case files: {split_dir}")
+    return [_load_case(path) for path in case_paths]
 
 
 def _as_json_value(value: Any) -> Any:
@@ -277,12 +285,11 @@ def _test_case_conditions(scalars: Any, scalar_names: Sequence[str]) -> dict[str
 
 def _evaluate_test_split(
     model: Any,
-    loader: DataLoader,
-    rollout_loader: DataLoader,
-    dataset: CFDataset,
+    cases: list[CFDataset],
     variables: list[str],
     scalar_names: list[str],
 ) -> tuple[dict[str, Any], dict[str, Any]]:
+    loader = DataLoader(ConcatDataset(cases), batch_size=_BATCH_SIZE, shuffle=False)
     device = _model_device(model)
     use_cuda = device.type == "cuda" and torch.cuda.is_available()
     if use_cuda:
@@ -313,7 +320,9 @@ def _evaluate_test_split(
         if not isinstance(predictions, torch.Tensor):
             raise ValueError("model.predict(test_dataloader) must return a tensor.")
         predictions = predictions.detach().to(device="cpu", dtype=torch.float64)
-        targets = torch.as_tensor(dataset.targets, dtype=torch.float64, device="cpu")
+        targets = torch.as_tensor(
+            np.concatenate([case.targets for case in cases]), dtype=torch.float64, device="cpu"
+        )
         if predictions.shape != targets.shape:
             raise ValueError(
                 "Test predictions and targets must have matching shapes; "
@@ -352,8 +361,11 @@ def _evaluate_test_split(
                     len(variables), elements_per_channel, dtype=np.int64
                 )
 
+        # Each test case is an independent trajectory, rolled out from its first snapshot.
         with torch.inference_mode():
-            rollout_predictions = predict_rollout(rollout_loader)
+            rollout_predictions = [
+                predict_rollout(DataLoader(case, batch_size=1, shuffle=False)) for case in cases
+            ]
     finally:
         if old_training_state is not None and hasattr(model, "train"):
             model.train(old_training_state)
@@ -378,50 +390,18 @@ def _evaluate_test_split(
         count = int(channel_element_counts[selected].sum())
         return math.sqrt(float(channel_square_sums[selected].sum()) / count) if count else None
 
-    if isinstance(rollout_predictions, torch.Tensor):
-        rollout_predictions = rollout_predictions.detach().to(device="cpu", dtype=torch.float64)
-        if sample_count == 1 and rollout_predictions.shape == targets[0].shape:
-            rollout_predictions = [rollout_predictions]
-        elif rollout_predictions.ndim >= 2:
-            rollout_predictions = list(rollout_predictions.unbind(dim=0))
-        else:
-            raise ValueError(
-                "model.predict_rollout(test_dataloader) must return one trajectory per test case."
-            )
-    elif isinstance(rollout_predictions, np.ndarray):
-        if sample_count == 1 and rollout_predictions.shape == tuple(targets[0].shape):
-            rollout_predictions = [rollout_predictions]
-        elif rollout_predictions.ndim >= 2:
-            rollout_predictions = list(rollout_predictions)
-        else:
-            raise ValueError(
-                "model.predict_rollout(test_dataloader) must return one trajectory per test case."
-            )
-    elif isinstance(rollout_predictions, Sequence) and not isinstance(
-        rollout_predictions, (str, bytes, bytearray)
-    ):
-        rollout_predictions = list(rollout_predictions)
-    else:
-        raise ValueError(
-            "model.predict_rollout(test_dataloader) must return one trajectory per test case."
-        )
-
-    if len(rollout_predictions) != sample_count:
-        raise ValueError(
-            "model.predict_rollout(test_dataloader) must return exactly one trajectory "
-            f"for each of the {sample_count} test cases; got {len(rollout_predictions)}."
-        )
-
     rollout_snapshot_metrics_by_case: list[list[dict[str, float | None]]] = []
     trajectory_records = []
     common_wavenumbers: list[int] | None = None
-    for case_index, prediction in enumerate(rollout_predictions):
-        if not isinstance(prediction, torch.Tensor):
-            prediction = torch.as_tensor(prediction)
-        prediction = prediction.detach().to(device="cpu", dtype=torch.float64)
-        target = targets[case_index]
-        if prediction.ndim == target.ndim + 1 and prediction.shape[0] == 1:
-            prediction = prediction.squeeze(0)
+    for case_index, (case, prediction) in enumerate(zip(cases, rollout_predictions)):
+        target = torch.as_tensor(case.targets, dtype=torch.float64, device="cpu")
+        if isinstance(prediction, Sequence) and not isinstance(prediction, (str, bytes, bytearray)):
+            # A list of per-step predictions: [1, C, H, W] steps are concatenated, [C, H, W] stacked.
+            steps = [torch.as_tensor(step) for step in prediction]
+            if not steps:
+                raise ValueError(f"model.predict_rollout() returned no steps for test case {case_index + 1}.")
+            prediction = torch.cat(steps) if steps[0].ndim == target.ndim else torch.stack(steps)
+        prediction = torch.as_tensor(prediction).detach().to(device="cpu", dtype=torch.float64)
         if prediction.shape != target.shape:
             raise ValueError(
                 f"Rollout trajectory {case_index + 1} and its test snapshots must match; "
@@ -457,7 +437,7 @@ def _evaluate_test_split(
             {
                 "id": f"trajectory-{case_index + 1}",
                 "label": f"Test case {case_index + 1}",
-                "conditions": _test_case_conditions(dataset.scalars[case_index], scalar_names),
+                "conditions": _test_case_conditions(case.scalars[0], scalar_names),
                 "errors": {
                     key: [snapshot[key] for snapshot in snapshot_metrics]
                     for key in ("rmse", "mae", "relativeL2")
@@ -549,54 +529,12 @@ def _evaluate_test_split(
     return metrics, rollout_analysis
 
 
-def _history_for_submission(history: Any) -> dict[str, list[Any]]:
-    if not isinstance(history, Mapping):
-        raise ValueError("model.fit() must return a mapping-like training history.")
-
-    epochs = history.get("epochs", history.get("train_epochs"))
-    training_losses = history.get(
-        "trainingLosses",
-        history.get("train_losses", history.get("training_losses")),
-    )
-    validation_losses = history.get(
-        "validationLosses",
-        history.get("validation_losses", history.get("val_losses")),
-    )
-
-    if training_losses is None:
-        raise ValueError("model.fit() history must include training losses.")
-    training_losses = list(training_losses)
-    if epochs is None:
-        epochs = list(range(len(training_losses)))
-    else:
-        epochs = list(epochs)
-    if len(epochs) != len(training_losses):
-        raise ValueError("model.fit() history epochs and training losses must align.")
-
-    if validation_losses is None:
-        validation_losses = [None] * len(epochs)
-    else:
-        validation_losses = list(validation_losses)
-        if not validation_losses:
-            validation_losses = [None] * len(epochs)
-        elif len(validation_losses) != len(epochs):
-            raise ValueError("model.fit() history validation losses must align with epochs.")
-
-    return _as_json_value(
-        {
-            "epochs": epochs,
-            "trainingLosses": training_losses,
-            "validationLosses": validation_losses,
-        }
-    )
-
-
 def _submission_root() -> Path:
     return Path.cwd() / "submission"
 
 
-def run(model: Any, submission_config: Mapping[str, Any]) -> Any:
-    """Train and evaluate ``model`` and write its submission record.
+def run(model: Any, submission_config: Mapping[str, Any]) -> dict[str, Any]:
+    """Evaluate an already trained ``model`` and write its submission record.
 
     Pass a decoded JSON object with submission metadata, including ``datasetId``.
     All supported metrics are calculated here from the benchmark test split;
@@ -606,33 +544,15 @@ def run(model: Any, submission_config: Mapping[str, Any]) -> Any:
     config = _validate_config(submission_config)
     benchmark_id = config["datasetId"]
     dataset_dir = download_dataset(benchmark_id)
+    test_cases = _load_split(dataset_dir, "test")
 
-    train_dataset = _load_split(dataset_dir, "train")
-    validation_dataset = _load_split(dataset_dir, "validation")
-    train_loader = DataLoader(train_dataset, batch_size=_BATCH_SIZE, shuffle=True)
-    validation_loader = DataLoader(
-        validation_dataset,
-        batch_size=_BATCH_SIZE,
-        shuffle=False,
-    )
-    test_dataset = _load_split(dataset_dir, "test")
-    test_loader = DataLoader(test_dataset, batch_size=_BATCH_SIZE, shuffle=False)
-    rollout_loader = DataLoader(test_dataset, batch_size=1, shuffle=False)
-
-    start_time = time.perf_counter()
-    history = model.fit(train_loader, validation_loader)
-    training_hours = (time.perf_counter() - start_time) / 3600
-    submission_history = _history_for_submission(history)
     metrics, rollout_analysis = _evaluate_test_split(
         model,
-        test_loader,
-        rollout_loader,
-        test_dataset,
+        test_cases,
         _benchmark_variables(benchmark_id),
         _benchmark_scalar_names(benchmark_id),
     )
-    metrics["efficiency"]["parameters"] = int(model.total_parameters)
-    metrics["efficiency"]["trainingHours"] = training_hours
+    metrics["efficiency"]["parameters"] = int(sum(parameter.numel() for parameter in model.parameters()))
 
     submission = deepcopy(config)
     submission.pop("metrics", None)
@@ -640,25 +560,18 @@ def run(model: Any, submission_config: Mapping[str, Any]) -> Any:
     submission["datasetId"] = benchmark_id
     submission["submittedAt"] = date.today().isoformat()
     submission["metrics"] = metrics
-    submission["artifacts"] = {
-        "trainingHistory": "training-history.json",
-        "rolloutAnalysis": "rollout-analysis.json",
-    }
+    submission["artifacts"] = {"rolloutAnalysis": "rollout-analysis.json"}
 
     root = _submission_root() / benchmark_id
-    history_path = root / config["id"] / "training-history.json"
     rollout_analysis_path = root / config["id"] / "rollout-analysis.json"
     submission_path = root / f"{config['id']}.json"
-    history_path.parent.mkdir(parents=True, exist_ok=True)
+    rollout_analysis_path.parent.mkdir(parents=True, exist_ok=True)
     with submission_path.open("w", encoding="utf-8") as submission_file:
         json.dump(submission, submission_file, indent=2, allow_nan=False)
         submission_file.write("\n")
-    with history_path.open("w", encoding="utf-8") as history_file:
-        json.dump(submission_history, history_file, indent=2, allow_nan=False)
-        history_file.write("\n")
     with rollout_analysis_path.open("w", encoding="utf-8") as analysis_file:
         json.dump(rollout_analysis, analysis_file, indent=2, allow_nan=False)
         analysis_file.write("\n")
 
     print(f"submission written to 'submission/{benchmark_id}' folder")
-    return history
+    return submission
