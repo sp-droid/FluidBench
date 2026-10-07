@@ -62,6 +62,27 @@
     return `/submissions/${encodeURIComponent(benchmarkId)}/${encodeURIComponent(id)}/${encodeURIComponent(filename)}`;
   }
 
+  async function loadTrainingHistory(id, benchmarkId, artifact) {
+    // Training curves are optional: submissions only carry them when the author provided them.
+    if (!artifact) return null;
+    const history = await readJson(artifactPath(id, benchmarkId, artifact, "training-history.json"));
+    if (!Array.isArray(history.epochs) || !Array.isArray(history.trainingLosses) || !Array.isArray(history.validationLosses)) {
+      throw new Error(`The training history for ${id} is incomplete.`);
+    }
+    if (history.epochs.length !== history.trainingLosses.length || history.epochs.length !== history.validationLosses.length) {
+      throw new Error(`The training history for ${id} has mismatched list lengths.`);
+    }
+    return {
+      lossName: typeof history.lossName === "string" && history.lossName ? history.lossName : "RMSE",
+      validationSplit: Number.isFinite(history.validationSplit) ? history.validationSplit : null,
+      points: history.epochs.map((epoch, index) => ({
+        epoch,
+        trainingLoss: history.trainingLosses[index],
+        validationLoss: history.validationLosses[index],
+      })),
+    };
+  }
+
   async function loadRolloutAnalysis(id, benchmarkId, artifact) {
     try {
       const analysis = await readJson(artifactPath(id, benchmarkId, artifact, "rollout-analysis.json"));
@@ -75,5 +96,5 @@
     }
   }
 
-  window.FluidBenchData = { load, loadSubmissions, loadBenchmarks, loadOptions, loadRolloutAnalysis };
+  window.FluidBenchData = { load, loadSubmissions, loadBenchmarks, loadOptions, loadTrainingHistory, loadRolloutAnalysis };
 })();

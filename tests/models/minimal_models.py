@@ -1,7 +1,7 @@
 import torch
 from torch import nn
 
-from minimal_base import BaseRegressionModel
+from .minimal_base import BaseRegressionModel
 
 class BaselineZero(BaseRegressionModel):
     def __init__(self):

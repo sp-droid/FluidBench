@@ -17,22 +17,22 @@
     fullySynthetic: {
       id: "fully-synthetic",
       name: "Fully synthetic",
-      description: "Training, validation, and test data are synthetic; pretraining data is absent or synthetic.",
+      description: "Training and test data are synthetic; pretraining data is absent or synthetic.",
     },
     simulatedTraining: {
       id: "simulated-training",
       name: "Simulated training",
-      description: "Training data is synthetic and test data is real; validation data may be synthetic or real.",
+      description: "Training data is synthetic and test data is real.",
     },
     realTraining: {
       id: "real-training",
       name: "Real training",
-      description: "Training, validation, and test data are real; any pretraining data is real too.",
+      description: "Training and test data are real; any pretraining data is real too.",
     },
     realFinetuning: {
       id: "real-finetuning",
       name: "Real finetuning",
-      description: "Pretraining data is synthetic; training, validation, and test data are real.",
+      description: "Pretraining data is synthetic; training and test data are real.",
     },
     other: {
       id: "other",
@@ -42,11 +42,11 @@
   };
   function classifyDataOrigin(dataOrigin) {
     if (!dataOrigin || typeof dataOrigin !== "object" || Array.isArray(dataOrigin)) return categories.other;
-    const { pretrain, train, validation, test } = dataOrigin;
-    const all = (value) => train === value && validation === value && test === value;
+    const { pretrain, train, test } = dataOrigin;
+    const all = (value) => train === value && test === value;
     const noPretraining = pretrain == null || pretrain === "none";
     if (pretrain === "synthetic" && all("real")) return categories.realFinetuning;
-    if (train === "synthetic" && test === "real" && ["synthetic", "real"].includes(validation)) return categories.simulatedTraining;
+    if (train === "synthetic" && test === "real") return categories.simulatedTraining;
     if (all("synthetic") && (noPretraining || pretrain === "synthetic")) return categories.fullySynthetic;
     if (all("real") && (noPretraining || pretrain === "real")) return categories.realTraining;
     return categories.other;
@@ -58,7 +58,7 @@
   })[char]);
   const formatSplits = (splits) => {
     if (!splits || typeof splits !== "object" || Array.isArray(splits)) return "—";
-    const keys = ["train", "validation", "test"];
+    const keys = ["train", "test"];
     const values = keys.map((key) => splits[key] == null ? NaN : Number(splits[key]));
     if (values.some((value) => !Number.isFinite(value))) return "—";
     const percentages = values.map((value) => {

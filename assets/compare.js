@@ -307,6 +307,77 @@
     return `<label class="compare-model-select"><span>Compare against</span><select id="compare-model-select" aria-label="Choose a different model"${candidates.length ? "" : " disabled"}><option value=""${selectedId ? "" : " selected"}>${placeholder}</option>${options}</select></label>`;
   }
 
+  function chartY(value, logScale) {
+    const clamped = Math.max(Number(value), 10 ** logScale.minExponent);
+    const normalized = (Math.log10(clamped) - logScale.minExponent) / (logScale.maxExponent - logScale.minExponent);
+    return 12 + (1 - normalized) * 164;
+  }
+
+  function epochBounds(points) {
+    const epochs = points.map((point) => Number(point.epoch)).filter(Number.isFinite);
+    return epochs.length ? { min: Math.min(...epochs), max: Math.max(...epochs) } : { min: 0, max: 0 };
+  }
+
+  function formatEpoch(epoch) {
+    return Number.isInteger(epoch) ? String(epoch) : String(Number(epoch.toPrecision(3)));
+  }
+
+  function epochTicks(maxEpoch) {
+    if (maxEpoch <= 0) return [0];
+    const divisions = Math.min(4, Math.max(1, Math.ceil(maxEpoch)));
+    return Array.from({ length: divisions + 1 }, (_, index) => formatEpoch((maxEpoch * index) / divisions));
+  }
+
+  function chartPath(points, field, logScale, maxEpoch) {
+    const left = 55;
+    const right = 12;
+    const width = 440;
+    const plotWidth = width - left - right;
+    return points.map((point, index) => {
+      const x = left + (Number(point.epoch) / maxEpoch) * plotWidth;
+      const y = chartY(point[field], logScale);
+      return `${index ? "L" : "M"}${x.toFixed(1)} ${y.toFixed(1)}`;
+    }).join(" ");
+  }
+
+  function chartMarkers(points, field, logScale, label, maxEpoch) {
+    const left = 55;
+    const plotWidth = 373;
+    const markerClass = field === "trainingLoss" ? "chart-point-training" : "chart-point-validation";
+    return points.map((point) => {
+      const x = left + (Number(point.epoch) / maxEpoch) * plotWidth;
+      const y = chartY(point[field], logScale);
+      const exactValue = String(Number(point[field]));
+      const hoverInfo = `Epoch ${point.epoch} · ${label} loss: ${exactValue}`;
+      return `<circle class="chart-point ${markerClass}" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3.1" tabindex="0" role="img" aria-label="${escapeHtml(hoverInfo)}" data-hover-info="${escapeHtml(hoverInfo)}"></circle>`;
+    }).join("");
+  }
+
+  function trainingChart(item, logScale) {
+    const points = item.trainingHistory?.points || [];
+    if (!points.length) return `<div class="training-chart-wrap"><div class="compare-chart-empty training-chart-empty">No training history provided.</div></div>`;
+    const { max: dataMaxEpoch } = epochBounds(points);
+    const maxEpoch = dataMaxEpoch > 0 ? dataMaxEpoch : 1;
+    const gridLines = Array.from({ length: logScale.maxExponent - logScale.minExponent + 1 }, (_, index) => logScale.maxExponent - index).map((exponent) => {
+      const y = chartY(10 ** exponent, logScale);
+      const value = 10 ** exponent;
+      return `<g class="chart-gridline"><line x1="55" y1="${y}" x2="428" y2="${y}"/><text x="48" y="${y + 3}" text-anchor="end">${formatLoss(value)}</text></g>`;
+    }).join("");
+    const xTicks = epochTicks(dataMaxEpoch).map((epoch) => {
+      const x = 55 + (Number(epoch) / maxEpoch) * 373;
+      return `<g class="chart-tick"><line x1="${x}" y1="176" x2="${x}" y2="180"/><text x="${x}" y="195" text-anchor="middle">${epoch}</text></g>`;
+    }).join("");
+    const label = `${item.model} ${item.trainingHistory.lossName || "RMSE"} training and validation loss by epoch`;
+    return `<div class="training-chart-wrap"><svg class="training-chart" viewBox="0 0 440 210" role="img" aria-label="${escapeHtml(label)}" preserveAspectRatio="xMidYMid meet">
+      ${gridLines}${xTicks}<line class="chart-axis" x1="55" y1="12" x2="55" y2="176"/><line class="chart-axis" x1="55" y1="176" x2="428" y2="176"/>
+      <path class="chart-series chart-training-line" d="${chartPath(points, "trainingLoss", logScale, maxEpoch)}"></path><path class="chart-series chart-validation-line" d="${chartPath(points, "validationLoss", logScale, maxEpoch)}"></path>
+      ${chartMarkers(points, "trainingLoss", logScale, "Training", maxEpoch)}${chartMarkers(points, "validationLoss", logScale, "Validation", maxEpoch)}
+      <g class="chart-legend-in-graph"><rect x="277" y="17" width="147" height="32" rx="5"/><line class="chart-legend-training" x1="286" y1="28" x2="302" y2="28"/><text x="307" y="31">Training</text><line class="chart-legend-validation" x1="354" y1="28" x2="370" y2="28"/><text x="375" y="31">Validation</text><text class="chart-legend-loss-name" x="286" y="43">${escapeHtml(item.trainingHistory.lossName || "RMSE")} loss</text></g>
+      <text class="chart-axis-label chart-y-label" transform="translate(13 95) rotate(-90)" text-anchor="middle">${escapeHtml(item.trainingHistory.lossName || "RMSE")} loss · log scale</text>
+      <text class="chart-axis-label" x="241" y="208" text-anchor="middle">Training epoch</text>
+    </svg></div>`;
+  }
+
   function modelFacts(item, other, dataset) {
     const metrics = item.metrics;
     const efficiency = metrics.efficiency;
@@ -323,6 +394,31 @@
     }).join("")}</dl>`;
   }
 
+  function formatValidationSplit(split) {
+    if (!Number.isFinite(split)) return "—";
+    const validation = Math.round(split * 1000) / 10;
+    return `${Math.round((100 - validation) * 10) / 10}-${validation}%`;
+  }
+
+  // Error name, split and final epoch losses, as reported with the training curves.
+  function trainingSummary(item, other) {
+    const history = item.trainingHistory;
+    const last = history?.points?.[history.points.length - 1];
+    const otherHistory = other?.trainingHistory;
+    const otherLast = otherHistory?.points?.[otherHistory.points.length - 1];
+    const comparable = history && otherHistory && history.lossName === otherHistory.lossName;
+    const facts = [
+      { label: "Error type", value: history ? escapeHtml(history.lossName) : "—" },
+      { label: "Train-val split", value: formatValidationSplit(history?.validationSplit) },
+      { label: "Final train error", value: last ? formatLoss(last.trainingLoss) : "—", metric: last?.trainingLoss, other: comparable ? otherLast?.trainingLoss : null },
+      { label: "Final validation error", value: last ? formatLoss(last.validationLoss) : "—", metric: last?.validationLoss, other: comparable ? otherLast?.validationLoss : null },
+    ];
+    return `<dl class="compare-facts training-summary">${facts.map((fact) => {
+      const tone = fact.metric != null && fact.other != null ? ` ${comparisonTone(fact.metric, fact.other)}` : "";
+      return `<div class="compare-fact-item${tone}"><dt>${fact.label}</dt><dd>${fact.value}</dd></div>`;
+    }).join("")}</dl>`;
+  }
+
   function averageTestRolloutError(item, metricId) {
     const values = (item.rolloutAnalysis?.trajectories || []).flatMap((trajectory) => {
       const errors = trajectory.errors?.[metricId];
@@ -333,7 +429,7 @@
 
   function evaluationLosses(item, other) {
     const columns = [
-      { label: "Test rollout", value: averageTestRolloutError },
+      { label: "Average", value: averageTestRolloutError },
     ];
     const header = columns.map(({ label }) => `<th scope="col">${label}</th>`).join("");
     const rows = rolloutErrorMetrics.map(({ label, id }) => {
@@ -345,21 +441,27 @@
       }).join("");
       return `<tr><th scope="row">${escapeHtml(label)}</th>${values}</tr>`;
     }).join("");
-    return `<div class="evaluation-loss-scroll"><table class="evaluation-loss-table" aria-label="Average evaluation losses by split"><thead><tr><th scope="col">Error type</th>${header}</tr></thead><tbody>${rows}</tbody></table></div>`;
+    return `<div class="evaluation-loss-scroll"><table class="evaluation-loss-table" aria-label="Average test errors"><thead><tr><th scope="col">Error type</th>${header}</tr></thead><tbody>${rows}</tbody></table></div>`;
   }
 
-  function renderPanel(item, other, dataset, side, submissions, leftId) {
+  function renderPanel(item, other, dataset, side, logScale, submissions, leftId) {
     const controls = side === "right" ? modelPicker(submissions, leftId, item.datasetId, item.id) : `<span class="compare-fixed-label">Selected from leaderboard</span>`;
+    const points = item.trainingHistory?.points || [];
+    const range = epochBounds(points);
+    const rangeLabel = points.length
+      ? (range.min === range.max ? `Epoch ${formatEpoch(range.min)}` : `Epoch ${formatEpoch(range.min)}–${formatEpoch(range.max)}`)
+      : "No epoch data";
     return `<div class="compare-panel-top"><div class="compare-model-title"><span class="compare-side-label">${side === "left" ? "Model A" : "Model B"}</span><h2>${escapeHtml(item.model)}</h2><p>${escapeHtml(item.authors)} · ${item.year}</p></div>${controls}</div>
       <div class="compare-section"><h3>Submission details</h3>${modelFacts(item, other, dataset)}</div>
-      <div class="compare-section"><div class="compare-section-title"><div><h3>Evaluation losses</h3><p>Test rollout averages all snapshots and trajectories.</p></div></div>${evaluationLosses(item, other)}</div>
+      <div class="compare-section"><div class="compare-section-title"><div><h3>Training loss</h3><p>${item.trainingHistory ? `Epoch versus ${escapeHtml(item.trainingHistory.lossName)}` : "Epoch versus training error"}</p></div><span class="chart-range">${rangeLabel} · log scale</span></div>${trainingChart(item, logScale)}${trainingSummary(item, other)}</div>
+      <div class="compare-section"><div class="compare-section-title"><div><h3>Evaluation losses</h3><p>Test-set errors averaged over all rollout snapshots and trajectories.</p></div></div>${evaluationLosses(item, other)}</div>
       ${rolloutAnalysisSection(item, other)}`;
   }
 
   function emptyComparePanel(submissions, leftId, benchmarkId) {
     const hasCandidates = submissions.some((submission) => submission.id !== leftId && submission.datasetId === benchmarkId);
     const guidance = hasCandidates
-      ? "Pick another submission from this benchmark to compare its results."
+      ? "Pick another submission from this benchmark to compare its curves and losses."
       : "There are no other submissions for this benchmark yet.";
     return `<div class="compare-panel-top"><div class="compare-model-title"><span class="compare-side-label">Model B</span><h2>No model selected</h2><p>${guidance}</p></div>${modelPicker(submissions, leftId, benchmarkId)}</div><div class="compare-empty-state"><span class="compare-empty-icon" aria-hidden="true">↔</span><h3>Ready to compare</h3><p>${guidance}</p></div>`;
   }
@@ -370,6 +472,64 @@
     if (right) url.searchParams.set("compare", right.id);
     else url.searchParams.delete("compare");
     window.history.replaceState({}, "", url);
+  }
+
+  function bindChartTooltips(panel) {
+    panel.querySelectorAll(".training-chart-wrap").forEach((wrap) => {
+      const tooltip = document.createElement("div");
+      tooltip.className = "chart-hover-tooltip";
+      tooltip.setAttribute("role", "tooltip");
+      tooltip.hidden = true;
+      wrap.appendChild(tooltip);
+
+      let timer = 0;
+      let activePoint = null;
+      const hide = () => {
+        window.clearTimeout(timer);
+        activePoint = null;
+        tooltip.hidden = true;
+      };
+      const schedule = (point) => {
+        window.clearTimeout(timer);
+        activePoint = point;
+        timer = window.setTimeout(() => {
+          if (!activePoint || !wrap.contains(activePoint)) return;
+          tooltip.textContent = activePoint.dataset.hoverInfo;
+          tooltip.hidden = false;
+          const wrapRect = wrap.getBoundingClientRect();
+          const pointRect = activePoint.getBoundingClientRect();
+          const pointX = pointRect.left + pointRect.width / 2 - wrapRect.left;
+          const pointY = pointRect.top - wrapRect.top;
+          const halfWidth = tooltip.offsetWidth / 2;
+          const left = Math.min(Math.max(halfWidth + 4, pointX), wrap.clientWidth - halfWidth - 4);
+          tooltip.style.left = `${left}px`;
+          if (pointY > tooltip.offsetHeight + 8) {
+            tooltip.style.top = `${pointY - 6}px`;
+            tooltip.style.transform = "translate(-50%, -100%)";
+          } else {
+            tooltip.style.top = `${pointY + pointRect.height + 7}px`;
+            tooltip.style.transform = "translateX(-50%)";
+          }
+        }, 100);
+      };
+
+      wrap.addEventListener("pointerover", (event) => {
+        const point = event.target.closest?.(".chart-point");
+        if (point && wrap.contains(point)) schedule(point);
+      });
+      wrap.addEventListener("pointerout", (event) => {
+        const point = event.target.closest?.(".chart-point");
+        const nextPoint = event.relatedTarget?.closest?.(".chart-point");
+        if (point && point !== nextPoint) hide();
+      });
+      wrap.addEventListener("focusin", (event) => {
+        const point = event.target.closest?.(".chart-point");
+        if (point) schedule(point);
+      });
+      wrap.addEventListener("focusout", (event) => {
+        if (event.target.closest?.(".chart-point")) hide();
+      });
+    });
   }
 
   function refreshRolloutPanel(panel, item, other = null) {
@@ -417,22 +577,35 @@
     const datasets = data.datasets || [];
 
     async function render() {
-      const [leftRollout, rightRollout] = await Promise.all([
+      const [leftHistory, rightHistory, leftRollout, rightRollout] = await Promise.all([
+        window.FluidBenchData.loadTrainingHistory(left.id, left.datasetId, left.artifacts?.trainingHistory),
+        right ? window.FluidBenchData.loadTrainingHistory(right.id, right.datasetId, right.artifacts?.trainingHistory) : Promise.resolve(null),
         window.FluidBenchData.loadRolloutAnalysis(left.id, left.datasetId, left.artifacts?.rolloutAnalysis),
         right ? window.FluidBenchData.loadRolloutAnalysis(right.id, right.datasetId, right.artifacts?.rolloutAnalysis) : Promise.resolve(null),
       ]);
+      left.trainingHistory = leftHistory;
       left.rolloutAnalysis = leftRollout;
       if (right) {
+        right.trainingHistory = rightHistory;
         right.rolloutAnalysis = rightRollout;
       }
+      const compared = right ? [left, right] : [left];
+      const allTrainingLosses = compared.flatMap((item) => (item.trainingHistory?.points || []).flatMap((point) => [point.trainingLoss, point.validationLoss]));
+      const positiveLosses = allTrainingLosses.filter((value) => Number(value) > 0).map(Number);
+      const minLoss = positiveLosses.length ? Math.min(...positiveLosses) : 1e-8;
+      const maxLoss = positiveLosses.length ? Math.max(...positiveLosses) : minLoss * 10;
+      const logScale = { minExponent: Math.floor(Math.log10(minLoss)), maxExponent: Math.ceil(Math.log10(maxLoss)) };
+      if (logScale.minExponent === logScale.maxExponent) logScale.maxExponent += 1;
       leftPanel.className = "compare-panel compare-panel-left";
       rightPanel.className = `compare-panel compare-panel-right${right ? "" : " is-unselected"}`;
-      leftPanel.innerHTML = renderPanel(left, right, datasets.find((dataset) => dataset.id === left.datasetId), "left", submissions, left.id);
+      leftPanel.innerHTML = renderPanel(left, right, datasets.find((dataset) => dataset.id === left.datasetId), "left", logScale, submissions, left.id);
       rightPanel.innerHTML = right
-        ? renderPanel(right, left, datasets.find((dataset) => dataset.id === right.datasetId), "right", submissions, left.id)
+        ? renderPanel(right, left, datasets.find((dataset) => dataset.id === right.datasetId), "right", logScale, submissions, left.id)
         : emptyComparePanel(submissions, left.id, left.datasetId);
       bindRolloutControls(leftPanel, left, right ? rightPanel : null, right);
       if (right) bindRolloutControls(rightPanel, right, leftPanel, left);
+      bindChartTooltips(leftPanel);
+      bindChartTooltips(rightPanel);
       document.querySelector("#compare-model-select")?.addEventListener("change", (event) => {
         right = rightCandidates.find((item) => item.id === event.target.value) || null;
         render().catch(showError);

@@ -90,11 +90,9 @@
     const category = activeDataCategory();
     const selected = currentError();
     if (!category) return "";
-    const categoryOptions = (problemOptions()?.categories || []).map((option) => `<button type="button" role="menuitemradio" aria-checked="${option.id === category.id}" class="error-picker-option${option.id === category.id ? " is-selected" : ""}" data-picker-kind="category" data-picker-value="${escapeHtml(option.id)}"><span>${escapeHtml(option.label)}</span><span class="error-picker-check" aria-hidden="true">${option.id === category.id ? "✓" : ""}</span></button>`).join("");
     const errorOptions = activeErrors().map((metric) => `<button type="button" role="menuitemradio" aria-checked="${metric.id === selected?.id}" class="error-picker-option${metric.id === selected?.id ? " is-selected" : ""}" data-picker-kind="error" data-picker-value="${escapeHtml(metric.id)}"><span>${escapeHtml(metric.label)}</span><span class="error-picker-check" aria-hidden="true">${metric.id === selected?.id ? "✓" : ""}</span></button>`).join("");
-    const categoryPicker = `<div class="error-picker"><button type="button" id="data-category-button" class="error-picker-button" aria-label="Choose data category" aria-haspopup="menu" aria-expanded="false" aria-controls="data-category-menu" data-picker-button data-menu-id="data-category-menu"><span class="error-picker-value">${escapeHtml(category.label)}</span></button><div id="data-category-menu" class="error-picker-menu" role="menu" aria-label="Choose data category" hidden>${categoryOptions}</div></div>`;
-    const errorPicker = selected ? `<div class="error-picker"><button type="button" id="score-metric-button" class="error-picker-button" aria-label="Choose error metric" aria-haspopup="menu" aria-expanded="false" aria-controls="score-metric-menu" data-picker-button data-menu-id="score-metric-menu"><span class="error-picker-value">${escapeHtml(selected.label)}</span></button><div id="score-metric-menu" class="error-picker-menu" role="menu" aria-label="Choose error metric for ${escapeHtml(category.label)}" hidden>${errorOptions}</div></div>` : "";
-    return `<div class="score-picker">${categoryPicker}${errorPicker}</div>`;
+    const errorPicker = selected ? `<div class="error-picker"><button type="button" id="score-metric-button" class="error-picker-button" aria-label="Choose error metric" aria-haspopup="menu" aria-expanded="false" aria-controls="score-metric-menu" data-picker-button data-menu-id="score-metric-menu"><span class="error-picker-value">${escapeHtml(selected.label)}</span></button><div id="score-metric-menu" class="error-picker-menu" role="menu" aria-label="Choose error metric" hidden>${errorOptions}</div></div>` : "";
+    return `<div class="score-picker">${errorPicker}</div>`;
   }
 
   function sortHeader(label, key) {
@@ -187,9 +185,8 @@
     const representationCell = `<td><span class="representation-badge ${escapeHtml(String(item.representation || "").toLowerCase())}">${escapeHtml(item.representation)}</span></td>`;
     let metricCells = "";
     const selected = currentError();
-    const scope = activeDataCategory()?.label || "Metric";
     const maxScore = Math.max(0, ...items.map((submission) => Number(errorValue(submission))).filter(Number.isFinite));
-    metricCells += errorCell(errorValue(item), `${scope} ${selected?.label || ""}`, maxScore);
+    metricCells += errorCell(errorValue(item), selected?.label || "Error", maxScore);
     for (const metric of metricDefinitions()) metricCells += metricCell(item, metric, items);
     return `<tr class="submission-row" data-href="${escapeHtml(compareHref)}" tabindex="0" aria-label="Open comparison for ${model}"><td class="rank-cell">${medal}</td>${modelCell}${representationCell}${metricCells}<td>${formatDate(item.submittedAt)}</td></tr>`;
   }
@@ -290,21 +287,8 @@
     $("#score-metric-button")?.focus();
   }
 
-  function selectDataCategory(key) {
-    const category = (problemOptions()?.categories || []).find((entry) => entry.id === key);
-    if (!category) return;
-    state.dataCategory = category.id;
-    state.errorKey = category.defaultError || category.errors?.[0]?.id || null;
-    state.sort.key = "score";
-    state.sort.direction = "asc";
-    state.sort.groupRepresentation = false;
-    state.representationFilter = "all";
-    render();
-    $("#data-category-button")?.focus();
-  }
-
   function sortLabel(key) {
-    if (key === "score") return `${activeDataCategory()?.label || "Metric"} ${currentError()?.label || ""}`.trim();
+    if (key === "score") return currentError()?.label || "Error";
     if (key.startsWith("metric:")) {
       return (problemOptions()?.metrics || []).find((metric) => metric.id === key.slice(7))?.label || key;
     }
@@ -365,8 +349,7 @@
   document.addEventListener("click", (event) => {
     const pickerOption = event.target.closest("[data-picker-kind][data-picker-value]");
     if (pickerOption) {
-      if (pickerOption.dataset.pickerKind === "category") selectDataCategory(pickerOption.dataset.pickerValue);
-      else selectError(pickerOption.dataset.pickerValue);
+      selectError(pickerOption.dataset.pickerValue);
       return;
     }
     const pickerButton = event.target.closest("[data-picker-button]");

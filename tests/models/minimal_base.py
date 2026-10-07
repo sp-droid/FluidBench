@@ -33,7 +33,7 @@ class BaseRegressionModel(nn.Module):
         optimizer = torch.optim.AdamW(self.parameters())
         
         # Avoid leaving an initial 0% bar above the live plot in notebooks.
-        history = {"train_losses": [], "train_epochs": [], "loss_name": self.loss.__class__.__name__}
+        history = {"train_losses": [], "val_losses": [], "train_epochs": [], "loss_name": self.loss.__class__.__name__}
         for epoch in range(EPOCHS):
             # Training
             self.train()
@@ -55,6 +55,17 @@ class BaseRegressionModel(nn.Module):
             train_loss /= len(train_dataloader)
             history["train_losses"].append(train_loss)
             history["train_epochs"].append(epoch)
+
+            # Validation
+            if val_dataloader is not None:
+                self.eval()
+                val_loss = 0
+                with torch.no_grad():
+                    for X, y in val_dataloader:
+                        X, y = self._to_device(X), self._to_device(y)
+                        val_loss += self.loss(self(X), y).item()
+                val_loss /= len(val_dataloader)
+                history["val_losses"].append(val_loss)
 
         return history
 

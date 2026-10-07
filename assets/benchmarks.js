@@ -9,7 +9,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const displayList = (value) => Array.isArray(value) ? value.join(", ") : "—";
   const displaySplits = (splits) => {
     if (!splits || typeof splits !== "object") return "—";
-    const values = ["train", "validation", "test"].map((key) => splits[key] == null ? NaN : Number(splits[key]));
+    const values = ["train", "test"].map((key) => splits[key] == null ? NaN : Number(splits[key]));
     if (values.some((value) => !Number.isFinite(value))) return "—";
     const percentages = values.map((value) => {
       const percent = value * 100;

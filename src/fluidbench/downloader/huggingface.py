@@ -1,4 +1,4 @@
-"""Download train, validation, and test splits from Hugging Face."""
+"""Download the train and test splits from Hugging Face."""
 
 from __future__ import annotations
 
@@ -7,7 +7,7 @@ from urllib.parse import urlparse
 
 from huggingface_hub import snapshot_download
 
-_SPLITS = ("train", "validation", "test")
+_SPLITS = ("train", "test")
 
 
 def _hub_dataset_id(source: str) -> str:
@@ -29,7 +29,7 @@ def _split_complete(split_dir: Path) -> bool:
 
 
 def download_dataset(source: str, dataset_id: str, dataset_dir: Path) -> Path:
-    """Download only the three split folders into the dataset's local folder."""
+    """Download only the split folders into the dataset's local folder."""
     hub_dataset_id = _hub_dataset_id(source)
     if all(_split_complete(dataset_dir / split) for split in _SPLITS):
         return dataset_dir

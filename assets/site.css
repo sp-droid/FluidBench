@@ -407,6 +407,8 @@ h1, h2, h3 { font-family: Manrope, "Segoe UI", Arial, sans-serif; }
 .compare-facts dt { margin-bottom: 3px; color: #7a89a0; font-size: 8px; }
 .compare-facts dd { margin: 0; color: #1d3557; font-size: 10px; font-weight: 650; overflow-wrap: anywhere; }
 .compare-chart-empty { padding: 30px 12px; border: 1px dashed #d7e0ec; border-radius: 8px; color: #77869c; font-size: 10px; text-align: center; }
+.training-chart-empty { aspect-ratio: 440 / 210; display: grid; place-items: center; padding: 0 12px; }
+.training-summary { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .rollout-analysis-controls { display: grid; grid-template-columns: minmax(105px,.7fr) minmax(0,1.3fr); gap: 7px; margin: 9px 0 11px; }
 .rollout-analysis-controls label { min-width: 0; display: grid; gap: 4px; color: #657590; font-size: 8px; font-weight: 650; }
 .rollout-analysis-controls select { width: 100%; min-width: 0; height: 31px; padding: 0 8px; border: 1px solid #d4dfec; border-radius: 6px; color: #173b72; background: #fff; font: inherit; font-size: 9px; }
@@ -448,20 +450,31 @@ h1, h2, h3 { font-family: Manrope, "Segoe UI", Arial, sans-serif; }
 .rollout-in-graph-legend .rollout-legend-reference-band { fill: #8493a8; opacity: .18; stroke: #8493a8; stroke-width: .5; }
 .rollout-in-graph-legend .rollout-legend-prediction-band { fill: var(--curve-color); opacity: .18; stroke: var(--curve-color); stroke-width: .5; }
 .rollout-chart-note { margin: 3px 1px 0; color: #8793a5; font-size: 7px; }
+.training-chart-wrap { width: 100%; overflow: hidden; position: relative; }
+.training-chart { width: 100%; height: auto; display: block; overflow: visible; }
 .chart-gridline line { stroke: #e8edf4; stroke-width: 1; }
 .chart-gridline text, .chart-tick text { fill: #7888a0; font-family: inherit; font-size: 8px; }
 .chart-tick line, .chart-axis { stroke: #bac8d9; stroke-width: 1; }
 .chart-axis-label { fill: #6f8098; font-family: inherit; font-size: 8px; }
 .chart-y-label { font-size: 7px; }
 .chart-series { fill: none; stroke: var(--curve-color); stroke-linecap: round; stroke-linejoin: round; stroke-width: 2.5; }
+.chart-validation-line { stroke-dasharray: 5 4; opacity: .58; stroke-width: 2; }
 .chart-point { stroke: var(--curve-color); stroke-width: 1.2; cursor: crosshair; }
+.chart-point-training { fill: var(--curve-color); }
+.chart-point-validation { fill: #fff; }
 .chart-point:hover { r: 5; stroke-width: 2; }
 .chart-hover-tooltip { position: absolute; z-index: 4; max-width: min(260px, calc(100% - 12px)); padding: 6px 8px; border: 1px solid #c9d7e9; border-radius: 6px; color: #193455; background: rgba(255,255,255,.97); box-shadow: 0 5px 16px rgba(26,54,92,.14); font-size: 9px; line-height: 1.35; font-variant-numeric: tabular-nums; white-space: nowrap; pointer-events: none; }
 .chart-hover-tooltip[hidden] { display: none; }
 .chart-legend-in-graph rect { fill: rgba(255,255,255,.94); stroke: #dfe7f1; stroke-width: .8; }
 .chart-legend-in-graph text { fill: #526782; font-family: inherit; font-size: 7px; }
+.chart-legend-in-graph .chart-legend-loss-name { fill: #8793a5; font-size: 6.5px; }
+.chart-legend-training, .chart-legend-validation { stroke: var(--curve-color); stroke-width: 1.8; }
+.chart-legend-validation { stroke-dasharray: 4 3; opacity: .62; }
+.training-chart-legend { display: flex; align-items: center; flex-wrap: wrap; gap: 7px 13px; color: #566a86; font-size: 8px; }
+.training-chart-legend > span { display: inline-flex; align-items: center; gap: 5px; }
 .legend-line { width: 16px; height: 0; border-top: 2px solid var(--curve-color); }
 .legend-line-dashed { border-top-style: dashed; opacity: .65; }
+.training-chart-legend .chart-loss-name { margin-left: auto; color: #7b8ba2; }
 .compare-loss-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 6px; margin: 9px 0 0; }
 .compare-loss-item { display: flex; align-items: center; justify-content: space-between; gap: 7px; min-width: 0; padding: 8px 9px; border: 1px solid #e8edf4; border-radius: 7px; background: #fafcff; }
 .compare-loss-item dt { min-width: 0; color: #6d7d95; font-size: 8px; }

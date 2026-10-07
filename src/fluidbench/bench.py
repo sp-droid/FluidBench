@@ -22,6 +22,7 @@ from .downloader import download_dataset
 
 _BATCH_SIZE = 8
 _ID_PATTERN = re.compile(r"^[a-z0-9_-]+$", re.IGNORECASE)
+_HISTORY_KEYS = ("train_error_history", "val_error_history", "train_error_name", "val_split")
 _ROLLOUT_METRIC_KEYS = (
     "rmse",
     "rolloutRmse",
@@ -65,33 +66,73 @@ def _validate_config(config: Mapping[str, Any]) -> dict[str, Any]:
     if not isinstance(representation, str) or representation not in {"Graph", "Grid"}:
         raise ValueError("Config field 'representation' must be 'Graph' or 'Grid'.")
 
+    misplaced = [key for key in _HISTORY_KEYS if key in config]
+    if misplaced:
+        raise ValueError(
+            f"Pass {misplaced} in the separate training_history argument of run(), "
+            "not in the submission config."
+        )
+
     return config
 
 
+def _validate_training_history(history: Mapping[str, Any]) -> dict[str, Any]:
+    """Check the optional training curves recorded by the user while training."""
+    if not isinstance(history, Mapping):
+        raise ValueError("training_history must be a JSON object (mapping).")
+    missing = [key for key in _HISTORY_KEYS if key not in history]
+    if missing:
+        raise ValueError(f"training_history needs all of {_HISTORY_KEYS}; missing {missing}.")
+
+    def is_number(value: Any) -> bool:
+        return isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value)
+
+    for key in ("train_error_history", "val_error_history"):
+        values = history[key]
+        if not isinstance(values, Sequence) or isinstance(values, (str, bytes)) or not values:
+            raise ValueError(f"training_history[{key!r}] must be a non-empty list of numbers.")
+        if not all(is_number(value) for value in values):
+            raise ValueError(f"training_history[{key!r}] must contain only finite numbers.")
+    if len(history["train_error_history"]) != len(history["val_error_history"]):
+        raise ValueError("'train_error_history' and 'val_error_history' must have one value per epoch.")
+    name = history["train_error_name"]
+    if not isinstance(name, str) or not name.strip():
+        raise ValueError("training_history['train_error_name'] must be a non-empty string.")
+    split = history["val_split"]
+    if not is_number(split) or not 0 < split < 1:
+        raise ValueError(
+            "training_history['val_split'] must be the fraction of the training data "
+            "held out for validation, between 0 and 1 (e.g. 0.1)."
+        )
+    return {
+        "lossName": name.strip(),
+        "validationSplit": float(split),
+        "epochs": list(range(1, len(history["train_error_history"]) + 1)),
+        "trainingLosses": [float(value) for value in history["train_error_history"]],
+        "validationLosses": [float(value) for value in history["val_error_history"]],
+    }
+
+
 def _load_case(case_path: Path) -> CFDataset:
+    """Load one case's snapshots as (snapshot i, snapshot i + 1) pairs."""
     try:
         with h5py.File(case_path, "r") as case_file:
-            scalars = case_file["inputs/scalars"][:]
-            fields = case_file["inputs/fields"][:]
-            targets = case_file["targets/fields"][:]
+            scalars = case_file["scalars"][:]
+            fields = case_file["fields"][:]
     except KeyError as exc:
-        raise ValueError(
-            f"Benchmark case {case_path} must contain inputs/scalars, "
-            "inputs/fields, and targets/fields."
-        ) from exc
+        raise ValueError(f"Benchmark case {case_path} must contain scalars and fields.") from exc
     except OSError as exc:
         raise ValueError(f"Could not read benchmark case file: {case_path}") from exc
 
-    lengths = (len(scalars), len(fields), len(targets))
-    if len(set(lengths)) != 1:
+    if len(scalars) != len(fields):
         raise ValueError(
-            f"Benchmark case {case_path} has mismatched sample counts: "
-            f"scalars={lengths[0]}, fields={lengths[1]}, targets={lengths[2]}."
+            f"Benchmark case {case_path} has mismatched snapshot counts: "
+            f"scalars={len(scalars)}, fields={len(fields)}."
         )
-    if not targets.size:
-        raise ValueError(f"Benchmark case {case_path} contains no samples.")
+    if len(fields) < 2:
+        raise ValueError(f"Benchmark case {case_path} needs at least two snapshots.")
 
-    return CFDataset(scalars, fields, targets, np.arange(len(targets)))
+    return CFDataset(scalars[:-1], fields[:-1], fields[1:], np.arange(len(fields) - 1))
 
 
 def _load_split(dataset_dir: Path, split: str) -> list[CFDataset]:
@@ -533,15 +574,24 @@ def _submission_root() -> Path:
     return Path.cwd() / "submission"
 
 
-def run(model: Any, submission_config: Mapping[str, Any]) -> dict[str, Any]:
+def run(
+    model: Any,
+    submission_config: Mapping[str, Any],
+    training_history: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
     """Evaluate an already trained ``model`` and write its submission record.
 
     Pass a decoded JSON object with submission metadata, including ``datasetId``.
+    ``training_history`` is optional and publishes the training curves: a mapping
+    with ``train_error_history`` and ``val_error_history`` (one value per epoch),
+    ``train_error_name`` (the error those values measure) and ``val_split`` (the
+    fraction of the training data held out for validation, e.g. 0.1).
     All supported metrics are calculated here from the benchmark test split;
     the input config does not need a ``metrics`` field. Artifacts are saved to
     ``./submission`` under the current working directory.
     """
     config = _validate_config(submission_config)
+    history = None if training_history is None else _validate_training_history(training_history)
     benchmark_id = config["datasetId"]
     dataset_dir = download_dataset(benchmark_id)
     test_cases = _load_split(dataset_dir, "test")
@@ -555,23 +605,27 @@ def run(model: Any, submission_config: Mapping[str, Any]) -> dict[str, Any]:
     metrics["efficiency"]["parameters"] = int(sum(parameter.numel() for parameter in model.parameters()))
 
     submission = deepcopy(config)
-    submission.pop("metrics", None)
-    submission.pop("artifacts", None)
+    for key in ("metrics", "artifacts"):
+        submission.pop(key, None)
     submission["datasetId"] = benchmark_id
     submission["submittedAt"] = date.today().isoformat()
     submission["metrics"] = metrics
-    submission["artifacts"] = {"rolloutAnalysis": "rollout-analysis.json"}
+    artifacts = {"rolloutAnalysis": rollout_analysis}
+    if history is not None:
+        artifacts["trainingHistory"] = history
+    filenames = {"rolloutAnalysis": "rollout-analysis.json", "trainingHistory": "training-history.json"}
+    submission["artifacts"] = {key: filenames[key] for key in artifacts}
 
     root = _submission_root() / benchmark_id
-    rollout_analysis_path = root / config["id"] / "rollout-analysis.json"
     submission_path = root / f"{config['id']}.json"
-    rollout_analysis_path.parent.mkdir(parents=True, exist_ok=True)
+    (root / config["id"]).mkdir(parents=True, exist_ok=True)
     with submission_path.open("w", encoding="utf-8") as submission_file:
         json.dump(submission, submission_file, indent=2, allow_nan=False)
         submission_file.write("\n")
-    with rollout_analysis_path.open("w", encoding="utf-8") as analysis_file:
-        json.dump(rollout_analysis, analysis_file, indent=2, allow_nan=False)
-        analysis_file.write("\n")
+    for key, content in artifacts.items():
+        with (root / config["id"] / filenames[key]).open("w", encoding="utf-8") as artifact_file:
+            json.dump(content, artifact_file, indent=2, allow_nan=False)
+            artifact_file.write("\n")
 
     print(f"submission written to 'submission/{benchmark_id}' folder")
     return submission

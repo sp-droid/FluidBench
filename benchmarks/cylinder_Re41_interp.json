@@ -6,7 +6,6 @@
   "dataOrigin": {
     "pretrain": "none",
     "train": "synthetic",
-    "validation": "synthetic",
     "test": "synthetic"
   },
   "mesh": "Structured",
@@ -29,9 +28,8 @@
     "Uy"
   ],
   "splitFractions": {
-    "train": 0.455,
-    "validation": 0.045,
+    "train": 0.5,
     "test": 0.5
   },
-  "sample_count": 198
+  "sample_count": 200
 }

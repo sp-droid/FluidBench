@@ -37,8 +37,8 @@
       }
     },
     "efficiency": {
-      "inferenceMs": 0.41744343417865987,
-      "memoryGb": 0.000787968,
+      "inferenceMs": 0.06802525251370037,
+      "memoryGb": 0.000789504,
       "parameters": 1
     },
     "perVariable": {
@@ -62,6 +62,7 @@
     "rolloutRelativeL2": 1.0
   },
   "artifacts": {
-    "rolloutAnalysis": "rollout-analysis.json"
+    "rolloutAnalysis": "rollout-analysis.json",
+    "trainingHistory": "training-history.json"
   }
 }
