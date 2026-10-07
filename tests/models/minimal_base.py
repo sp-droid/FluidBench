@@ -27,7 +27,7 @@ class BaseRegressionModel(nn.Module):
     # Train the model
     def fit(self,
         train_dataloader,
-        val_dataloader=None
+        val_dataloader
     ):
         EPOCHS = 15
         optimizer = torch.optim.AdamW(self.parameters())
@@ -57,15 +57,14 @@ class BaseRegressionModel(nn.Module):
             history["train_epochs"].append(epoch)
 
             # Validation
-            if val_dataloader is not None:
-                self.eval()
-                val_loss = 0
-                with torch.no_grad():
-                    for X, y in val_dataloader:
-                        X, y = self._to_device(X), self._to_device(y)
-                        val_loss += self.loss(self(X), y).item()
-                val_loss /= len(val_dataloader)
-                history["val_losses"].append(val_loss)
+            self.eval()
+            val_loss = 0
+            with torch.no_grad():
+                for X, y in val_dataloader:
+                    X, y = self._to_device(X), self._to_device(y)
+                    val_loss += self.loss(self(X), y).item()
+            val_loss /= len(val_dataloader)
+            history["val_losses"].append(val_loss)
 
         return history
 
