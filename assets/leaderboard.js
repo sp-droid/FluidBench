@@ -121,7 +121,8 @@
   function columns() {
     const common = ["<th scope=\"col\">#</th>", sortHeader("Model", "model"), sortHeader("Representation", "representation")];
     const metrics = metricDefinitions();
-    const content = [...common, scoreHeader()];
+    // The bar column has no heading so the score number and its bar never share a cell.
+    const content = [...common, scoreHeader(), '<th class="score-bar-heading" aria-hidden="true"></th>'];
     for (const metric of metrics) content.push(sortHeader(metric.label, metricSortKey(metric)));
     content.push(sortHeader("Submitted", "submitted"));
     return { html: content.join(""), count: content.length };
@@ -145,13 +146,27 @@
     return null;
   }
 
-  function errorCell(score, label, max) {
+  // Log-scaled bar length between the best and worst visible scores, so close results stay distinguishable.
+  function scoreRange(items) {
+    const scores = items.map((submission) => Number(errorValue(submission))).filter((value) => Number.isFinite(value) && value > 0);
+    return scores.length ? { min: Math.min(...scores), max: Math.max(...scores) } : null;
+  }
+
+  function barWidth(score, range) {
+    const full = 58;
+    const minimum = 8;
+    if (!range || range.max <= range.min) return full;
+    const value = Math.max(Number(score), range.min);
+    const position = (Math.log10(value) - Math.log10(range.min)) / (Math.log10(range.max) - Math.log10(range.min));
+    return minimum + position * (full - minimum);
+  }
+
+  function errorCell(score, label, range) {
     if (score === null || score === undefined || !Number.isFinite(Number(score))) {
-      return `<td class="metric-value" title="${escapeHtml(label)}: unavailable">—</td>`;
+      return `<td class="metric-value" title="${escapeHtml(label)}: unavailable">—</td><td class="score-bar-cell"></td>`;
     }
-    const width = max > 0 ? Math.max(12, (score / max) * 58) : 12;
     const title = `${label}: ${formatError(score)}`;
-    return `<td class="metric-value" title="${escapeHtml(title)}">${formatError(score)}<span class="metric-bar" role="img" aria-label="${escapeHtml(title)}" title="${escapeHtml(title)}"><span style="width:${width}px"></span></span></td>`;
+    return `<td class="metric-value" title="${escapeHtml(title)}">${formatError(score)}</td><td class="score-bar-cell"><span class="metric-bar" role="img" aria-label="${escapeHtml(`${title} (log scale)`)}" title="${escapeHtml(`${title} · log scale`)}"><span style="width:${barWidth(score, range).toFixed(1)}px"></span></span></td>`;
   }
 
   function formattedValue(value, format) {
@@ -169,8 +184,8 @@
   function metricCell(item, metric, items) {
     const value = getPath(item.metrics, metric.path);
     if (metric.format === "error") {
-      const max = Math.max(0, ...items.map((submission) => Number(getPath(submission.metrics, metric.path))).filter(Number.isFinite));
-      return errorCell(value, metric.label, max);
+      const rendered = Number.isFinite(Number(value)) && value !== null ? formatError(value) : "—";
+      return `<td class="metric-value" title="${escapeHtml(`${metric.label}: ${rendered}`)}">${rendered}</td>`;
     }
     const rendered = formattedValue(value, metric.format);
     return `<td${value == null ? "" : ` title=\"${escapeHtml(`${metric.label}: ${rendered}`)}\"`}>${rendered}</td>`;
@@ -185,8 +200,7 @@
     const representationCell = `<td><span class="representation-badge ${escapeHtml(String(item.representation || "").toLowerCase())}">${escapeHtml(item.representation)}</span></td>`;
     let metricCells = "";
     const selected = currentError();
-    const maxScore = Math.max(0, ...items.map((submission) => Number(errorValue(submission))).filter(Number.isFinite));
-    metricCells += errorCell(errorValue(item), selected?.label || "Error", maxScore);
+    metricCells += errorCell(errorValue(item), selected?.label || "Error", scoreRange(items));
     for (const metric of metricDefinitions()) metricCells += metricCell(item, metric, items);
     return `<tr class="submission-row" data-href="${escapeHtml(compareHref)}" tabindex="0" aria-label="Open comparison for ${model}"><td class="rank-cell">${medal}</td>${modelCell}${representationCell}${metricCells}<td>${formatDate(item.submittedAt)}</td></tr>`;
   }

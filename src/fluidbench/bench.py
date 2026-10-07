@@ -23,6 +23,7 @@ from .downloader import download_dataset
 _BATCH_SIZE = 8
 _ID_PATTERN = re.compile(r"^[a-z0-9_-]+$", re.IGNORECASE)
 _HISTORY_KEYS = ("train_error_history", "val_error_history", "train_error_name", "val_split")
+_MAX_PLOT_POINTS = 200
 _ROLLOUT_METRIC_KEYS = (
     "rmse",
     "rolloutRmse",
@@ -76,6 +77,32 @@ def _validate_config(config: Mapping[str, Any]) -> dict[str, Any]:
     return config
 
 
+def _plot_indices(count: int) -> list[int]:
+    """At most _MAX_PLOT_POINTS equispaced indices into a series, always keeping the first and last."""
+    if count <= _MAX_PLOT_POINTS:
+        return list(range(count))
+    return [round(index * (count - 1) / (_MAX_PLOT_POINTS - 1)) for index in range(_MAX_PLOT_POINTS)]
+
+
+def _thin_rollout_analysis(analysis: dict[str, Any]) -> dict[str, Any]:
+    """Limit the plotted rollout series (errors per step, spectra per wavenumber) to _MAX_PLOT_POINTS."""
+    steps = _plot_indices(len(analysis["timeSteps"]))
+    analysis["timeSteps"] = [analysis["timeSteps"][i] for i in steps]
+    wavenumbers = _plot_indices(len(analysis["wavenumbers"]))
+    analysis["wavenumbers"] = [analysis["wavenumbers"][i] for i in wavenumbers]
+    for trajectory in analysis["trajectories"]:
+        # Trajectories can be shorter than timeSteps; keep the shared indices that exist.
+        trajectory["errors"] = {
+            key: [values[i] for i in steps if i < len(values)]
+            for key, values in trajectory["errors"].items()
+        }
+        for spectrum in (trajectory.get("kineticEnergySpectrum") or {}).values():
+            indices = _plot_indices(len(spectrum["wavenumbers"]))
+            for key in ("wavenumbers", "mean", "standardDeviation"):
+                spectrum[key] = [spectrum[key][i] for i in indices]
+    return analysis
+
+
 def _validate_training_history(history: Mapping[str, Any]) -> dict[str, Any]:
     """Check the optional training curves recorded by the user while training."""
     if not isinstance(history, Mapping):
@@ -104,12 +131,13 @@ def _validate_training_history(history: Mapping[str, Any]) -> dict[str, Any]:
             "training_history['val_split'] must be the fraction of the training data "
             "held out for validation, between 0 and 1 (e.g. 0.1)."
         )
+    epochs = _plot_indices(len(history["train_error_history"]))
     return {
         "lossName": name.strip(),
         "validationSplit": float(split),
-        "epochs": list(range(1, len(history["train_error_history"]) + 1)),
-        "trainingLosses": [float(value) for value in history["train_error_history"]],
-        "validationLosses": [float(value) for value in history["val_error_history"]],
+        "epochs": [index + 1 for index in epochs],
+        "trainingLosses": [float(history["train_error_history"][index]) for index in epochs],
+        "validationLosses": [float(history["val_error_history"][index]) for index in epochs],
     }
 
 
@@ -567,7 +595,8 @@ def _evaluate_test_split(
         },
         **rollout_average,
     }
-    return metrics, rollout_analysis
+    # Metrics above use every snapshot; only the stored plot series are thinned.
+    return metrics, _thin_rollout_analysis(rollout_analysis)
 
 
 def _submission_root() -> Path:

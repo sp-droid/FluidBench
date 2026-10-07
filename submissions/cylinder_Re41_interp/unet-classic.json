@@ -1,0 +1,68 @@
+{
+  "datasetId": "cylinder_Re41_interp",
+  "id": "unet-classic",
+  "model": "UNet Classic",
+  "authors": "Pablo A.C.",
+  "year": 2026,
+  "representation": "Grid",
+  "submittedAt": "2026-10-07",
+  "metrics": {
+    "rmse": 0.0025657602486230794,
+    "mae": 0.0020602978539408017,
+    "relativeL2": 0.004327884918478211,
+    "rollout": {
+      "step1": {
+        "rmse": 0.003647536185747373,
+        "rolloutRmse": 0.003647536185747373,
+        "mae": 0.0026413755900016045,
+        "rolloutMae": 0.0026413755900016045,
+        "relativeL2": 0.00626354882466537,
+        "rolloutRelativeL2": 0.00626354882466537
+      },
+      "step25": {
+        "rmse": 0.03186216262004068,
+        "rolloutRmse": 0.020674120292423378,
+        "mae": 0.026862384524467764,
+        "rolloutMae": 0.017170624179809205,
+        "relativeL2": 0.05391092081554453,
+        "rolloutRelativeL2": 0.035140624979747404
+      },
+      "step100": {
+        "rmse": null,
+        "rolloutRmse": 0.04169300260423289,
+        "mae": null,
+        "rolloutMae": 0.03309336051474683,
+        "relativeL2": null,
+        "rolloutRelativeL2": 0.07018421885437064
+      }
+    },
+    "efficiency": {
+      "inferenceMs": 0.6367000004493001,
+      "memoryGb": 0.0370688,
+      "parameters": 1918979
+    },
+    "perVariable": {
+      "velocityRmse": 0.002936443539104669,
+      "pressureRmse": 0.001582395539536178
+    },
+    "rolloutAnalysis": {
+      "trajectoryCount": 1,
+      "snapshotCountByTrajectory": [
+        99
+      ],
+      "errorMetricIds": [
+        "rmse",
+        "mae",
+        "relativeL2"
+      ],
+      "hasKineticEnergySpectrum": true
+    },
+    "rolloutRmse": 0.04169300260423289,
+    "rolloutMae": 0.03309336051474683,
+    "rolloutRelativeL2": 0.07018421885437064
+  },
+  "artifacts": {
+    "rolloutAnalysis": "rollout-analysis.json",
+    "trainingHistory": "training-history.json"
+  }
+}

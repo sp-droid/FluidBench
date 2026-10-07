@@ -153,29 +153,53 @@
     return paths.join(" ");
   }
 
-  function bandBoundaryPaths(xs, means, standardDeviations, yFor, seriesClass) {
+  function bandBoundaryPaths(xs, means, standardDeviations, yFor, seriesClass, series = "") {
     if (!means.length || !standardDeviations.some((value) => Number(value) > 0)) return "";
     const upper = means.map((mean, index) => mean == null ? null : Number(mean) + Number(standardDeviations[index] || 0));
     const lower = means.map((mean, index) => mean == null ? null : Math.max(0, Number(mean) - Number(standardDeviations[index] || 0)));
-    return `<path class="rollout-band-edge ${seriesClass}" d="${linePath(xs, upper, yFor)}"></path><path class="rollout-band-edge ${seriesClass}" d="${linePath(xs, lower, yFor)}"></path>`;
+    const tag = series ? ` data-series="${series}"` : "";
+    return `<path class="rollout-band-edge ${seriesClass}"${tag} d="${linePath(xs, upper, yFor)}"></path><path class="rollout-band-edge ${seriesClass}"${tag} d="${linePath(xs, lower, yFor)}"></path>`;
   }
 
-  function chartGrid(yMax, yFor, xLabels, xPositions, xLabel, yLabel) {
-    const yTicks = [0, 0.5, 1].map((fraction) => {
-      const value = yMax * fraction;
+  // Log range fitted to the data (not rounded out to whole decades), with a small margin.
+  function fittedLogRange(minimum, maximum) {
+    let low = Math.log10(minimum);
+    let high = Math.log10(maximum);
+    if (high - low < 0.2) {
+      const middle = (low + high) / 2;
+      low = middle - 0.1;
+      high = middle + 0.1;
+    }
+    const margin = (high - low) * 0.04;
+    return { minExponent: low - margin, maxExponent: high + margin };
+  }
+
+  // Tick values at whole decades inside a log range; falls back to its ends when it spans less than two decades.
+  function logTicks(range, maxTicks = 6) {
+    const first = Math.ceil(range.minExponent);
+    const last = Math.floor(range.maxExponent);
+    if (last - first < 1) return [10 ** range.minExponent, 10 ** range.maxExponent];
+    const step = Math.max(1, Math.ceil((last - first + 1) / maxTicks));
+    const ticks = [];
+    for (let exponent = first; exponent <= last; exponent += step) ticks.push(10 ** exponent);
+    return ticks;
+  }
+
+  function chartGrid(yMax, yFor, xLabels, xPositions, xLabel, yLabel, yTickValues = null) {
+    const yTicks = (yTickValues || [0, 0.5, 1].map((fraction) => yMax * fraction)).map((value) => {
       const y = yFor(value);
       return `<g class="rollout-gridline"><line x1="52" y1="${y.toFixed(1)}" x2="428" y2="${y.toFixed(1)}"/><text x="46" y="${(y + 3).toFixed(1)}" text-anchor="end">${axisNumber(value)}</text></g>`;
     }).join("");
     const xTicks = xLabels.map((label, index) => `<g class="rollout-tick"><line x1="${xPositions[index].toFixed(1)}" y1="181" x2="${xPositions[index].toFixed(1)}" y2="185"/><text x="${xPositions[index].toFixed(1)}" y="198" text-anchor="middle">${escapeHtml(label)}</text></g>`).join("");
-    return `${yTicks}${xTicks}<line class="rollout-axis" x1="52" y1="20" x2="52" y2="181"/><line class="rollout-axis" x1="52" y1="181" x2="428" y2="181"/><text class="rollout-axis-label rollout-y-axis-label" transform="translate(13 100) rotate(-90)" text-anchor="middle">${escapeHtml(yLabel)}</text><text class="rollout-axis-label" x="240" y="220" text-anchor="middle">${escapeHtml(xLabel)}</text>`;
+    return `${yTicks}${xTicks}<line class="rollout-axis" x1="52" y1="8" x2="52" y2="181"/><line class="rollout-axis" x1="52" y1="181" x2="428" y2="181"/><text class="rollout-axis-label rollout-y-axis-label" transform="translate(13 100) rotate(-90)" text-anchor="middle">${escapeHtml(yLabel)}</text><text class="rollout-axis-label" x="240" y="220" text-anchor="middle">${escapeHtml(xLabel)}</text>`;
   }
 
   function rolloutErrorChart(analysis, metricId, trajectoryId, comparisonAnalysis = null) {
     const series = rolloutErrorSeries(analysis, metricId, trajectoryId);
     const spreads = series.mean.map((mean, index) => mean == null ? null : Number(mean) + Number(series.standardDeviation[index] || 0)).filter(Number.isFinite);
     if (!series.steps.length || !spreads.length) return `<div class="compare-chart-empty">No rollout error data is available.</div>`;
-    const yMax = Math.max(...spreads, Number.EPSILON) * 1.08;
-    const yFor = (value) => 181 - (Math.max(0, value) / yMax) * 161;
+    const yMax = Math.max(...spreads, Number.EPSILON) * 1.03;
+    const yFor = (value) => 181 - (Math.max(0, value) / yMax) * 173;
     const xFor = (index) => 52 + (series.steps.length === 1 ? 0 : index / (series.steps.length - 1)) * 376;
     const xs = series.steps.map((_, index) => xFor(index));
     const comparisonSeries = comparisonAnalysis ? rolloutErrorSeries(comparisonAnalysis, metricId, trajectoryId) : null;
@@ -200,16 +224,15 @@
         if (!tone) return "";
         const result = ownMean < otherMean ? "Lower error" : ownMean > otherMean ? "Higher error" : "Equal error";
         const title = `Snapshots ${step}–${nextStep} · ${label}: ${ownMean.toPrecision(5)} · Comparison: ${otherMean.toPrecision(5)} · ${result}`;
-        return `<line class="rollout-comparison-segment ${tone}" x1="${xs[index].toFixed(1)}" y1="181" x2="${xs[index + 1].toFixed(1)}" y2="181"><title>${escapeHtml(title)}</title></line>`;
+        return `<line class="rollout-comparison-segment ${tone}" data-series="comparison" x1="${xs[index].toFixed(1)}" y1="181" x2="${xs[index + 1].toFixed(1)}" y2="181"><title>${escapeHtml(title)}</title></line>`;
       }).join("")
       : "";
-    const points = series.mean.map((value, index) => value == null ? "" : `<circle class="rollout-error-point" cx="${xs[index].toFixed(1)}" cy="${yFor(Number(value)).toFixed(1)}" r="2"><title>Snapshot ${series.steps[index]} · Mean ${label}: ${Number(value).toPrecision(5)} · SD: ${Number(series.standardDeviation[index] || 0).toPrecision(5)}</title></circle>`).join("");
     const grid = chartGrid(yMax, yFor, xLabels, xPositions, "Prediction snapshot", label);
     const legend = trajectoryId === "all"
-      ? `<g class="rollout-in-graph-legend"><rect x="316" y="23" width="107" height="22" rx="5"/><rect class="rollout-legend-mean-band" x="324" y="29" width="14" height="10" rx="2"/><line class="rollout-legend-mean" x1="324" y1="34" x2="338" y2="34"/><text x="343" y="37">Mean ± 1 SD</text></g>`
-      : `<g class="rollout-in-graph-legend"><rect x="337" y="23" width="86" height="22" rx="5"/><line class="rollout-legend-mean" x1="344" y1="34" x2="358" y2="34"/><text x="363" y="37">Snapshot error</text></g>`;
+      ? `<g class="rollout-in-graph-legend"><rect x="58" y="11" width="107" height="22" rx="5"/><g class="chart-legend-entry" data-legend-series="mean"><rect class="chart-legend-hit" x="60" y="13" width="103" height="18"/><rect class="rollout-legend-mean-band" x="66" y="17" width="14" height="10" rx="2"/><line class="rollout-legend-mean" x1="66" y1="22" x2="80" y2="22"/><text x="85" y="25">Mean ± 1 SD</text></g></g>`
+      : `<g class="rollout-in-graph-legend"><rect x="58" y="11" width="86" height="22" rx="5"/><g class="chart-legend-entry" data-legend-series="mean"><rect class="chart-legend-hit" x="60" y="13" width="82" height="18"/><line class="rollout-legend-mean" x1="65" y1="22" x2="79" y2="22"/><text x="84" y="25">Snapshot error</text></g></g>`;
     return `<div class="rollout-chart-wrap"><svg class="rollout-chart" viewBox="0 0 440 232" role="img" aria-label="${escapeHtml(label)} rollout error by prediction snapshot">
-      ${grid}<path class="rollout-band rollout-band-model" d="${bandPath(xs, series.mean, series.standardDeviation, yFor)}"></path>${bandBoundaryPaths(xs, series.mean, series.standardDeviation, yFor, "rollout-band-edge-model")}<path class="rollout-line rollout-error-line" d="${linePath(xs, series.mean, yFor)}"></path>${points}${comparisonSegments}
+      ${grid}<path class="rollout-band rollout-band-model" data-series="mean" d="${bandPath(xs, series.mean, series.standardDeviation, yFor)}"></path>${bandBoundaryPaths(xs, series.mean, series.standardDeviation, yFor, "rollout-band-edge-model", "mean")}<path class="rollout-line rollout-error-line" data-series="mean" d="${linePath(xs, series.mean, yFor)}"></path>${comparisonSegments}
       ${legend}
     </svg></div>`;
   }
@@ -238,16 +261,35 @@
       ...series.prediction.mean.map((value, index) => Number(value) + Number(series.prediction.standardDeviation[index] || 0)),
       Number.EPSILON,
     );
-    const yMax = maximum * 1.08;
-    const yFor = (value) => 181 - (Math.max(0, value) / yMax) * 161;
-    const xFor = (index) => 52 + (series.wavenumbers.length === 1 ? 0 : index / (series.wavenumbers.length - 1)) * 376;
+    // Log-log axes: energy and wavenumber both span orders of magnitude.
+    const positive = [series.target, series.prediction].flatMap((part) => part.mean.flatMap((value, index) => {
+      const sd = Number(part.standardDeviation[index] || 0);
+      return [Number(value), Number(value) + sd, Number(value) - sd];
+    })).filter((value) => Number.isFinite(value) && value > 0);
+    const energyRange = fittedLogRange(Math.min(...positive, maximum), maximum);
+    const yFor = (value) => {
+      const clamped = Math.min(Math.max(Number(value), 10 ** energyRange.minExponent), 10 ** energyRange.maxExponent);
+      return 181 - ((Math.log10(clamped) - energyRange.minExponent) / (energyRange.maxExponent - energyRange.minExponent)) * 173;
+    };
+    const yTickValues = logTicks(energyRange);
+    const kMin = Math.max(Number(series.wavenumbers[0]), Number.EPSILON);
+    const kMax = Number(series.wavenumbers[series.wavenumbers.length - 1]);
+    const logK = kMax > kMin;
+    const xFor = (index) => {
+      if (series.wavenumbers.length === 1) return 52;
+      if (!logK) return 52 + (index / (series.wavenumbers.length - 1)) * 376;
+      return 52 + ((Math.log10(Math.max(Number(series.wavenumbers[index]), kMin)) - Math.log10(kMin)) / (Math.log10(kMax) - Math.log10(kMin))) * 376;
+    };
     const xs = series.wavenumbers.map((_, index) => xFor(index));
     const comparisonSeries = comparisonAnalysis ? rolloutSpectrumSeries(comparisonAnalysis, trajectoryId) : null;
     const comparisonIndicesByWavenumber = new Map((comparisonSeries?.wavenumbers || []).map((wavenumber, index) => [String(wavenumber), index]));
-    const xLabels = [series.wavenumbers[0], series.wavenumbers[Math.floor((series.wavenumbers.length - 1) / 2)], series.wavenumbers[series.wavenumbers.length - 1]];
-    const xPositions = [xs[0], xs[Math.floor((xs.length - 1) / 2)], xs[xs.length - 1]];
-    const grid = chartGrid(yMax, yFor, xLabels, xPositions, "Wavenumber k", "Kinetic energy");
-    const markers = (values, name, className) => values.map((value, index) => `<circle class="rollout-spectrum-point ${className}" cx="${xs[index].toFixed(1)}" cy="${yFor(Number(value)).toFixed(1)}" r="2"><title>k = ${series.wavenumbers[index]} · ${name}: ${Number(value).toPrecision(5)}</title></circle>`).join("");
+    // Ticks at the powers of two present in the spectrum, plus its last wavenumber.
+    const tickIndices = series.wavenumbers
+      .map((wavenumber, index) => (Number.isInteger(Math.log2(Number(wavenumber))) || index === series.wavenumbers.length - 1 ? index : null))
+      .filter((index) => index != null);
+    const xLabels = tickIndices.map((index) => series.wavenumbers[index]);
+    const xPositions = tickIndices.map((index) => xs[index]);
+    const grid = chartGrid(null, yFor, xLabels, xPositions, "Wavenumber k · log scale", "Kinetic energy · log scale", yTickValues);
     const comparisonSegments = comparisonSeries?.target && comparisonSeries?.prediction
       ? series.wavenumbers.slice(0, -1).map((wavenumber, index) => {
         const nextWavenumber = series.wavenumbers[index + 1];
@@ -273,14 +315,13 @@
         if (!tone) return "";
         const result = ownGap < otherGap ? "Closer to reference" : ownGap > otherGap ? "Farther from reference" : "Equal distance from reference";
         const title = `Wavenumbers ${wavenumber}–${nextWavenumber} · Prediction/reference gap: ${ownGap.toPrecision(5)} · Comparison: ${otherGap.toPrecision(5)} · ${result}`;
-        return `<line class="rollout-comparison-segment ${tone}" x1="${xs[index].toFixed(1)}" y1="181" x2="${xs[index + 1].toFixed(1)}" y2="181"><title>${escapeHtml(title)}</title></line>`;
+        return `<line class="rollout-comparison-segment ${tone}" data-series="comparison" x1="${xs[index].toFixed(1)}" y1="181" x2="${xs[index + 1].toFixed(1)}" y2="181"><title>${escapeHtml(title)}</title></line>`;
       }).join("")
       : "";
-    const legend = `<g class="rollout-in-graph-legend"><rect x="258" y="23" width="165" height="22" rx="5"/><rect class="rollout-legend-reference-band" x="264" y="29" width="13" height="10" rx="2"/><line class="rollout-legend-reference" x1="264" y1="34" x2="277" y2="34"/><text x="281" y="37">Reference</text><rect class="rollout-legend-prediction-band" x="335" y="29" width="13" height="10" rx="2"/><line class="rollout-legend-prediction" x1="335" y1="34" x2="348" y2="34"/><text x="352" y="37">Prediction</text></g>`;
+    const legend = `<g class="rollout-in-graph-legend"><rect x="258" y="11" width="165" height="22" rx="5"/><g class="chart-legend-entry" data-legend-series="reference"><rect class="chart-legend-hit" x="260" y="13" width="70" height="18"/><rect class="rollout-legend-reference-band" x="264" y="17" width="13" height="10" rx="2"/><line class="rollout-legend-reference" x1="264" y1="22" x2="277" y2="22"/><text x="281" y="25">Reference</text></g><g class="chart-legend-entry" data-legend-series="prediction"><rect class="chart-legend-hit" x="331" y="13" width="88" height="18"/><rect class="rollout-legend-prediction-band" x="335" y="17" width="13" height="10" rx="2"/><line class="rollout-legend-prediction" x1="335" y1="22" x2="348" y2="22"/><text x="352" y="25">Prediction</text></g></g>`;
     return `<div class="rollout-chart-wrap"><svg class="rollout-chart" viewBox="0 0 440 232" role="img" aria-label="Kinetic energy spectrum of predicted and reference trajectories">
-      ${grid}<path class="rollout-band rollout-band-reference" d="${bandPath(xs, series.target.mean, series.target.standardDeviation, yFor)}"></path><path class="rollout-band rollout-band-model" d="${bandPath(xs, series.prediction.mean, series.prediction.standardDeviation, yFor)}"></path>${bandBoundaryPaths(xs, series.target.mean, series.target.standardDeviation, yFor, "rollout-band-edge-reference")}${bandBoundaryPaths(xs, series.prediction.mean, series.prediction.standardDeviation, yFor, "rollout-band-edge-model")}
-      <path class="rollout-line rollout-reference-line" d="${linePath(xs, series.target.mean, yFor)}"></path><path class="rollout-line rollout-prediction-line" d="${linePath(xs, series.prediction.mean, yFor)}"></path>
-      ${markers(series.target.mean, "Reference", "rollout-target-point")}${markers(series.prediction.mean, "Prediction", "rollout-prediction-point")}
+      ${grid}<path class="rollout-band rollout-band-reference" data-series="reference" d="${bandPath(xs, series.target.mean, series.target.standardDeviation, yFor)}"></path><path class="rollout-band rollout-band-model" data-series="prediction" d="${bandPath(xs, series.prediction.mean, series.prediction.standardDeviation, yFor)}"></path>${bandBoundaryPaths(xs, series.target.mean, series.target.standardDeviation, yFor, "rollout-band-edge-reference", "reference")}${bandBoundaryPaths(xs, series.prediction.mean, series.prediction.standardDeviation, yFor, "rollout-band-edge-model", "prediction")}
+      <path class="rollout-line rollout-reference-line" data-series="reference" d="${linePath(xs, series.target.mean, yFor)}"></path><path class="rollout-line rollout-prediction-line" data-series="prediction" d="${linePath(xs, series.prediction.mean, yFor)}"></path>
       ${comparisonSegments}
       ${legend}
     </svg></div>`;
@@ -308,7 +349,7 @@
   }
 
   function chartY(value, logScale) {
-    const clamped = Math.max(Number(value), 10 ** logScale.minExponent);
+    const clamped = Math.min(Math.max(Number(value), 10 ** logScale.minExponent), 10 ** logScale.maxExponent);
     const normalized = (Math.log10(clamped) - logScale.minExponent) / (logScale.maxExponent - logScale.minExponent);
     return 12 + (1 - normalized) * 164;
   }
@@ -340,27 +381,13 @@
     }).join(" ");
   }
 
-  function chartMarkers(points, field, logScale, label, maxEpoch) {
-    const left = 55;
-    const plotWidth = 373;
-    const markerClass = field === "trainingLoss" ? "chart-point-training" : "chart-point-validation";
-    return points.map((point) => {
-      const x = left + (Number(point.epoch) / maxEpoch) * plotWidth;
-      const y = chartY(point[field], logScale);
-      const exactValue = String(Number(point[field]));
-      const hoverInfo = `Epoch ${point.epoch} · ${label} loss: ${exactValue}`;
-      return `<circle class="chart-point ${markerClass}" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3.1" tabindex="0" role="img" aria-label="${escapeHtml(hoverInfo)}" data-hover-info="${escapeHtml(hoverInfo)}"></circle>`;
-    }).join("");
-  }
-
   function trainingChart(item, logScale) {
     const points = item.trainingHistory?.points || [];
     if (!points.length) return `<div class="training-chart-wrap"><div class="compare-chart-empty training-chart-empty">No training history provided.</div></div>`;
     const { max: dataMaxEpoch } = epochBounds(points);
     const maxEpoch = dataMaxEpoch > 0 ? dataMaxEpoch : 1;
-    const gridLines = Array.from({ length: logScale.maxExponent - logScale.minExponent + 1 }, (_, index) => logScale.maxExponent - index).map((exponent) => {
-      const y = chartY(10 ** exponent, logScale);
-      const value = 10 ** exponent;
+    const gridLines = logTicks(logScale).map((value) => {
+      const y = chartY(value, logScale);
       return `<g class="chart-gridline"><line x1="55" y1="${y}" x2="428" y2="${y}"/><text x="48" y="${y + 3}" text-anchor="end">${formatLoss(value)}</text></g>`;
     }).join("");
     const xTicks = epochTicks(dataMaxEpoch).map((epoch) => {
@@ -370,9 +397,8 @@
     const label = `${item.model} ${item.trainingHistory.lossName || "RMSE"} training and validation loss by epoch`;
     return `<div class="training-chart-wrap"><svg class="training-chart" viewBox="0 0 440 210" role="img" aria-label="${escapeHtml(label)}" preserveAspectRatio="xMidYMid meet">
       ${gridLines}${xTicks}<line class="chart-axis" x1="55" y1="12" x2="55" y2="176"/><line class="chart-axis" x1="55" y1="176" x2="428" y2="176"/>
-      <path class="chart-series chart-training-line" d="${chartPath(points, "trainingLoss", logScale, maxEpoch)}"></path><path class="chart-series chart-validation-line" d="${chartPath(points, "validationLoss", logScale, maxEpoch)}"></path>
-      ${chartMarkers(points, "trainingLoss", logScale, "Training", maxEpoch)}${chartMarkers(points, "validationLoss", logScale, "Validation", maxEpoch)}
-      <g class="chart-legend-in-graph"><rect x="277" y="17" width="147" height="32" rx="5"/><line class="chart-legend-training" x1="286" y1="28" x2="302" y2="28"/><text x="307" y="31">Training</text><line class="chart-legend-validation" x1="354" y1="28" x2="370" y2="28"/><text x="375" y="31">Validation</text><text class="chart-legend-loss-name" x="286" y="43">${escapeHtml(item.trainingHistory.lossName || "RMSE")} loss</text></g>
+      <path class="chart-series chart-validation-line" data-series="validation" d="${chartPath(points, "validationLoss", logScale, maxEpoch)}"></path><path class="chart-series chart-training-line" data-series="training" d="${chartPath(points, "trainingLoss", logScale, maxEpoch)}"></path>
+      <g class="chart-legend-in-graph"><rect x="277" y="17" width="147" height="32" rx="5"/><g class="chart-legend-entry" data-legend-series="training"><rect class="chart-legend-hit" x="282" y="20" width="66" height="14"/><line class="chart-legend-training" x1="286" y1="28" x2="302" y2="28"/><text x="307" y="31">Training</text></g><g class="chart-legend-entry" data-legend-series="validation"><rect class="chart-legend-hit" x="350" y="20" width="70" height="14"/><line class="chart-legend-validation" x1="354" y1="28" x2="370" y2="28"/><text x="375" y="31">Validation</text></g><text class="chart-legend-loss-name" x="286" y="43">${escapeHtml(item.trainingHistory.lossName || "RMSE")} loss</text></g>
       <text class="chart-axis-label chart-y-label" transform="translate(13 95) rotate(-90)" text-anchor="middle">${escapeHtml(item.trainingHistory.lossName || "RMSE")} loss · log scale</text>
       <text class="chart-axis-label" x="241" y="208" text-anchor="middle">Training epoch</text>
     </svg></div>`;
@@ -474,64 +500,6 @@
     window.history.replaceState({}, "", url);
   }
 
-  function bindChartTooltips(panel) {
-    panel.querySelectorAll(".training-chart-wrap").forEach((wrap) => {
-      const tooltip = document.createElement("div");
-      tooltip.className = "chart-hover-tooltip";
-      tooltip.setAttribute("role", "tooltip");
-      tooltip.hidden = true;
-      wrap.appendChild(tooltip);
-
-      let timer = 0;
-      let activePoint = null;
-      const hide = () => {
-        window.clearTimeout(timer);
-        activePoint = null;
-        tooltip.hidden = true;
-      };
-      const schedule = (point) => {
-        window.clearTimeout(timer);
-        activePoint = point;
-        timer = window.setTimeout(() => {
-          if (!activePoint || !wrap.contains(activePoint)) return;
-          tooltip.textContent = activePoint.dataset.hoverInfo;
-          tooltip.hidden = false;
-          const wrapRect = wrap.getBoundingClientRect();
-          const pointRect = activePoint.getBoundingClientRect();
-          const pointX = pointRect.left + pointRect.width / 2 - wrapRect.left;
-          const pointY = pointRect.top - wrapRect.top;
-          const halfWidth = tooltip.offsetWidth / 2;
-          const left = Math.min(Math.max(halfWidth + 4, pointX), wrap.clientWidth - halfWidth - 4);
-          tooltip.style.left = `${left}px`;
-          if (pointY > tooltip.offsetHeight + 8) {
-            tooltip.style.top = `${pointY - 6}px`;
-            tooltip.style.transform = "translate(-50%, -100%)";
-          } else {
-            tooltip.style.top = `${pointY + pointRect.height + 7}px`;
-            tooltip.style.transform = "translateX(-50%)";
-          }
-        }, 100);
-      };
-
-      wrap.addEventListener("pointerover", (event) => {
-        const point = event.target.closest?.(".chart-point");
-        if (point && wrap.contains(point)) schedule(point);
-      });
-      wrap.addEventListener("pointerout", (event) => {
-        const point = event.target.closest?.(".chart-point");
-        const nextPoint = event.relatedTarget?.closest?.(".chart-point");
-        if (point && point !== nextPoint) hide();
-      });
-      wrap.addEventListener("focusin", (event) => {
-        const point = event.target.closest?.(".chart-point");
-        if (point) schedule(point);
-      });
-      wrap.addEventListener("focusout", (event) => {
-        if (event.target.closest?.(".chart-point")) hide();
-      });
-    });
-  }
-
   function refreshRolloutPanel(panel, item, other = null) {
     if (!item?.rolloutAnalysis) return;
     const metric = panel.querySelector("[data-rollout-metric]")?.value || "rmse";
@@ -567,6 +535,21 @@
     refreshBoth();
   }
 
+  // Hovering a legend entry fades every other series in the same chart to near invisibility.
+  function focusSeries(svg, series) {
+    svg?.querySelectorAll("[data-series]").forEach((element) => {
+      element.style.opacity = series && element.dataset.series !== series ? "0.02" : "";
+    });
+  }
+  document.addEventListener("pointerover", (event) => {
+    const entry = event.target.closest?.("[data-legend-series]");
+    if (entry) focusSeries(entry.closest("svg"), entry.dataset.legendSeries);
+  });
+  document.addEventListener("pointerout", (event) => {
+    const entry = event.target.closest?.("[data-legend-series]");
+    if (entry && !entry.contains(event.relatedTarget)) focusSeries(entry.closest("svg"), null);
+  });
+
   window.FluidBenchData.load().then((data) => {
     const submissions = data.submissions || [];
     if (submissions.length < 2) throw new Error("Add at least two submissions to compare models.");
@@ -594,8 +577,7 @@
       const positiveLosses = allTrainingLosses.filter((value) => Number(value) > 0).map(Number);
       const minLoss = positiveLosses.length ? Math.min(...positiveLosses) : 1e-8;
       const maxLoss = positiveLosses.length ? Math.max(...positiveLosses) : minLoss * 10;
-      const logScale = { minExponent: Math.floor(Math.log10(minLoss)), maxExponent: Math.ceil(Math.log10(maxLoss)) };
-      if (logScale.minExponent === logScale.maxExponent) logScale.maxExponent += 1;
+      const logScale = fittedLogRange(minLoss, maxLoss);
       leftPanel.className = "compare-panel compare-panel-left";
       rightPanel.className = `compare-panel compare-panel-right${right ? "" : " is-unselected"}`;
       leftPanel.innerHTML = renderPanel(left, right, datasets.find((dataset) => dataset.id === left.datasetId), "left", logScale, submissions, left.id);
@@ -604,8 +586,6 @@
         : emptyComparePanel(submissions, left.id, left.datasetId);
       bindRolloutControls(leftPanel, left, right ? rightPanel : null, right);
       if (right) bindRolloutControls(rightPanel, right, leftPanel, left);
-      bindChartTooltips(leftPanel);
-      bindChartTooltips(rightPanel);
       document.querySelector("#compare-model-select")?.addEventListener("change", (event) => {
         right = rightCandidates.find((item) => item.id === event.target.value) || null;
         render().catch(showError);
