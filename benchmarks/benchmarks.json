@@ -1,5 +1,6 @@
 {
   "benchmarkIds": [
+    "cylinder_interp",
     "cylinder_Re41_interp"
   ]
 }

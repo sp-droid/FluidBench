@@ -1,0 +1,77 @@
+{
+  "datasetId": "cylinder_interp",
+  "id": "baseline-same",
+  "model": "Baseline Same",
+  "authors": "Pablo A.C.",
+  "year": 2026,
+  "representation": "Grid",
+  "submittedAt": "2026-10-07",
+  "metrics": {
+    "rmse": 0.027715490332505283,
+    "mae": 0.007120184715452471,
+    "relativeL2": 0.046569815628321916,
+    "rollout": {
+      "step1": {
+        "rmse": 0.01602072070419786,
+        "rolloutRmse": 0.01602072070419786,
+        "mae": 0.0033492636516742245,
+        "rolloutMae": 0.0033492636516742245,
+        "relativeL2": 0.027550283003026022,
+        "rolloutRelativeL2": 0.027550283003026022
+      },
+      "step25": {
+        "rmse": 0.10855283950973664,
+        "rolloutRmse": 0.07833705101183505,
+        "mae": 0.04357013999511556,
+        "rolloutMae": 0.02690088960746868,
+        "relativeL2": 0.18344559619725614,
+        "rolloutRelativeL2": 0.13317623085070737
+      },
+      "step100": {
+        "rmse": null,
+        "rolloutRmse": 0.12073103807847664,
+        "mae": null,
+        "rolloutMae": 0.05785720025665365,
+        "relativeL2": null,
+        "rolloutRelativeL2": 0.2024307785742626
+      }
+    },
+    "efficiency": {
+      "inferenceMs": 0.10923272730180561,
+      "memoryGb": 0.000591872,
+      "parameters": 1
+    },
+    "perVariable": {
+      "velocityRmse": 0.03316866593899248,
+      "pressureRmse": 0.010204137041838523
+    },
+    "rolloutAnalysis": {
+      "trajectoryCount": 10,
+      "snapshotCountByTrajectory": [
+        99,
+        99,
+        99,
+        99,
+        99,
+        99,
+        99,
+        99,
+        99,
+        99
+      ],
+      "errorMetricIds": [
+        "rmse",
+        "mae",
+        "relativeL2"
+      ],
+      "hasKineticEnergySpectrum": true
+    },
+    "rolloutRmse": 0.12073103807847664,
+    "rolloutMae": 0.05785720025665365,
+    "rolloutRelativeL2": 0.2024307785742626
+  },
+  "artifacts": {
+    "rolloutAnalysis": "rollout-analysis.json",
+    "trainingHistory": "training-history.json"
+  }
+}

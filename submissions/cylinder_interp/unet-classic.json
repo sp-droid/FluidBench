@@ -1,0 +1,77 @@
+{
+  "datasetId": "cylinder_interp",
+  "id": "unet-classic",
+  "model": "UNet Classic",
+  "authors": "Pablo A.C.",
+  "year": 2026,
+  "representation": "Grid",
+  "submittedAt": "2026-10-07",
+  "metrics": {
+    "rmse": 0.0011497551315289775,
+    "mae": 0.0007148183805949903,
+    "relativeL2": 0.001931911860502939,
+    "rollout": {
+      "step1": {
+        "rmse": 0.0009022076924150819,
+        "rolloutRmse": 0.0009022076924150819,
+        "mae": 0.0005882406430546074,
+        "rolloutMae": 0.0005882406430546074,
+        "relativeL2": 0.0015513892968177807,
+        "rolloutRelativeL2": 0.0015513892968177807
+      },
+      "step25": {
+        "rmse": 0.0031389200832453654,
+        "rolloutRmse": 0.0022550036645236494,
+        "mae": 0.0021861011254827424,
+        "rolloutMae": 0.0016608935515443107,
+        "relativeL2": 0.005304508765293563,
+        "rolloutRelativeL2": 0.0038349298883769956
+      },
+      "step100": {
+        "rmse": null,
+        "rolloutRmse": 0.029099864731389168,
+        "mae": null,
+        "rolloutMae": 0.015063721184143486,
+        "relativeL2": null,
+        "rolloutRelativeL2": 0.04855774615607804
+      }
+    },
+    "efficiency": {
+      "inferenceMs": 0.36134010103220743,
+      "memoryGb": 0.037267456,
+      "parameters": 1918979
+    },
+    "perVariable": {
+      "velocityRmse": 0.001282305554123715,
+      "pressureRmse": 0.0008229189019329894
+    },
+    "rolloutAnalysis": {
+      "trajectoryCount": 10,
+      "snapshotCountByTrajectory": [
+        99,
+        99,
+        99,
+        99,
+        99,
+        99,
+        99,
+        99,
+        99,
+        99
+      ],
+      "errorMetricIds": [
+        "rmse",
+        "mae",
+        "relativeL2"
+      ],
+      "hasKineticEnergySpectrum": true
+    },
+    "rolloutRmse": 0.029099864731389168,
+    "rolloutMae": 0.015063721184143486,
+    "rolloutRelativeL2": 0.04855774615607804
+  },
+  "artifacts": {
+    "rolloutAnalysis": "rollout-analysis.json",
+    "trainingHistory": "training-history.json"
+  }
+}

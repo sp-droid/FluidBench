@@ -431,6 +431,11 @@ h1, h2, h3 { font-family: Manrope, "Segoe UI", Arial, sans-serif; }
 .rollout-comparison-segment.is-better { stroke: #20a477; }
 .rollout-comparison-segment.is-worse { stroke: #d76d52; }
 .rollout-comparison-segment.is-tied { stroke: #9aa9bb; }
+.case-bar { fill: var(--curve-color); opacity: .85; }
+.case-bar.is-better { fill: #20a477; }
+.case-bar.is-worse { fill: #d76d52; }
+.case-bar.is-tied { fill: #9aa9bb; }
+.case-bar:hover { opacity: 1; }
 .rollout-axis-label { fill: #6f8098; font-family: inherit; font-size: 8px; }
 .rollout-y-axis-label { font-size: 7px; }
 .rollout-line { fill: none; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2.2; }
@@ -740,3 +745,4 @@ h1, h2, h3 { font-family: Manrope, "Segoe UI", Arial, sans-serif; }
 @media (max-width: 600px) {
   .geometry-card { padding: 14px; }
 }
+.symbol-label { text-transform: none !important; }

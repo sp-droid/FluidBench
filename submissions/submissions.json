@@ -1,5 +1,10 @@
 {
   "submissionsByBenchmark": {
+    "cylinder_interp": [
+      "baseline-same",
+      "baseline-zero",
+      "unet-classic"
+    ],
     "cylinder_Re41_interp": [
       "baseline-same",
       "baseline-zero",

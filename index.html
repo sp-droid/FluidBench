@@ -58,14 +58,15 @@
       </div>
     </section>
     <section class="shell section-space">
-      <article class="surface-card benchmark-card featured-benchmark-card">
+      <!-- Featured benchmark: set its ID here; everything inside the card follows it. -->
+      <article class="surface-card benchmark-card featured-benchmark-card" data-dataset-id="cylinder_interp">
         <div class="benchmark-summary">
-          <div class="featured-benchmark-visual"><img src="assets/cylinder-flow-dataset.png" data-dataset-image data-dataset-id="cylinder_Re41_interp" alt="2D Cylinder benchmark visualization" loading="lazy"></div>
+          <div class="featured-benchmark-visual"><img src="assets/cylinder-flow-dataset200.png" data-dataset-image alt="2D Cylinder [41-200] benchmark visualization" loading="lazy"></div>
           <div class="featured-benchmark-copy">
-            <div class="card-title-row"><span class="line-icon icon-blue" aria-hidden="true">▤</span><div><p class="eyebrow">Featured benchmark</p><h2 data-dataset-field="name" data-dataset-id="cylinder_Re41_interp">2D Cylinder</h2></div><a class="text-link card-link" data-dataset-details-link data-dataset-id="cylinder_Re41_interp" href="pages/benchmarks.html?dataset=cylinder_Re41_interp#benchmark-details">Details →</a></div>
-            <p class="featured-benchmark-description" data-dataset-field="description" data-dataset-id="cylinder_Re41_interp">A canonical wake prediction task: use a sequence of velocity and pressure snapshots to predict the future incompressible flow around a cylinder.</p>
-            <div class="featured-benchmark-tags"><div class="benchmark-class-tags" data-benchmark-tags data-dataset-id="cylinder_Re41_interp"></div><div class="dataset-origin-tags" data-origin-category data-dataset-id="cylinder_Re41_interp"><span class="dataset-origin-badge dataset-origin-fully-synthetic" title="Training and test data are synthetic; pretraining data is absent or synthetic.">Fully synthetic</span></div></div>
-            <dl class="featured-benchmark-details" data-dataset-id="cylinder_Re41_interp"><div><dt>Reynolds numbers</dt><dd>Re = <span data-dataset-field="reynoldsNumbers">41</span></dd></div><div><dt>Samples</dt><dd data-dataset-field="sampleCount">99</dd></div><div><dt>Flow variables</dt><dd data-dataset-field="flowVariables">p, Ux, Uy</dd></div><div><dt>Input scalars</dt><dd data-dataset-field="inputScalarNames">Re, dt</dd></div><div><dt>Data splits (train-test)</dt><dd data-dataset-field="splitFractions">50-50%</dd></div></dl>
+            <div class="card-title-row"><span class="line-icon icon-blue" aria-hidden="true">▤</span><div><p class="eyebrow">Featured benchmark</p><h2 data-dataset-field="name">2D Cylinder [41-200]</h2></div><a class="text-link card-link" data-dataset-details-link href="pages/benchmarks.html?dataset=cylinder_interp#benchmark-details">Details →</a></div>
+            <p class="featured-benchmark-description" data-dataset-field="description">A canonical wake prediction task: use a sequence of velocity and pressure snapshots to predict the future incompressible flow around a cylinder.</p>
+            <div class="featured-benchmark-tags"><div class="benchmark-class-tags" data-benchmark-tags></div><div class="dataset-origin-tags" data-origin-category><span class="dataset-origin-badge dataset-origin-fully-synthetic" title="Training and test data are synthetic; pretraining data is absent or synthetic.">Fully synthetic</span></div></div>
+            <dl class="featured-benchmark-details"><div><dt class="symbol-label">Re</dt><dd data-dataset-field="reynoldsNumbers">[41,200]</dd></div><div><dt>Samples</dt><dd data-dataset-field="sampleCount">5,000</dd></div><div><dt>Flow variables</dt><dd data-dataset-field="flowVariables">p, Ux, Uy</dd></div><div><dt>Input scalars</dt><dd data-dataset-field="inputScalarNames">Re, dt</dd></div><div><dt>Data splits (train-test)</dt><dd data-dataset-field="splitFractions">80-20%</dd></div></dl>
           </div>
         </div>
       </article>

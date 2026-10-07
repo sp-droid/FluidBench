@@ -17,7 +17,7 @@
     <section class="page-hero"><p class="eyebrow">Shared data · Consistent splits</p><h1>FluidBench <span>benchmarks</span></h1><p>Explore the benchmark specifications used to compare model submissions.</p></section>
     <section class="section-space surface-card benchmark-directory" aria-labelledby="benchmark-directory-title">
       <div class="section-heading"><div><p class="eyebrow">Benchmark suite</p><h2 id="benchmark-directory-title">All benchmarks</h2></div></div>
-      <div class="table-wrap"><table class="info-table benchmark-directory-table"><thead><tr><th>Benchmark</th><th>Problem category</th><th>Flow regime</th><th>Mesh</th><th>Boundary</th><th>Data origin</th><th>Reynolds numbers</th><th>Mach</th><th>Samples</th><th>Data splits (train-test)</th><th>Results</th></tr></thead><tbody id="benchmark-directory-body" aria-live="polite"><tr><td colspan="11">Loading benchmarks…</td></tr></tbody></table></div>
+      <div class="table-wrap"><table class="info-table benchmark-directory-table"><thead><tr><th>Benchmark</th><th>Problem category</th><th>Flow regime</th><th>Mesh</th><th>Boundary</th><th>Data origin</th><th>Re</th><th>Mach</th><th>Samples</th><th>Data splits (train-test)</th><th>Results</th></tr></thead><tbody id="benchmark-directory-body" aria-live="polite"><tr><td colspan="11">Loading benchmarks…</td></tr></tbody></table></div>
     </section>
     <div class="section-space benchmark-overview-row">
     <article class="surface-card benchmark-card featured-benchmark-card" id="benchmark-details" data-selected-benchmark>
@@ -27,7 +27,7 @@
           <div class="card-title-row"><span class="line-icon icon-blue" aria-hidden="true">▤</span><div><p class="eyebrow">Selected benchmark</p><h2 data-dataset-field="name" data-dataset-id="cylinder_Re41_interp">2D Cylinder</h2></div><a class="text-link card-link" href="#benchmark-specifications">Details →</a></div>
           <p class="featured-benchmark-description" data-dataset-field="description" data-dataset-id="cylinder_Re41_interp">A canonical wake prediction task: use a sequence of velocity and pressure snapshots to predict the future incompressible flow around a cylinder.</p>
           <div class="featured-benchmark-tags"><div class="benchmark-class-tags" data-benchmark-tags data-dataset-id="cylinder_Re41_interp"></div><div class="dataset-origin-tags" data-origin-category data-dataset-id="cylinder_Re41_interp"><span class="dataset-origin-badge dataset-origin-fully-synthetic" title="Training and test data are synthetic; pretraining data is absent or synthetic.">Fully synthetic</span></div></div>
-          <dl class="featured-benchmark-details" data-dataset-id="cylinder_Re41_interp"><div><dt>Reynolds numbers</dt><dd>Re = <span data-dataset-field="reynoldsNumbers">41</span></dd></div><div><dt>Samples</dt><dd data-dataset-field="sampleCount">99</dd></div><div><dt>Flow variables</dt><dd data-dataset-field="flowVariables">p, Ux, Uy</dd></div><div><dt>Input scalars</dt><dd data-dataset-field="inputScalarNames">Re, dt</dd></div><div><dt>Data splits (train-test)</dt><dd data-dataset-field="splitFractions">50-50%</dd></div></dl>
+          <dl class="featured-benchmark-details" data-dataset-id="cylinder_Re41_interp"><div><dt class="symbol-label">Re</dt><dd data-dataset-field="reynoldsNumbers">41</dd></div><div><dt>Samples</dt><dd data-dataset-field="sampleCount">99</dd></div><div><dt>Flow variables</dt><dd data-dataset-field="flowVariables">p, Ux, Uy</dd></div><div><dt>Input scalars</dt><dd data-dataset-field="inputScalarNames">Re, dt</dd></div><div><dt>Data splits (train-test)</dt><dd data-dataset-field="splitFractions">50-50%</dd></div></dl>
         </div>
       </div>
     </article>
@@ -39,7 +39,7 @@
     </div>
     <section class="section-space benchmark-spec-grid">
       <article class="surface-card content-card"><div class="card-icon">▦</div><p class="eyebrow">Dataset mesh</p><h2><span data-dataset-field="mesh" data-dataset-id="cylinder_Re41_interp">Structured</span></h2><p>Each model submission identifies its representation as Graph or Grid, independently of the dataset mesh type.</p></article>
-      <article class="surface-card content-card"><div class="card-icon">∿</div><p class="eyebrow">Flow regime</p><h2><span data-dataset-field="compressibility" data-dataset-id="cylinder_Re41_interp">Incompressible</span></h2><p>Reynolds numbers: <strong data-dataset-field="reynoldsNumbers" data-dataset-id="cylinder_Re41_interp">41</strong></p></article>
+      <article class="surface-card content-card"><div class="card-icon">∿</div><p class="eyebrow">Flow regime</p><h2><span data-dataset-field="compressibility" data-dataset-id="cylinder_Re41_interp">Incompressible</span></h2><p>Re: <strong data-dataset-field="reynoldsNumbers" data-dataset-id="cylinder_Re41_interp">41</strong></p></article>
       <article class="surface-card content-card"><div class="card-icon">◷</div><p class="eyebrow">Problem category</p><h2><span data-dataset-field="problem" data-dataset-id="cylinder_Re41_interp">Rollout</span></h2><p>Boundary condition: <strong data-dataset-field="boundary" data-dataset-id="cylinder_Re41_interp">Fixed</strong></p></article>
     </section>
     <section class="section-space surface-card benchmark-table-card" id="benchmark-specifications" data-dataset-id="cylinder_Re41_interp">
@@ -50,7 +50,7 @@
         <tr><td>Compressibility</td><td title="Flow regime" data-dataset-field="compressibility">Incompressible</td></tr>
         <tr><td>Mesh</td><td title="Dataset mesh type" data-dataset-field="mesh">Structured</td></tr>
         <tr><td>Boundary</td><td title="Boundary condition" data-dataset-field="boundary">Fixed</td></tr>
-        <tr><td>Reynolds numbers</td><td title="Reference flow conditions" data-dataset-field="reynoldsNumbers">41</td></tr>
+        <tr><td>Re</td><td title="Reynolds number range" data-dataset-field="reynoldsNumbers">41</td></tr>
         <tr><td>Pretraining data</td><td title="Data origin used for pretraining" data-dataset-origin="pretrain">None</td></tr>
         <tr><td>Training data</td><td title="Data origin used for training" data-dataset-origin="train">Synthetic</td></tr>
         <tr><td>Test data</td><td title="Data origin used for testing" data-dataset-origin="test">Synthetic</td></tr>

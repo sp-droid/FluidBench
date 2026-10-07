@@ -67,7 +67,18 @@
     });
     return `${percentages.join("-")}%`;
   };
+  // Reynolds numbers are shown as their range, e.g. [41,200]; a single value stays plain.
+  function formatReynolds(values) {
+    const numbers = (Array.isArray(values) ? values : []).map(Number).filter(Number.isFinite);
+    if (!numbers.length) return "—";
+    const low = Math.min(...numbers);
+    const high = Math.max(...numbers);
+    return low === high ? String(low) : `[${low},${high}]`;
+  }
+  window.FluidBenchFormat = { reynolds: formatReynolds };
+
   function fieldValue(dataset, key) {
+    if (key === "reynoldsNumbers") return formatReynolds(dataset.reynoldsNumbers);
     if (key === "sampleCount") return dataset.sample_count == null ? "—" : Number(dataset.sample_count).toLocaleString();
     if (key === "splitFractions") return formatSplits(dataset.splitFractions);
     const value = dataset[key];
@@ -84,10 +95,8 @@
   }
 
   function render(datasets) {
-    const selectedId = datasetFilter?.value;
     originCategories.forEach((container) => {
-      const id = container.hasAttribute("data-follow-selection") ? selectedId : container.dataset.datasetId;
-      const dataset = datasets.find((item) => item.id === id) || datasets[0];
+      const dataset = datasetFor(container, datasets);
       if (!dataset) return;
       const category = classifyDataOrigin(dataset.dataOrigin);
       container.setAttribute("aria-label", `Data origin category: ${category.name}. ${category.description}`);

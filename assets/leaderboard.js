@@ -194,7 +194,7 @@
   function row(item, index, items) {
     const model = escapeHtml(item.model);
     const authors = escapeHtml(item.authors);
-    const compareHref = window.FluidBenchPaths.url(`/pages/compare.html?model=${encodeURIComponent(item.id)}`);
+    const compareHref = window.FluidBenchPaths.url(`/pages/compare.html?dataset=${encodeURIComponent(item.datasetId)}&model=${encodeURIComponent(item.id)}`);
     const medal = index < 3 ? `<span class="medal" aria-label="Rank ${index + 1}">${["🥇", "🥈", "🥉"][index]}</span>` : index + 1;
     const modelCell = `<td><span class="model-name">${model}</span><span class="model-author">${authors}</span></td>`;
     const representationCell = `<td><span class="representation-badge ${escapeHtml(String(item.representation || "").toLowerCase())}">${escapeHtml(item.representation)}</span></td>`;

@@ -4,6 +4,8 @@
   const params = new URLSearchParams(window.location.search);
   const requestedLeft = params.get("model");
   const requestedRight = params.get("compare");
+  // Submission IDs are only unique within a benchmark, so the benchmark is part of the address.
+  const requestedDataset = params.get("dataset");
   const rolloutErrorMetrics = [
     { label: "RMSE", id: "rmse" },
     { label: "MAE", id: "mae" },
@@ -24,9 +26,12 @@
     return "is-tied";
   };
 
+  // Conditions are stored as float32 (e.g. Re 109.00000762939453); show them rounded.
+  const formatCondition = (value) => Number.isFinite(Number(value)) ? String(Number(Number(value).toPrecision(6))) : String(value);
+
   function trajectoryLabel(trajectory) {
     const conditions = Object.entries(trajectory.conditions || {})
-      .map(([name, value]) => `${name} ${Array.isArray(value) ? value.join(", ") : value}`)
+      .map(([name, value]) => `${name} ${Array.isArray(value) ? value.map(formatCondition).join(", ") : formatCondition(value)}`)
       .join(" · ");
     return `${trajectory.label || trajectory.id}${conditions ? ` · ${conditions}` : ""}`;
   }
@@ -196,9 +201,12 @@
 
   function rolloutErrorChart(analysis, metricId, trajectoryId, comparisonAnalysis = null) {
     const series = rolloutErrorSeries(analysis, metricId, trajectoryId);
-    const spreads = series.mean.map((mean, index) => mean == null ? null : Number(mean) + Number(series.standardDeviation[index] || 0)).filter(Number.isFinite);
+    const upperEdges = (part) => part.mean.map((mean, index) => mean == null ? null : Number(mean) + Number(part.standardDeviation[index] || 0)).filter(Number.isFinite);
+    const spreads = upperEdges(series);
     if (!series.steps.length || !spreads.length) return `<div class="compare-chart-empty">No rollout error data is available.</div>`;
-    const yMax = Math.max(...spreads, Number.EPSILON) * 1.03;
+    // Same y-range in both panels: cover this submission and the one it is compared with.
+    const comparisonSpreads = comparisonAnalysis ? upperEdges(rolloutErrorSeries(comparisonAnalysis, metricId, trajectoryId)) : [];
+    const yMax = Math.max(...spreads, ...comparisonSpreads, Number.EPSILON) * 1.03;
     const yFor = (value) => 181 - (Math.max(0, value) / yMax) * 173;
     const xFor = (index) => 52 + (series.steps.length === 1 ? 0 : index / (series.steps.length - 1)) * 376;
     const xs = series.steps.map((_, index) => xFor(index));
@@ -237,6 +245,47 @@
     </svg></div>`;
   }
 
+  // Each test case's error averaged over all of its rollout snapshots.
+  function caseAverages(analysis, metricId) {
+    return (analysis?.trajectories || []).map((trajectory, index) => {
+      const re = trajectory.conditions?.Re;
+      return {
+        id: trajectory.id,
+        label: re == null ? String(index + 1) : formatCondition(re),
+        name: trajectoryLabel(trajectory),
+        value: summarizeValues(trajectory.errors?.[metricId] || []).mean,
+      };
+    });
+  }
+
+  function caseErrorChart(analysis, metricId, comparisonAnalysis = null) {
+    const cases = caseAverages(analysis, metricId);
+    const comparison = new Map(caseAverages(comparisonAnalysis, metricId).map((entry) => [entry.id, entry.value]));
+    // Same y-range in both panels.
+    const values = [...cases.map((entry) => entry.value), ...comparison.values()].filter((value) => value != null && Number.isFinite(Number(value)));
+    if (!cases.length || !values.length) return `<div class="compare-chart-empty">No per-case errors are available.</div>`;
+    const yMax = Math.max(...values.map(Number), Number.EPSILON) * 1.03;
+    const yFor = (value) => 181 - (Math.max(0, value) / yMax) * 173;
+    const slot = 376 / cases.length;
+    const barWidth = Math.min(40, Math.max(1.5, slot * 0.7));
+    const metricLabel = rolloutErrorMetrics.find((metric) => metric.id === metricId)?.label || "Error";
+    const bars = cases.map((entry, index) => {
+      if (entry.value == null || !Number.isFinite(Number(entry.value))) return "";
+      const other = comparison.get(entry.id);
+      const tone = comparisonTone(entry.value, other);
+      const y = yFor(Number(entry.value));
+      const x = 52 + slot * index + (slot - barWidth) / 2;
+      const versus = other == null ? "" : ` · Comparison: ${formatLoss(other)}`;
+      return `<rect class="case-bar${tone ? ` ${tone}` : ""}" x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barWidth.toFixed(1)}" height="${(181 - y).toFixed(1)}"><title>${escapeHtml(`${entry.name} · Average ${metricLabel}: ${formatLoss(entry.value)}${versus}`)}</title></rect>`;
+    }).join("");
+    // Label every case when they fit, otherwise about twelve evenly spread ones.
+    const every = Math.max(1, Math.ceil(cases.length / 12));
+    const tickIndices = cases.map((_, index) => index).filter((index) => index % every === 0 || index === cases.length - 1);
+    const hasRe = cases.some((entry, index) => entry.label !== String(index + 1));
+    const grid = chartGrid(yMax, yFor, tickIndices.map((index) => cases[index].label), tickIndices.map((index) => 52 + slot * (index + 0.5)), hasRe ? "Test case (Re)" : "Test case", `Average ${metricLabel}`);
+    return `<div class="rollout-chart-wrap"><svg class="rollout-chart" viewBox="0 0 440 232" role="img" aria-label="Average ${escapeHtml(metricLabel)} for each test case">${grid}${bars}</svg></div>`;
+  }
+
   function rolloutSpectrumSeries(analysis, trajectoryId) {
     const trajectories = selectedTrajectories(analysis, trajectoryId);
     return {
@@ -256,13 +305,15 @@
     if (!series.wavenumbers.length || !series.target || !series.prediction) {
       return `<div class="compare-chart-empty">Kinetic energy spectra are not available for this benchmark.</div>`;
     }
+    // Same y-range in both panels: cover this submission's curves and the comparison's.
+    const comparisonSpectrum = comparisonAnalysis ? rolloutSpectrumSeries(comparisonAnalysis, trajectoryId) : null;
+    const parts = [series.target, series.prediction, comparisonSpectrum?.target, comparisonSpectrum?.prediction].filter(Boolean);
     const maximum = Math.max(
-      ...series.target.mean.map((value, index) => Number(value) + Number(series.target.standardDeviation[index] || 0)),
-      ...series.prediction.mean.map((value, index) => Number(value) + Number(series.prediction.standardDeviation[index] || 0)),
+      ...parts.flatMap((part) => part.mean.map((value, index) => Number(value) + Number(part.standardDeviation[index] || 0))).filter(Number.isFinite),
       Number.EPSILON,
     );
     // Log-log axes: energy and wavenumber both span orders of magnitude.
-    const positive = [series.target, series.prediction].flatMap((part) => part.mean.flatMap((value, index) => {
+    const positive = parts.flatMap((part) => part.mean.flatMap((value, index) => {
       const sd = Number(part.standardDeviation[index] || 0);
       return [Number(value), Number(value) + sd, Number(value) - sd];
     })).filter((value) => Number.isFinite(value) && value > 0);
@@ -335,7 +386,9 @@
     const errorOptions = rolloutErrorMetrics.map((metric) => `<option value="${metric.id}">${metric.label}</option>`).join("");
     const trajectoryOptions = analysis.trajectories.map((trajectory) => `<option value="${escapeHtml(trajectory.id)}">${escapeHtml(trajectoryLabel(trajectory))}</option>`).join("");
     return `<div class="compare-section rollout-analysis-section">
-      <div class="compare-section-title"><div><h3>Rollout analysis</h3><p>Per-snapshot errors and time-averaged kinetic spectra</p></div></div>
+      <div class="compare-section-title"><div><h3>Rollout analysis</h3><p>Test-set errors per case and per snapshot, and time-averaged kinetic spectra</p></div></div>
+      <div class="rollout-chart-block"><h4>Average error</h4>${evaluationLosses(item, other)}</div>
+      <div class="rollout-chart-block"><h4>Error per test case</h4><div class="rollout-spectrum-controls"><label>Error type<select data-case-metric>${errorOptions}</select></label></div><div data-case-error-chart>${caseErrorChart(analysis, "rmse", other?.rolloutAnalysis)}</div><p class="rollout-chart-note">Each bar is one test case, averaged over all its rollout snapshots. Green or orange marks a lower or higher error than the compared submission on that case.</p></div>
       <div class="rollout-chart-block"><h4>Snapshot error</h4><div class="rollout-analysis-controls"><label>Error type<select data-rollout-metric>${errorOptions}</select></label><label>Test trajectory<select data-rollout-trajectory><option value="all">All trajectories · mean ± 1 SD</option>${trajectoryOptions}</select></label></div><div data-rollout-checkpoints>${rolloutCheckpointTable(analysis, "rmse", "all", other?.rolloutAnalysis)}</div><div data-rollout-error-chart>${rolloutErrorChart(analysis, "rmse", "all", other?.rolloutAnalysis)}</div></div>
       <div class="rollout-chart-block"><h4>Kinetic energy spectrum</h4>${spectrumTrajectorySelect(analysis)}<div data-rollout-spectrum-chart>${kineticSpectrumChart(analysis, "all", other?.rolloutAnalysis)}</div><p class="rollout-chart-note">Shading and thin edges show ±1 SD across snapshots and selected cases.</p></div>
     </div>`;
@@ -480,7 +533,6 @@
     return `<div class="compare-panel-top"><div class="compare-model-title"><span class="compare-side-label">${side === "left" ? "Model A" : "Model B"}</span><h2>${escapeHtml(item.model)}</h2><p>${escapeHtml(item.authors)} · ${item.year}</p></div>${controls}</div>
       <div class="compare-section"><h3>Submission details</h3>${modelFacts(item, other, dataset)}</div>
       <div class="compare-section"><div class="compare-section-title"><div><h3>Training loss</h3><p>${item.trainingHistory ? `Epoch versus ${escapeHtml(item.trainingHistory.lossName)}` : "Epoch versus training error"}</p></div><span class="chart-range">${rangeLabel} · log scale</span></div>${trainingChart(item, logScale)}${trainingSummary(item, other)}</div>
-      <div class="compare-section"><div class="compare-section-title"><div><h3>Evaluation losses</h3><p>Test-set errors averaged over all rollout snapshots and trajectories.</p></div></div>${evaluationLosses(item, other)}</div>
       ${rolloutAnalysisSection(item, other)}`;
   }
 
@@ -494,6 +546,7 @@
 
   function updateUrl(left, right) {
     const url = new URL(window.location.href);
+    url.searchParams.set("dataset", left.datasetId);
     url.searchParams.set("model", left.id);
     if (right) url.searchParams.set("compare", right.id);
     else url.searchParams.delete("compare");
@@ -509,13 +562,17 @@
     if (errorChart) errorChart.innerHTML = rolloutErrorChart(item.rolloutAnalysis, metric, trajectory, other?.rolloutAnalysis);
     if (checkpointTable) checkpointTable.innerHTML = rolloutCheckpointTable(item.rolloutAnalysis, metric, trajectory, other?.rolloutAnalysis);
 
+    const caseChart = panel.querySelector("[data-case-error-chart]");
+    const caseMetric = panel.querySelector("[data-case-metric]")?.value || "rmse";
+    if (caseChart) caseChart.innerHTML = caseErrorChart(item.rolloutAnalysis, caseMetric, other?.rolloutAnalysis);
+
     const spectrumChart = panel.querySelector("[data-rollout-spectrum-chart]");
     const spectrumTrajectory = panel.querySelector("[data-spectrum-trajectory]")?.value || "all";
     if (spectrumChart) spectrumChart.innerHTML = kineticSpectrumChart(item.rolloutAnalysis, spectrumTrajectory, other?.rolloutAnalysis);
   }
 
   function bindRolloutControls(panel, item, peerPanel = null, peerItem = null) {
-    const controlSelectors = ["[data-rollout-metric]", "[data-rollout-trajectory]", "[data-spectrum-trajectory]"];
+    const controlSelectors = ["[data-rollout-metric]", "[data-rollout-trajectory]", "[data-case-metric]", "[data-spectrum-trajectory]"];
     const syncPeer = (selector, value) => {
       const peerControl = peerPanel?.querySelector(selector);
       if (peerControl && Array.from(peerControl.options).some((option) => option.value === value)) peerControl.value = value;
@@ -554,7 +611,7 @@
     const submissions = data.submissions || [];
     if (submissions.length < 2) throw new Error("Add at least two submissions to compare models.");
     const sortedByRmse = submissions.slice().sort((a, b) => a.metrics.rmse - b.metrics.rmse);
-    const left = submissions.find((item) => item.id === requestedLeft) || sortedByRmse[0];
+    const left = submissions.find((item) => item.id === requestedLeft && (!requestedDataset || item.datasetId === requestedDataset)) || sortedByRmse[0];
     const rightCandidates = submissions.filter((item) => item.id !== left.id && item.datasetId === left.datasetId);
     let right = rightCandidates.find((item) => item.id === requestedRight) || null;
     const datasets = data.datasets || [];
