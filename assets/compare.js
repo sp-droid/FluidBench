@@ -52,6 +52,8 @@
   function rolloutErrorSeries(analysis, metricId, trajectoryId) {
     const trajectories = selectedTrajectories(analysis, trajectoryId);
     const steps = analysis.timeSteps || [];
+    // Snapshot times (cumulative dt): the case's own times, or the mean across cases for "all".
+    const times = trajectoryId === "all" ? analysis.times : trajectories[0]?.times;
     const summaries = steps.map((step, index) => {
       // For "all", this is the arithmetic mean of every trajectory's error at this snapshot.
       const values = trajectories.map((trajectory) => trajectory.errors?.[metricId]?.[index]);
@@ -59,9 +61,40 @@
     });
     return {
       steps: summaries.map((summary) => summary.step),
+      times: steps.map((step, index) => (Number.isFinite(Number(times?.[index])) ? Number(times[index]) : step)),
       mean: summaries.map((summary) => summary.count ? summary.mean : null),
       standardDeviation: summaries.map((summary) => summary.count ? summary.standardDeviation : null),
     };
+  }
+
+  // Final error vs lead time: each point rolls out only the last N steps of a case and scores its final snapshot.
+  function leadErrorSeries(analysis, metricId, trajectoryId) {
+    const trajectories = selectedTrajectories(analysis, trajectoryId);
+    const steps = analysis.leadSteps || [];
+    const summaries = steps.map((step, index) => ({
+      step,
+      time: summarizeValues(trajectories.map((trajectory) => trajectory.leadTime?.times?.[index])).mean,
+      ...summarizeValues(trajectories.map((trajectory) => trajectory.leadTime?.errors?.[metricId]?.[index])),
+    }));
+    return {
+      steps,
+      times: summaries.map((summary) => summary.time ?? summary.step),
+      mean: summaries.map((summary) => summary.count ? summary.mean : null),
+      standardDeviation: summaries.map((summary) => summary.count ? summary.standardDeviation : null),
+    };
+  }
+
+  const formatTime = (value) => String(Number(Number(value).toPrecision(3)));
+
+  // Round tick values (1, 2, 2.5 or 5 times a power of ten) spanning [minimum, maximum].
+  function niceTicks(minimum, maximum, count = 5) {
+    if (!(maximum > minimum)) return [minimum];
+    const raw = (maximum - minimum) / (count - 1);
+    const magnitude = 10 ** Math.floor(Math.log10(raw));
+    const step = [1, 2, 2.5, 5, 10].map((factor) => factor * magnitude).find((value) => value >= raw);
+    const ticks = [];
+    for (let value = Math.ceil(minimum / step) * step; value <= maximum + step * 1e-9; value += step) ticks.push(Number(value.toPrecision(12)));
+    return ticks;
   }
 
   function rolloutCheckpointTable(analysis, metricId, trajectoryId, comparisonAnalysis = null) {
@@ -78,14 +111,14 @@
       { label: "P75", index: percentileIndex(.75) },
       { label: "Last step", index: lastIndex },
     ];
-    const headers = checkpoints.map(({ label, index }) => `<th scope="col"><span>${label}</span><small>Snapshot ${series.steps[index]}</small></th>`).join("");
+    const headers = checkpoints.map(({ label, index }) => `<th scope="col"><span>${label}</span><small>t = ${formatTime(series.times[index])}</small></th>`).join("");
     const values = checkpoints.map(({ index }) => {
       const value = series.mean[index];
       const comparisonValue = comparisonByStep.get(String(series.steps[index]));
       const tone = comparisonSeries ? comparisonTone(value, comparisonValue) : "";
       const detail = value == null ? "" : trajectoryId === "all"
-        ? `Mean across ${selectedTrajectories(analysis, trajectoryId).length} trajectories at snapshot ${series.steps[index]}: ${formatLoss(value)}`
-        : `Snapshot ${series.steps[index]}: ${formatLoss(value)}`;
+        ? `Mean across ${selectedTrajectories(analysis, trajectoryId).length} trajectories at t = ${formatTime(series.times[index])}: ${formatLoss(value)}`
+        : `t = ${formatTime(series.times[index])}: ${formatLoss(value)}`;
       const comparisonDetail = comparisonValue == null ? "" : ` · Compared value: ${formatLoss(comparisonValue)}`;
       const title = detail ? ` title="${escapeHtml(`${detail}${comparisonDetail}`)}"` : "";
       return `<td${tone ? ` class="${tone}"` : ""}${title}>${value == null ? "—" : formatLoss(value)}</td>`;
@@ -199,22 +232,21 @@
     return `${yTicks}${xTicks}<line class="rollout-axis" x1="52" y1="8" x2="52" y2="181"/><line class="rollout-axis" x1="52" y1="181" x2="428" y2="181"/><text class="rollout-axis-label rollout-y-axis-label" transform="translate(13 100) rotate(-90)" text-anchor="middle">${escapeHtml(yLabel)}</text><text class="rollout-axis-label" x="240" y="220" text-anchor="middle">${escapeHtml(xLabel)}</text>`;
   }
 
-  function rolloutErrorChart(analysis, metricId, trajectoryId, comparisonAnalysis = null) {
-    const series = rolloutErrorSeries(analysis, metricId, trajectoryId);
+  function errorLineChart(series, comparisonSeries, { metricLabel, xLabel, singleLegend, ariaLabel, allTrajectories, emptyMessage }) {
     const upperEdges = (part) => part.mean.map((mean, index) => mean == null ? null : Number(mean) + Number(part.standardDeviation[index] || 0)).filter(Number.isFinite);
     const spreads = upperEdges(series);
-    if (!series.steps.length || !spreads.length) return `<div class="compare-chart-empty">No rollout error data is available.</div>`;
+    if (!series.steps.length || !spreads.length) return `<div class="compare-chart-empty">${emptyMessage}</div>`;
     // Same y-range in both panels: cover this submission and the one it is compared with.
-    const comparisonSpreads = comparisonAnalysis ? upperEdges(rolloutErrorSeries(comparisonAnalysis, metricId, trajectoryId)) : [];
+    const comparisonSpreads = comparisonSeries ? upperEdges(comparisonSeries) : [];
     const yMax = Math.max(...spreads, ...comparisonSpreads, Number.EPSILON) * 1.03;
     const yFor = (value) => 181 - (Math.max(0, value) / yMax) * 173;
-    const xFor = (index) => 52 + (series.steps.length === 1 ? 0 : index / (series.steps.length - 1)) * 376;
-    const xs = series.steps.map((_, index) => xFor(index));
-    const comparisonSeries = comparisonAnalysis ? rolloutErrorSeries(comparisonAnalysis, metricId, trajectoryId) : null;
+    // x positions follow time, from the first to the last plotted time.
+    const tMin = Math.min(...series.times);
+    const tMax = Math.max(...series.times);
+    const xForTime = (time) => 52 + (tMax > tMin ? (time - tMin) / (tMax - tMin) : 0) * 376;
+    const xs = series.times.map(xForTime);
+    const ticks = niceTicks(tMin, tMax);
     const comparisonIndicesByStep = new Map((comparisonSeries?.steps || []).map((step, index) => [String(step), index]));
-    const xLabels = [series.steps[0], series.steps[Math.floor((series.steps.length - 1) / 2)], series.steps[series.steps.length - 1]];
-    const xPositions = [xs[0], xs[Math.floor((xs.length - 1) / 2)], xs[xs.length - 1]];
-    const label = rolloutErrorMetrics.find((metric) => metric.id === metricId)?.label || "Error";
     const comparisonSegments = comparisonSeries
       ? series.steps.slice(0, -1).map((step, index) => {
         const nextStep = series.steps[index + 1];
@@ -231,18 +263,37 @@
         const tone = comparisonTone(ownMean, otherMean);
         if (!tone) return "";
         const result = ownMean < otherMean ? "Lower error" : ownMean > otherMean ? "Higher error" : "Equal error";
-        const title = `Snapshots ${step}–${nextStep} · ${label}: ${ownMean.toPrecision(5)} · Comparison: ${otherMean.toPrecision(5)} · ${result}`;
+        const title = `${xLabel} ${formatTime(series.times[index])}–${formatTime(series.times[index + 1])} · ${metricLabel}: ${ownMean.toPrecision(5)} · Comparison: ${otherMean.toPrecision(5)} · ${result}`;
         return `<line class="rollout-comparison-segment ${tone}" data-series="comparison" x1="${xs[index].toFixed(1)}" y1="181" x2="${xs[index + 1].toFixed(1)}" y2="181"><title>${escapeHtml(title)}</title></line>`;
       }).join("")
       : "";
-    const grid = chartGrid(yMax, yFor, xLabels, xPositions, "Prediction snapshot", label);
-    const legend = trajectoryId === "all"
+    const grid = chartGrid(yMax, yFor, ticks.map(formatTime), ticks.map(xForTime), xLabel, metricLabel);
+    const legend = allTrajectories
       ? `<g class="rollout-in-graph-legend"><rect x="58" y="11" width="107" height="22" rx="5"/><g class="chart-legend-entry" data-legend-series="mean"><rect class="chart-legend-hit" x="60" y="13" width="103" height="18"/><rect class="rollout-legend-mean-band" x="66" y="17" width="14" height="10" rx="2"/><line class="rollout-legend-mean" x1="66" y1="22" x2="80" y2="22"/><text x="85" y="25">Mean ± 1 SD</text></g></g>`
-      : `<g class="rollout-in-graph-legend"><rect x="58" y="11" width="86" height="22" rx="5"/><g class="chart-legend-entry" data-legend-series="mean"><rect class="chart-legend-hit" x="60" y="13" width="82" height="18"/><line class="rollout-legend-mean" x1="65" y1="22" x2="79" y2="22"/><text x="84" y="25">Snapshot error</text></g></g>`;
-    return `<div class="rollout-chart-wrap"><svg class="rollout-chart" viewBox="0 0 440 232" role="img" aria-label="${escapeHtml(label)} rollout error by prediction snapshot">
+      : `<g class="rollout-in-graph-legend"><rect x="58" y="11" width="86" height="22" rx="5"/><g class="chart-legend-entry" data-legend-series="mean"><rect class="chart-legend-hit" x="60" y="13" width="82" height="18"/><line class="rollout-legend-mean" x1="65" y1="22" x2="79" y2="22"/><text x="84" y="25">${escapeHtml(singleLegend)}</text></g></g>`;
+    return `<div class="rollout-chart-wrap"><svg class="rollout-chart" viewBox="0 0 440 232" role="img" aria-label="${escapeHtml(ariaLabel)}">
       ${grid}<path class="rollout-band rollout-band-model" data-series="mean" d="${bandPath(xs, series.mean, series.standardDeviation, yFor)}"></path>${bandBoundaryPaths(xs, series.mean, series.standardDeviation, yFor, "rollout-band-edge-model", "mean")}<path class="rollout-line rollout-error-line" data-series="mean" d="${linePath(xs, series.mean, yFor)}"></path>${comparisonSegments}
       ${legend}
     </svg></div>`;
+  }
+
+  function rolloutErrorChart(analysis, metricId, trajectoryId, comparisonAnalysis = null) {
+    const metricLabel = rolloutErrorMetrics.find((metric) => metric.id === metricId)?.label || "Error";
+    return errorLineChart(
+      rolloutErrorSeries(analysis, metricId, trajectoryId),
+      comparisonAnalysis ? rolloutErrorSeries(comparisonAnalysis, metricId, trajectoryId) : null,
+      { metricLabel, xLabel: "Time", singleLegend: "Time error", ariaLabel: `${metricLabel} rollout error over time`, allTrajectories: trajectoryId === "all", emptyMessage: "No rollout error data is available." },
+    );
+  }
+
+  function leadErrorChart(analysis, metricId, trajectoryId, comparisonAnalysis = null) {
+    if (!analysis.leadSteps?.length) return `<div class="compare-chart-empty">Final vs. lead time is not available for this submission yet; re-run it with the current fluidbench.</div>`;
+    const metricLabel = rolloutErrorMetrics.find((metric) => metric.id === metricId)?.label || "Error";
+    return errorLineChart(
+      leadErrorSeries(analysis, metricId, trajectoryId),
+      comparisonAnalysis?.leadSteps?.length ? leadErrorSeries(comparisonAnalysis, metricId, trajectoryId) : null,
+      { metricLabel: `Final ${metricLabel}`, xLabel: "Lead time", singleLegend: "Final error", ariaLabel: `Final ${metricLabel} by lead time`, allTrajectories: trajectoryId === "all", emptyMessage: "No lead-time data is available." },
+    );
   }
 
   // Each test case's error averaged over all of its rollout snapshots.
@@ -386,11 +437,12 @@
     const errorOptions = rolloutErrorMetrics.map((metric) => `<option value="${metric.id}">${metric.label}</option>`).join("");
     const trajectoryOptions = analysis.trajectories.map((trajectory) => `<option value="${escapeHtml(trajectory.id)}">${escapeHtml(trajectoryLabel(trajectory))}</option>`).join("");
     return `<div class="compare-section rollout-analysis-section">
-      <div class="compare-section-title"><div><h3>Rollout analysis</h3><p>Test-set errors per case and per snapshot, and time-averaged kinetic spectra</p></div></div>
+      <div class="compare-section-title"><div><h3>Rollout analysis</h3><p>Test-set errors per case and over time, time-averaged kinetic spectra, and final error by lead time</p></div></div>
       <div class="rollout-chart-block"><h4>Average error</h4>${evaluationLosses(item, other)}</div>
       <div class="rollout-chart-block"><h4>Error per test case</h4><div class="rollout-spectrum-controls"><label>Error type<select data-case-metric>${errorOptions}</select></label></div><div data-case-error-chart>${caseErrorChart(analysis, "rmse", other?.rolloutAnalysis)}</div><p class="rollout-chart-note">Each bar is one test case, averaged over all its rollout snapshots. Green or orange marks a lower or higher error than the compared submission on that case.</p></div>
-      <div class="rollout-chart-block"><h4>Snapshot error</h4><div class="rollout-analysis-controls"><label>Error type<select data-rollout-metric>${errorOptions}</select></label><label>Test trajectory<select data-rollout-trajectory><option value="all">All trajectories · mean ± 1 SD</option>${trajectoryOptions}</select></label></div><div data-rollout-checkpoints>${rolloutCheckpointTable(analysis, "rmse", "all", other?.rolloutAnalysis)}</div><div data-rollout-error-chart>${rolloutErrorChart(analysis, "rmse", "all", other?.rolloutAnalysis)}</div></div>
+      <div class="rollout-chart-block"><h4>Time error</h4><div class="rollout-analysis-controls"><label>Error type<select data-rollout-metric>${errorOptions}</select></label><label>Test trajectory<select data-rollout-trajectory><option value="all">All trajectories · mean ± 1 SD</option>${trajectoryOptions}</select></label></div><div data-rollout-checkpoints>${rolloutCheckpointTable(analysis, "rmse", "all", other?.rolloutAnalysis)}</div><div data-rollout-error-chart>${rolloutErrorChart(analysis, "rmse", "all", other?.rolloutAnalysis)}</div></div>
       <div class="rollout-chart-block"><h4>Kinetic energy spectrum</h4>${spectrumTrajectorySelect(analysis)}<div data-rollout-spectrum-chart>${kineticSpectrumChart(analysis, "all", other?.rolloutAnalysis)}</div><p class="rollout-chart-note">Shading and thin edges show ±1 SD across snapshots and selected cases.</p></div>
+      <div class="rollout-chart-block"><h4>Final vs. lead time</h4><div class="rollout-analysis-controls"><label>Error type<select data-lead-metric>${errorOptions}</select></label><label>Test trajectory<select data-lead-trajectory><option value="all">All trajectories · mean ± 1 SD</option>${trajectoryOptions}</select></label></div><div data-lead-error-chart>${leadErrorChart(analysis, "rmse", "all", other?.rolloutAnalysis)}</div><p class="rollout-chart-note">Each point starts a rollout N steps before the end of every test case and scores only its final snapshot; lead time is the simulated time those N steps cover.</p></div>
     </div>`;
   }
 
@@ -566,13 +618,18 @@
     const caseMetric = panel.querySelector("[data-case-metric]")?.value || "rmse";
     if (caseChart) caseChart.innerHTML = caseErrorChart(item.rolloutAnalysis, caseMetric, other?.rolloutAnalysis);
 
+    const leadChart = panel.querySelector("[data-lead-error-chart]");
+    const leadMetric = panel.querySelector("[data-lead-metric]")?.value || "rmse";
+    const leadTrajectory = panel.querySelector("[data-lead-trajectory]")?.value || "all";
+    if (leadChart) leadChart.innerHTML = leadErrorChart(item.rolloutAnalysis, leadMetric, leadTrajectory, other?.rolloutAnalysis);
+
     const spectrumChart = panel.querySelector("[data-rollout-spectrum-chart]");
     const spectrumTrajectory = panel.querySelector("[data-spectrum-trajectory]")?.value || "all";
     if (spectrumChart) spectrumChart.innerHTML = kineticSpectrumChart(item.rolloutAnalysis, spectrumTrajectory, other?.rolloutAnalysis);
   }
 
   function bindRolloutControls(panel, item, peerPanel = null, peerItem = null) {
-    const controlSelectors = ["[data-rollout-metric]", "[data-rollout-trajectory]", "[data-case-metric]", "[data-spectrum-trajectory]"];
+    const controlSelectors = ["[data-rollout-metric]", "[data-rollout-trajectory]", "[data-case-metric]", "[data-spectrum-trajectory]", "[data-lead-metric]", "[data-lead-trajectory]"];
     const syncPeer = (selector, value) => {
       const peerControl = peerPanel?.querySelector(selector);
       if (peerControl && Array.from(peerControl.options).some((option) => option.value === value)) peerControl.value = value;

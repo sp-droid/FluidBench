@@ -15,7 +15,7 @@ from typing import Any
 import h5py
 import numpy as np
 import torch
-from torch.utils.data import ConcatDataset, DataLoader
+from torch.utils.data import ConcatDataset, DataLoader, Subset
 
 from .cfdataset import CFDataset
 from .downloader import download_dataset
@@ -24,6 +24,7 @@ _BATCH_SIZE = 8
 _ID_PATTERN = re.compile(r"^[a-z0-9_-]+$", re.IGNORECASE)
 _HISTORY_KEYS = ("train_error_history", "val_error_history", "train_error_name", "val_split")
 _MAX_PLOT_POINTS = 200
+_MAX_LEAD_TIMES = 40
 _ROLLOUT_METRIC_KEYS = (
     "rmse",
     "rolloutRmse",
@@ -88,6 +89,7 @@ def _thin_rollout_analysis(analysis: dict[str, Any]) -> dict[str, Any]:
     """Limit the plotted rollout series (errors per step, spectra per wavenumber) to _MAX_PLOT_POINTS."""
     steps = _plot_indices(len(analysis["timeSteps"]))
     analysis["timeSteps"] = [analysis["timeSteps"][i] for i in steps]
+    analysis["times"] = [analysis["times"][i] for i in steps]
     wavenumbers = _plot_indices(len(analysis["wavenumbers"]))
     analysis["wavenumbers"] = [analysis["wavenumbers"][i] for i in wavenumbers]
     for trajectory in analysis["trajectories"]:
@@ -96,6 +98,7 @@ def _thin_rollout_analysis(analysis: dict[str, Any]) -> dict[str, Any]:
             key: [values[i] for i in steps if i < len(values)]
             for key, values in trajectory["errors"].items()
         }
+        trajectory["times"] = [trajectory["times"][i] for i in steps if i < len(trajectory["times"])]
         for spectrum in (trajectory.get("kineticEnergySpectrum") or {}).values():
             indices = _plot_indices(len(spectrum["wavenumbers"]))
             for key in ("wavenumbers", "mean", "standardDeviation"):
@@ -352,6 +355,41 @@ def _test_case_conditions(scalars: Any, scalar_names: Sequence[str]) -> dict[str
     }
 
 
+def _lead_counts(count: int) -> list[int]:
+    """Rollout lengths for the final-vs-lead-time analysis: 1 step up to ``count``, at most _MAX_LEAD_TIMES."""
+    if count <= _MAX_LEAD_TIMES:
+        return list(range(1, count + 1))
+    return sorted({round(1 + index * (count - 1) / (_MAX_LEAD_TIMES - 1)) for index in range(_MAX_LEAD_TIMES)})
+
+
+def _step_durations(case: CFDataset, scalar_names: Sequence[str]) -> np.ndarray:
+    """Time advanced by each (input snapshot -> target snapshot) pair: its ``dt`` scalar, or 1 without one."""
+    if "dt" in scalar_names:
+        return np.asarray(case.scalars, dtype=np.float64).reshape(len(case), -1)[:, list(scalar_names).index("dt")]
+    return np.ones(len(case), dtype=np.float64)
+
+
+def _as_trajectory(prediction: Any, target: torch.Tensor, case_index: int) -> torch.Tensor:
+    """Normalise a predict_rollout() result to a [time, ...] tensor matching ``target``."""
+    if isinstance(prediction, Sequence) and not isinstance(prediction, (str, bytes, bytearray)):
+        # A list of per-step predictions: [1, C, H, W] steps are concatenated, [C, H, W] stacked.
+        steps = [torch.as_tensor(step) for step in prediction]
+        if not steps:
+            raise ValueError(f"model.predict_rollout() returned no steps for test case {case_index + 1}.")
+        prediction = torch.cat(steps) if steps[0].ndim == target.ndim else torch.stack(steps)
+    prediction = torch.as_tensor(prediction).detach().to(device="cpu", dtype=torch.float64)
+    if prediction.shape != target.shape:
+        raise ValueError(
+            f"Rollout trajectory {case_index + 1} and its test snapshots must match; "
+            f"got {tuple(prediction.shape)} and {tuple(target.shape)}."
+        )
+    if not torch.isfinite(prediction).all():
+        raise ValueError(
+            f"model.predict_rollout() returned non-finite values in test case {case_index + 1}."
+        )
+    return prediction
+
+
 def _evaluate_test_split(
     model: Any,
     cases: list[CFDataset],
@@ -435,6 +473,28 @@ def _evaluate_test_split(
             rollout_predictions = [
                 predict_rollout(DataLoader(case, batch_size=1, shuffle=False)) for case in cases
             ]
+
+        # Final vs lead time (as in WeatherBench 2): for each case, start the rollout N steps before its
+        # final snapshot and score only that final snapshot, for N from 1 up to the whole case.
+        lead_counts = _lead_counts(max(len(case) for case in cases))
+        lead_records = []
+        with torch.inference_mode():
+            for case_index, case in enumerate(cases):
+                count = len(case)
+                durations = _step_durations(case, scalar_names)
+                final_target = torch.as_tensor(case.targets[-1:], dtype=torch.float64, device="cpu")
+                record = {"steps": [], "times": [], "errors": {"rmse": [], "mae": [], "relativeL2": []}}
+                for lead in (lead for lead in lead_counts if lead <= count):
+                    window = Subset(case, range(count - lead, count))
+                    rollout = predict_rollout(DataLoader(window, batch_size=1, shuffle=False))
+                    window_target = torch.as_tensor(case.targets[count - lead:], dtype=torch.float64, device="cpu")
+                    final = _as_trajectory(rollout, window_target, case_index)[-1:]
+                    scores = _snapshot_metrics(final, final_target)
+                    record["steps"].append(lead)
+                    record["times"].append(float(durations[count - lead:].sum()))
+                    for key in record["errors"]:
+                        record["errors"][key].append(scores[key])
+                lead_records.append(record)
     finally:
         if old_training_state is not None and hasattr(model, "train"):
             model.train(old_training_state)
@@ -464,26 +524,11 @@ def _evaluate_test_split(
     common_wavenumbers: list[int] | None = None
     for case_index, (case, prediction) in enumerate(zip(cases, rollout_predictions)):
         target = torch.as_tensor(case.targets, dtype=torch.float64, device="cpu")
-        if isinstance(prediction, Sequence) and not isinstance(prediction, (str, bytes, bytearray)):
-            # A list of per-step predictions: [1, C, H, W] steps are concatenated, [C, H, W] stacked.
-            steps = [torch.as_tensor(step) for step in prediction]
-            if not steps:
-                raise ValueError(f"model.predict_rollout() returned no steps for test case {case_index + 1}.")
-            prediction = torch.cat(steps) if steps[0].ndim == target.ndim else torch.stack(steps)
-        prediction = torch.as_tensor(prediction).detach().to(device="cpu", dtype=torch.float64)
-        if prediction.shape != target.shape:
-            raise ValueError(
-                f"Rollout trajectory {case_index + 1} and its test snapshots must match; "
-                f"got {tuple(prediction.shape)} and {tuple(target.shape)}."
-            )
         if target.ndim < 3 or target.shape[0] == 0:
             raise ValueError(
                 f"Test case {case_index + 1} must contain a non-empty time sequence of snapshots."
             )
-        if not torch.isfinite(prediction).all():
-            raise ValueError(
-                f"model.predict_rollout() returned non-finite values in test case {case_index + 1}."
-            )
+        prediction = _as_trajectory(prediction, target, case_index)
 
         snapshot_metrics = [
             _snapshot_metrics(prediction[time_index], target[time_index])
@@ -507,6 +552,8 @@ def _evaluate_test_split(
                 "id": f"trajectory-{case_index + 1}",
                 "label": f"Test case {case_index + 1}",
                 "conditions": _test_case_conditions(case.scalars[0], scalar_names),
+                # Time of each predicted snapshot since the rollout's initial snapshot (cumulative dt).
+                "times": np.cumsum(_step_durations(case, scalar_names)).tolist(),
                 "errors": {
                     key: [snapshot[key] for snapshot in snapshot_metrics]
                     for key in ("rmse", "mae", "relativeL2")
@@ -516,6 +563,7 @@ def _evaluate_test_split(
                     if target_spectrum is not None and prediction_spectrum is not None
                     else None
                 ),
+                "leadTime": lead_records[case_index],
             }
         )
 
@@ -564,10 +612,17 @@ def _evaluate_test_split(
         "rolloutMae": _mean_metric(all_rollout_snapshots, "mae"),
         "rolloutRelativeL2": _mean_metric(all_rollout_snapshots, "relativeL2"),
     }
+    step_count = max(map(len, rollout_snapshot_metrics_by_case))
     rollout_analysis = {
-        "schemaVersion": 1,
+        "schemaVersion": 2,
         "trajectoryCount": len(trajectory_records),
-        "timeSteps": list(range(1, max(map(len, rollout_snapshot_metrics_by_case)) + 1)),
+        "timeSteps": list(range(1, step_count + 1)),
+        # Mean snapshot time across cases at each step, for plotting all cases on one time axis.
+        "times": [
+            float(np.mean([record["times"][index] for record in trajectory_records if index < len(record["times"])]))
+            for index in range(step_count)
+        ],
+        "leadSteps": lead_counts,
         "errorMetricIds": ["rmse", "mae", "relativeL2"],
         "wavenumbers": common_wavenumbers or [],
         "trajectories": trajectory_records,

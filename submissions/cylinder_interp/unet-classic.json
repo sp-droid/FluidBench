@@ -37,8 +37,8 @@
       }
     },
     "efficiency": {
-      "inferenceMs": 0.36134010103220743,
-      "memoryGb": 0.037267456,
+      "inferenceMs": 0.5297330302783674,
+      "memoryGb": 0.02860288,
       "parameters": 1918979
     },
     "perVariable": {
