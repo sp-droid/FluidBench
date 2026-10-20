@@ -1,0 +1,69 @@
+{
+  "datasetId": "cylinder_Re41_raw",
+  "id": "mlp",
+  "model": "MLP",
+  "description": "Feed-forward network (3 hidden layers) on the flattened snapshot, predicting the normalised increment.",
+  "authors": "Pablo A.C.",
+  "year": 2026,
+  "representation": "Graph",
+  "submittedAt": "2026-10-20",
+  "metrics": {
+    "rmse": 5.9551208985622135e-05,
+    "mae": 2.261276570306472e-05,
+    "relativeL2": 0.00011339913285375028,
+    "rollout": {
+      "step1": {
+        "rmse": 1.7694855892513372e-06,
+        "rolloutRmse": 1.7694855892513372e-06,
+        "mae": 1.1360431088007772e-06,
+        "rolloutMae": 1.1360431088007772e-06,
+        "relativeL2": 3.1387819835227514e-06,
+        "rolloutRelativeL2": 3.1387819835227514e-06
+      },
+      "step25": {
+        "rmse": 0.00011949938343895294,
+        "rolloutRmse": 4.772483512968967e-05,
+        "mae": 4.575796506799534e-05,
+        "rolloutMae": 2.229840982067452e-05,
+        "relativeL2": 0.00022722933165235265,
+        "rolloutRelativeL2": 9.02343139742745e-05
+      },
+      "step100": {
+        "rmse": null,
+        "rolloutRmse": 0.0001414085347770145,
+        "mae": null,
+        "rolloutMae": 6.71333079631476e-05,
+        "relativeL2": null,
+        "rolloutRelativeL2": 0.00027061596015471874
+      }
+    },
+    "efficiency": {
+      "inferenceMs": 0.44942121211065433,
+      "memoryGb": 0.219840512,
+      "parameters": 24864448
+    },
+    "perVariable": {
+      "velocityRmse": 7.146710693244589e-05,
+      "pressureRmse": 2.0589918124179506e-05
+    },
+    "rolloutAnalysis": {
+      "trajectoryCount": 1,
+      "snapshotCountByTrajectory": [
+        99
+      ],
+      "errorMetricIds": [
+        "rmse",
+        "mae",
+        "relativeL2"
+      ],
+      "hasKineticEnergySpectrum": false
+    },
+    "rolloutRmse": 0.0001414085347770145,
+    "rolloutMae": 6.71333079631476e-05,
+    "rolloutRelativeL2": 0.00027061596015471874
+  },
+  "artifacts": {
+    "rolloutAnalysis": "rollout-analysis.json",
+    "trainingHistory": "training-history.json"
+  }
+}

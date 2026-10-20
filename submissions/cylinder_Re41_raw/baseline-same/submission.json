@@ -1,0 +1,69 @@
+{
+  "datasetId": "cylinder_Re41_raw",
+  "id": "baseline-same",
+  "model": "Baseline Same",
+  "description": "Persistence baseline: every predicted snapshot is a copy of the input snapshot.",
+  "authors": "Pablo A.C.",
+  "year": 2026,
+  "representation": "Graph",
+  "submittedAt": "2026-10-20",
+  "metrics": {
+    "rmse": 0.009025198358925592,
+    "mae": 0.0015047407826117355,
+    "relativeL2": 0.01718604349379961,
+    "rollout": {
+      "step1": {
+        "rmse": 0.06558171451584537,
+        "rolloutRmse": 0.06558171451584537,
+        "mae": 0.0353191589580843,
+        "rolloutMae": 0.0353191589580843,
+        "relativeL2": 0.11633138196845152,
+        "rolloutRelativeL2": 0.11633138196845152
+      },
+      "step25": {
+        "rmse": 0.19085902686392814,
+        "rolloutRmse": 0.168519069441261,
+        "mae": 0.11301600594082714,
+        "rolloutMae": 0.09640494361843527,
+        "relativeL2": 0.3629204424829824,
+        "rolloutRelativeL2": 0.3161393077489463
+      },
+      "step100": {
+        "rmse": null,
+        "rolloutRmse": 0.19028659807173937,
+        "mae": null,
+        "rolloutMae": 0.11334495621966181,
+        "relativeL2": null,
+        "rolloutRelativeL2": 0.362957136587662
+      }
+    },
+    "efficiency": {
+      "inferenceMs": 0.22035656568025136,
+      "memoryGb": 0.002306048,
+      "parameters": 1
+    },
+    "perVariable": {
+      "velocityRmse": 0.0098413691918428,
+      "pressureRmse": 0.007117409719382075
+    },
+    "rolloutAnalysis": {
+      "trajectoryCount": 1,
+      "snapshotCountByTrajectory": [
+        99
+      ],
+      "errorMetricIds": [
+        "rmse",
+        "mae",
+        "relativeL2"
+      ],
+      "hasKineticEnergySpectrum": false
+    },
+    "rolloutRmse": 0.19028659807173937,
+    "rolloutMae": 0.11334495621966181,
+    "rolloutRelativeL2": 0.362957136587662
+  },
+  "artifacts": {
+    "rolloutAnalysis": "rollout-analysis.json",
+    "trainingHistory": "training-history.json"
+  }
+}
