@@ -1,0 +1,36 @@
+{
+  "id": "cylinder_Re41_raw",
+  "source": "https://huggingface.co/datasets/spxd/cylinder_Re41_raw/tree/main",
+  "loader": "huggingface",
+  "name": "2D Cylinder raw",
+  "dataOrigin": {
+    "pretrain": "none",
+    "train": "synthetic",
+    "test": "synthetic"
+  },
+  "mesh": "Unstructured",
+  "problem": "Rollout",
+  "compressibility": "Incompressible",
+  "boundary": "Fixed",
+  "image": "assets/cylinder-flow-dataset.webp",
+  "geometry": "assets/meshes/cylinder8000.json",
+  "description": "A canonical wake prediction task on the native finite-volume mesh: use a sequence of velocity and pressure snapshots on its cells to predict the future incompressible flow around a cylinder.",
+  "reynoldsNumbers": [
+    41
+  ],
+  "inputScalarNames": [
+    "Re",
+    "dt"
+  ],
+  "flowVariables": [
+    "p",
+    "Ux",
+    "Uy"
+  ],
+  "splitFractions": {
+    "train": 0.5,
+    "test": 0.5
+  },
+  "sample_count": 200,
+  "sizeGb": 0.0123
+}
