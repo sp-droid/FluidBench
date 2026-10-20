@@ -64,9 +64,12 @@ def _validate_config(config: Mapping[str, Any]) -> dict[str, Any]:
             raise ValueError(f"Config field {key!r} must be a non-empty string.")
     if isinstance(config["year"], bool) or not isinstance(config["year"], int):
         raise ValueError("Config field 'year' must be an integer.")
+    description = config.get("description")
+    if description is not None and (not isinstance(description, str) or not description.strip() or len(description) > 240):
+        raise ValueError("Optional config field 'description' must be a non-empty string of at most 240 characters (one phrase).")
     representation = config["representation"]
-    if not isinstance(representation, str) or representation not in {"Graph", "Grid"}:
-        raise ValueError("Config field 'representation' must be 'Graph' or 'Grid'.")
+    if not isinstance(representation, str) or representation not in {"Graph", "Grid", "Patches"}:
+        raise ValueError("Config field 'representation' must be 'Graph', 'Grid' or 'Patches'.")
 
     misplaced = [key for key in _HISTORY_KEYS if key in config]
     if misplaced:
@@ -671,8 +674,8 @@ def run(
     ``train_error_name`` (the error those values measure) and ``val_split`` (the
     fraction of the training data held out for validation, e.g. 0.1).
     All supported metrics are calculated here from the benchmark test split;
-    the input config does not need a ``metrics`` field. Artifacts are saved to
-    ``./submission`` under the current working directory.
+    the input config does not need a ``metrics`` field. The record (``submission.json``) and its
+    artifacts are saved to ``./submission/{datasetId}/{id}/`` under the current working directory.
     """
     config = _validate_config(submission_config)
     history = None if training_history is None else _validate_training_history(training_history)
@@ -700,16 +703,16 @@ def run(
     filenames = {"rolloutAnalysis": "rollout-analysis.json", "trainingHistory": "training-history.json"}
     submission["artifacts"] = {key: filenames[key] for key in artifacts}
 
-    root = _submission_root() / benchmark_id
-    submission_path = root / f"{config['id']}.json"
-    (root / config["id"]).mkdir(parents=True, exist_ok=True)
-    with submission_path.open("w", encoding="utf-8") as submission_file:
+    # The record and its artifacts share one folder: submission/{benchmark}/{id}/submission.json
+    folder = _submission_root() / benchmark_id / config["id"]
+    folder.mkdir(parents=True, exist_ok=True)
+    with (folder / "submission.json").open("w", encoding="utf-8") as submission_file:
         json.dump(submission, submission_file, indent=2, allow_nan=False)
         submission_file.write("\n")
     for key, content in artifacts.items():
-        with (root / config["id"] / filenames[key]).open("w", encoding="utf-8") as artifact_file:
+        with (folder / filenames[key]).open("w", encoding="utf-8") as artifact_file:
             json.dump(content, artifact_file, indent=2, allow_nan=False)
             artifact_file.write("\n")
 
-    print(f"submission written to 'submission/{benchmark_id}' folder")
+    print(f"submission written to 'submission/{benchmark_id}/{config['id']}' folder")
     return submission

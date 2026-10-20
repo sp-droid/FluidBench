@@ -2,6 +2,7 @@
   "datasetId": "cylinder_Re41_interp",
   "id": "unet-classic",
   "model": "UNet Classic",
+  "description": "Classic U-Net with strided convolutions and the input scalars injected at the bottleneck.",
   "authors": "Pablo A.C.",
   "year": 2026,
   "representation": "Grid",

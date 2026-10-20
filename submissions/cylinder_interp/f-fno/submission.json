@@ -1,0 +1,78 @@
+{
+  "datasetId": "cylinder_interp",
+  "id": "f-fno",
+  "model": "F-FNO",
+  "description": "Factorized Fourier neural operator: separate 1D spectral filters per axis in a deep residual stack.",
+  "authors": "temp",
+  "year": 2026,
+  "representation": "Grid",
+  "submittedAt": "2026-10-14",
+  "metrics": {
+    "rmse": 0.0011874784309326323,
+    "mae": 0.00048433282256600275,
+    "relativeL2": 0.0019952976089433992,
+    "rollout": {
+      "step1": {
+        "rmse": 0.002582648059237496,
+        "rolloutRmse": 0.002582648059237496,
+        "mae": 0.0011991839916954906,
+        "rolloutMae": 0.0011991839916954906,
+        "relativeL2": 0.004441213810564415,
+        "rolloutRelativeL2": 0.004441213810564415
+      },
+      "step25": {
+        "rmse": 0.0036480642245045893,
+        "rolloutRmse": 0.003291916669497633,
+        "mae": 0.002448317895540938,
+        "rolloutMae": 0.002136675371325289,
+        "relativeL2": 0.006165590469665144,
+        "rolloutRelativeL2": 0.005603979943843923
+      },
+      "step100": {
+        "rmse": null,
+        "rolloutRmse": 0.022711367658104258,
+        "mae": null,
+        "rolloutMae": 0.011579531963607679,
+        "relativeL2": null,
+        "rolloutRelativeL2": 0.03787827017621708
+      }
+    },
+    "efficiency": {
+      "inferenceMs": 3.782823535356779,
+      "memoryGb": 0.17670656,
+      "parameters": 2834243
+    },
+    "perVariable": {
+      "velocityRmse": 0.0011693647534287335,
+      "pressureRmse": 0.0012229011483631015
+    },
+    "rolloutAnalysis": {
+      "trajectoryCount": 10,
+      "snapshotCountByTrajectory": [
+        99,
+        99,
+        99,
+        99,
+        99,
+        99,
+        99,
+        99,
+        99,
+        99
+      ],
+      "errorMetricIds": [
+        "rmse",
+        "mae",
+        "relativeL2"
+      ],
+      "hasKineticEnergySpectrum": true
+    },
+    "rolloutRmse": 0.022711367658104258,
+    "rolloutMae": 0.011579531963607679,
+    "rolloutRelativeL2": 0.03787827017621708
+  },
+  "artifacts": {
+    "rolloutAnalysis": "rollout-analysis.json",
+    "trainingHistory": "training-history.json"
+  }
+}

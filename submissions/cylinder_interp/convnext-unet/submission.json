@@ -1,0 +1,78 @@
+{
+  "datasetId": "cylinder_interp",
+  "id": "convnext-unet",
+  "model": "ConvNeXt U-Net",
+  "description": "U-Net built from ConvNeXt blocks with large 7x7 depthwise convolutions.",
+  "authors": "temp",
+  "year": 2026,
+  "representation": "Grid",
+  "submittedAt": "2026-10-14",
+  "metrics": {
+    "rmse": 0.0016582516129287777,
+    "mae": 0.0005189105005807041,
+    "relativeL2": 0.0027863289067951366,
+    "rollout": {
+      "step1": {
+        "rmse": 0.004540720405296062,
+        "rolloutRmse": 0.004540720405296062,
+        "mae": 0.00108049030780119,
+        "rolloutMae": 0.00108049030780119,
+        "relativeL2": 0.007809478177731732,
+        "rolloutRelativeL2": 0.007809478177731732
+      },
+      "step25": {
+        "rmse": 0.004982861041322367,
+        "rolloutRmse": 0.004151010802579679,
+        "mae": 0.0032929902124322493,
+        "rolloutMae": 0.0023046607439039133,
+        "relativeL2": 0.008420387459239356,
+        "rolloutRelativeL2": 0.007065487901710058
+      },
+      "step100": {
+        "rmse": null,
+        "rolloutRmse": 0.028424394531124806,
+        "mae": null,
+        "rolloutMae": 0.016133903886812625,
+        "relativeL2": null,
+        "rolloutRelativeL2": 0.04739874807876714
+      }
+    },
+    "efficiency": {
+      "inferenceMs": 8.612205959607216,
+      "memoryGb": 0.178830336,
+      "parameters": 1619235
+    },
+    "perVariable": {
+      "velocityRmse": 0.0017990259798441337,
+      "pressureRmse": 0.001332818923573037
+    },
+    "rolloutAnalysis": {
+      "trajectoryCount": 10,
+      "snapshotCountByTrajectory": [
+        99,
+        99,
+        99,
+        99,
+        99,
+        99,
+        99,
+        99,
+        99,
+        99
+      ],
+      "errorMetricIds": [
+        "rmse",
+        "mae",
+        "relativeL2"
+      ],
+      "hasKineticEnergySpectrum": true
+    },
+    "rolloutRmse": 0.028424394531124806,
+    "rolloutMae": 0.016133903886812625,
+    "rolloutRelativeL2": 0.04739874807876714
+  },
+  "artifacts": {
+    "rolloutAnalysis": "rollout-analysis.json",
+    "trainingHistory": "training-history.json"
+  }
+}

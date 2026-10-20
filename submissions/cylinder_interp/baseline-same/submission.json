@@ -2,6 +2,7 @@
   "datasetId": "cylinder_interp",
   "id": "baseline-same",
   "model": "Baseline Same",
+  "description": "Persistence baseline: every predicted snapshot is a copy of the input snapshot.",
   "authors": "Pablo A.C.",
   "year": 2026,
   "representation": "Grid",

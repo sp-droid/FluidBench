@@ -19,14 +19,14 @@
   <meta name="twitter:image" content="https://sp-droid.github.io/FluidBench/assets/mark.png">
   <meta name="twitter:image:alt" content="FluidBench blue and cyan flowing swirl mark">
   <title>Fluidbench</title>
-  <link rel="icon" href="assets/mark.png" type="image/png">
+  <link rel="icon" href="assets/favicon.png" type="image/png">
   <link rel="stylesheet" href="assets/site.css">
   <script src="assets/site.js" defer></script><script src="assets/data.js" defer></script><script src="assets/top-model.js" defer></script><script src="assets/dataset-tags.js" defer></script>
 </head>
 <body>
   <header class="site-header">
     <div class="header-inner">
-      <a class="brand" href="index.html" aria-label="FluidBench home"><img src="assets/mark.png" alt="" width="50" height="40"><span>FluidBench</span></a>
+      <a class="brand" href="index.html" aria-label="FluidBench home"><img src="assets/mark.webp" alt="" width="50" height="40"><span>FluidBench</span></a>
       <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="primary-nav" aria-label="Open navigation"><span></span><span></span><span></span></button>
       <nav class="primary-nav" id="primary-nav" aria-label="Primary navigation">
         <a class="nav-link active" aria-current="page" href="index.html">Overview</a><a class="nav-link" href="pages/leaderboard.html">Leaderboard</a><a class="nav-link" href="pages/benchmarks.html">Benchmarks</a><a class="nav-link" href="pages/models.html">Models</a><a class="nav-link" href="pages/metrics.html">Metrics</a><a class="nav-link" href="pages/docs.html">Docs</a><a class="nav-link nav-external" href="https://github.com/sp-droid/FluidBench" target="_blank" rel="noreferrer">GitHub ↗</a>
@@ -47,7 +47,7 @@
         <div class="feature-pills" aria-label="Platform features"><span class="feature-pill pill-green"><span class="pill-icon">&lt;/&gt;</span>Standardized API</span><span class="feature-pill pill-blue"><span class="pill-icon">▱</span>Standardized datasets</span><span class="feature-pill pill-purple"><span class="pill-icon">▥</span>Comparable metrics</span></div>
         <div class="hero-actions"><a class="button button-primary" href="pages/leaderboard.html">Explore leaderboard <span aria-hidden="true">→</span></a><a class="button button-quiet" href="pages/docs.html#how-it-works">How to submit a score</a></div>
       </div>
-      <figure class="flow-visual"><img src="assets/cylinder-flow-hero.png" alt="Cylinder flow with a long, swirling wake"></figure>
+      <figure class="flow-visual"><img src="assets/cylinder-flow-hero.webp" alt="Cylinder flow with a long, swirling wake"></figure>
     </section>
     <section class="shell top-model-section" aria-labelledby="top-model-title">
       <div class="top-model-card">
@@ -61,17 +61,17 @@
       <!-- Featured benchmark: set its ID here; everything inside the card follows it. -->
       <article class="surface-card benchmark-card featured-benchmark-card" data-dataset-id="cylinder_interp">
         <div class="benchmark-summary">
-          <div class="featured-benchmark-visual"><img src="assets/cylinder-flow-dataset200.png" data-dataset-image alt="2D Cylinder [41-200] benchmark visualization" loading="lazy"></div>
+          <div class="featured-benchmark-visual"><img src="assets/cylinder-flow-dataset200.webp" data-dataset-image alt="2D Cylinder [41-200] benchmark visualization" loading="lazy"></div>
           <div class="featured-benchmark-copy">
             <div class="card-title-row"><span class="line-icon icon-blue" aria-hidden="true">▤</span><div><p class="eyebrow">Featured benchmark</p><h2 data-dataset-field="name">2D Cylinder [41-200]</h2></div><a class="text-link card-link" data-dataset-details-link href="pages/benchmarks.html?dataset=cylinder_interp#benchmark-details">Details →</a></div>
             <p class="featured-benchmark-description" data-dataset-field="description">A canonical wake prediction task: use a sequence of velocity and pressure snapshots to predict the future incompressible flow around a cylinder.</p>
             <div class="featured-benchmark-tags"><div class="benchmark-class-tags" data-benchmark-tags></div><div class="dataset-origin-tags" data-origin-category><span class="dataset-origin-badge dataset-origin-fully-synthetic" title="Training and test data are synthetic; pretraining data is absent or synthetic.">Fully synthetic</span></div></div>
-            <dl class="featured-benchmark-details"><div><dt class="symbol-label">Re</dt><dd data-dataset-field="reynoldsNumbers">[41,200]</dd></div><div><dt>Samples</dt><dd data-dataset-field="sampleCount">5,000</dd></div><div><dt>Flow variables</dt><dd data-dataset-field="flowVariables">p, Ux, Uy</dd></div><div><dt>Input scalars</dt><dd data-dataset-field="inputScalarNames">Re, dt</dd></div><div><dt>Data splits (train-test)</dt><dd data-dataset-field="splitFractions">80-20%</dd></div></dl>
+            <dl class="featured-benchmark-details"><div><dt class="symbol-label">Re</dt><dd data-dataset-field="reynoldsNumbers">[41,200]</dd></div><div><dt>Samples</dt><dd data-dataset-field="sampleCount">5,000</dd></div><div><dt>Size</dt><dd data-dataset-field="sizeGb">88.5 MB</dd></div><div><dt>Flow variables</dt><dd data-dataset-field="flowVariables">p, Ux, Uy</dd></div><div><dt>Input scalars</dt><dd data-dataset-field="inputScalarNames">Re, dt</dd></div><div><dt>Data splits (train-test)</dt><dd data-dataset-field="splitFractions">80-20%</dd></div></dl>
           </div>
         </div>
       </article>
     </section>
   </main>
-  <footer class="site-footer"><div class="shell footer-inner"><a class="brand footer-brand" href="index.html"><img src="assets/mark.png" alt="" width="40" height="32"><span>FluidBench</span></a><p>Open, reproducible benchmarks for fluid dynamics ML.</p><div class="footer-links"><a href="pages/docs.html">Documentation</a><a href="https://github.com/sp-droid/FluidBench" target="_blank" rel="noreferrer">GitHub ↗</a></div><span class="copyright">© <span data-year></span> FluidBench</span></div></footer>
+  <footer class="site-footer"><div class="shell footer-inner"><a class="brand footer-brand" href="index.html"><img src="assets/mark.webp" alt="" width="40" height="32"><span>FluidBench</span></a><p>Open, reproducible benchmarks for fluid dynamics ML.</p><div class="footer-links"><a href="pages/docs.html">Documentation</a><a href="https://github.com/sp-droid/FluidBench" target="_blank" rel="noreferrer">GitHub ↗</a></div><span class="copyright">© <span data-year></span> FluidBench</span></div></footer>
 </body>
 </html>

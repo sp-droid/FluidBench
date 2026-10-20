@@ -75,12 +75,19 @@
     const high = Math.max(...numbers);
     return low === high ? String(low) : `[${low},${high}]`;
   }
-  window.FluidBenchFormat = { reynolds: formatReynolds };
+  // Dataset size from `sizeGb` (decimal GB); small datasets read better in MB.
+  function formatSize(gigabytes) {
+    const value = Number(gigabytes);
+    if (gigabytes == null || !Number.isFinite(value)) return "—";
+    return value < 0.1 ? `${(value * 1000).toFixed(1)} MB` : `${value.toFixed(2)} GB`;
+  }
+  window.FluidBenchFormat = { reynolds: formatReynolds, size: formatSize };
 
   function fieldValue(dataset, key) {
     if (key === "reynoldsNumbers") return formatReynolds(dataset.reynoldsNumbers);
     if (key === "sampleCount") return dataset.sample_count == null ? "—" : Number(dataset.sample_count).toLocaleString();
     if (key === "splitFractions") return formatSplits(dataset.splitFractions);
+    if (key === "sizeGb") return formatSize(dataset.sizeGb);
     const value = dataset[key];
     if (value == null) return "—";
     if (Array.isArray(value)) return value.join(", ");
@@ -126,6 +133,7 @@
       if (!dataset) return;
       const key = field.dataset.datasetField;
       field.textContent = fieldValue(dataset, key);
+      if (key === "sizeGb") field.title = dataset.sizeGb == null ? "" : `${dataset.sizeGb} GB`;
     });
     document.querySelectorAll("[data-dataset-details-link]").forEach((link) => {
       const dataset = datasetFor(link, datasets);

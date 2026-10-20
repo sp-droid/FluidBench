@@ -1,62 +1,54 @@
 {
-  "datasetId": "cylinder_interp",
+  "datasetId": "cylinder_Re41_interp",
   "id": "baseline-zero",
   "model": "Baseline Zero",
+  "description": "Zero baseline: every predicted snapshot is an all-zero field.",
   "authors": "Pablo A.C.",
   "year": 2026,
   "representation": "Grid",
   "submittedAt": "2026-10-07",
   "metrics": {
-    "rmse": 0.5951385024520006,
-    "mae": 0.3680170982613735,
+    "rmse": 0.5928439172835638,
+    "mae": 0.35974205723694885,
     "relativeL2": 1.0,
     "rollout": {
       "step1": {
-        "rmse": 0.5815197560600843,
-        "rolloutRmse": 0.5815197560600843,
-        "mae": 0.3460706844166593,
-        "rolloutMae": 0.3460706844166593,
+        "rmse": 0.5823433787861066,
+        "rolloutRmse": 0.5823433787861066,
+        "mae": 0.3484180986107989,
+        "rolloutMae": 0.3484180986107989,
         "relativeL2": 1.0,
         "rolloutRelativeL2": 1.0
       },
       "step25": {
-        "rmse": 0.5917181832092434,
-        "rolloutRmse": 0.5872851496711073,
-        "mae": 0.36207298945073874,
-        "rolloutMae": 0.3553855376362543,
+        "rmse": 0.5910149954413997,
+        "rolloutRmse": 0.5873194730173572,
+        "mae": 0.3605408994368009,
+        "rolloutMae": 0.3557168746804621,
         "relativeL2": 1.0,
         "rolloutRelativeL2": 1.0
       },
       "step100": {
         "rmse": null,
-        "rolloutRmse": 0.5951137520511053,
+        "rolloutRmse": 0.5928329580700281,
         "mae": null,
-        "rolloutMae": 0.3680170982613735,
+        "rolloutMae": 0.3597420572369489,
         "relativeL2": null,
         "rolloutRelativeL2": 1.0
       }
     },
     "efficiency": {
-      "inferenceMs": 0.08421292930672114,
+      "inferenceMs": 0.12811313141043287,
       "memoryGb": 0.000787968,
       "parameters": 1
     },
     "perVariable": {
-      "velocityRmse": 0.7258971399042905,
-      "pressureRmse": 0.09336056908551939
+      "velocityRmse": 0.7236890926465886,
+      "pressureRmse": 0.08330621314810037
     },
     "rolloutAnalysis": {
-      "trajectoryCount": 10,
+      "trajectoryCount": 1,
       "snapshotCountByTrajectory": [
-        99,
-        99,
-        99,
-        99,
-        99,
-        99,
-        99,
-        99,
-        99,
         99
       ],
       "errorMetricIds": [
@@ -66,8 +58,8 @@
       ],
       "hasKineticEnergySpectrum": true
     },
-    "rolloutRmse": 0.5951137520511053,
-    "rolloutMae": 0.3680170982613735,
+    "rolloutRmse": 0.5928329580700281,
+    "rolloutMae": 0.3597420572369489,
     "rolloutRelativeL2": 1.0
   },
   "artifacts": {

@@ -1,0 +1,78 @@
+{
+  "datasetId": "cylinder_interp",
+  "id": "dilated-resnet",
+  "model": "Dil-ResNet",
+  "description": "Full-resolution CNN whose dilated convolutions (1-2-4-8) give it a wide receptive field.",
+  "authors": "temp",
+  "year": 2026,
+  "representation": "Grid",
+  "submittedAt": "2026-10-14",
+  "metrics": {
+    "rmse": 0.0011398982806871778,
+    "mae": 0.0004435727842641516,
+    "relativeL2": 0.0019153495799561606,
+    "rollout": {
+      "step1": {
+        "rmse": 0.001994835188905459,
+        "rolloutRmse": 0.001994835188905459,
+        "mae": 0.0008228580997600606,
+        "rolloutMae": 0.0008228580997600606,
+        "relativeL2": 0.0034303233219745662,
+        "rolloutRelativeL2": 0.0034303233219745662
+      },
+      "step25": {
+        "rmse": 0.004773307414426847,
+        "rolloutRmse": 0.003524746859427362,
+        "mae": 0.0031247358215807344,
+        "rolloutMae": 0.0021322601999064733,
+        "relativeL2": 0.00806678287988981,
+        "rolloutRelativeL2": 0.00599489125366487
+      },
+      "step100": {
+        "rmse": null,
+        "rolloutRmse": 0.01924348876132798,
+        "mae": null,
+        "rolloutMae": 0.010980897531790832,
+        "relativeL2": null,
+        "rolloutRelativeL2": 0.032118348052813946
+      }
+    },
+    "efficiency": {
+      "inferenceMs": 5.564720606057425,
+      "memoryGb": 0.150406144,
+      "parameters": 1081731
+    },
+    "perVariable": {
+      "velocityRmse": 0.001256611359600918,
+      "pressureRmse": 0.0008602093075435868
+    },
+    "rolloutAnalysis": {
+      "trajectoryCount": 10,
+      "snapshotCountByTrajectory": [
+        99,
+        99,
+        99,
+        99,
+        99,
+        99,
+        99,
+        99,
+        99,
+        99
+      ],
+      "errorMetricIds": [
+        "rmse",
+        "mae",
+        "relativeL2"
+      ],
+      "hasKineticEnergySpectrum": true
+    },
+    "rolloutRmse": 0.01924348876132798,
+    "rolloutMae": 0.010980897531790832,
+    "rolloutRelativeL2": 0.032118348052813946
+  },
+  "artifacts": {
+    "rolloutAnalysis": "rollout-analysis.json",
+    "trainingHistory": "training-history.json"
+  }
+}

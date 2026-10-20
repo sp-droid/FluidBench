@@ -10,7 +10,7 @@ Serve the repository root with any static HTTP server and open its local URL. Th
 
 ## Sample data
 
-`submissions/submissions.json` is a lightweight manifest that groups submission IDs by benchmark. Each benchmark has a folder under `submissions/`; lightweight submission records live at `submissions/{benchmarkId}/{id}.json`, and heavier training histories live at `submissions/{benchmarkId}/{id}/training-history.json`. Benchmark records are routed by `benchmarks/benchmarks.json` and stored in `benchmarks/{id}.json`. The sample metrics and training histories are illustrative and can be edited in their corresponding files.
+`submissions/submissions.json` lists the benchmark folders that have submissions. Each benchmark has a folder under `submissions/` with its own manifest, `submissions/{benchmarkId}/submissions.json`, listing the submission IDs it contains. Every submission is a folder: the lightweight record lives at `submissions/{benchmarkId}/{id}/submission.json`, next to its heavier artifacts (`rollout-analysis.json`, optional `training-history.json`). Benchmark records are routed by `benchmarks/benchmarks.json` and stored in `benchmarks/{id}.json`. The sample metrics and training histories are illustrative and can be edited in their corresponding files.
 
 ## Pages
 

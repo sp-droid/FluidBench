@@ -1,0 +1,78 @@
+{
+  "datasetId": "cylinder_interp",
+  "id": "modern-unet",
+  "model": "Modern U-Net",
+  "description": "U-Net with residual blocks, GroupNorm and FiLM conditioning on Re and dt (PDE-Arena style).",
+  "authors": "temp",
+  "year": 2026,
+  "representation": "Grid",
+  "submittedAt": "2026-10-14",
+  "metrics": {
+    "rmse": 0.0010727579474683962,
+    "mae": 0.0003841536467057186,
+    "relativeL2": 0.0018025349444685218,
+    "rollout": {
+      "step1": {
+        "rmse": 0.00213435894865049,
+        "rolloutRmse": 0.00213435894865049,
+        "mae": 0.0008572692954044607,
+        "rolloutMae": 0.0008572692954044607,
+        "relativeL2": 0.003670227992300623,
+        "rolloutRelativeL2": 0.003670227992300623
+      },
+      "step25": {
+        "rmse": 0.004476002289294059,
+        "rolloutRmse": 0.003186870618054966,
+        "mae": 0.002714499935991926,
+        "rolloutMae": 0.0018433734047912222,
+        "relativeL2": 0.007564600364294583,
+        "rolloutRelativeL2": 0.005420275300236863
+      },
+      "step100": {
+        "rmse": null,
+        "rolloutRmse": 0.02728351037616649,
+        "mae": null,
+        "rolloutMae": 0.015035627368885666,
+        "relativeL2": null,
+        "rolloutRelativeL2": 0.04551206083289095
+      }
+    },
+    "efficiency": {
+      "inferenceMs": 3.45950444445609,
+      "memoryGb": 0.262039552,
+      "parameters": 13298787
+    },
+    "perVariable": {
+      "velocityRmse": 0.0011739390815392924,
+      "pressureRmse": 0.0008343637739254897
+    },
+    "rolloutAnalysis": {
+      "trajectoryCount": 10,
+      "snapshotCountByTrajectory": [
+        99,
+        99,
+        99,
+        99,
+        99,
+        99,
+        99,
+        99,
+        99,
+        99
+      ],
+      "errorMetricIds": [
+        "rmse",
+        "mae",
+        "relativeL2"
+      ],
+      "hasKineticEnergySpectrum": true
+    },
+    "rolloutRmse": 0.02728351037616649,
+    "rolloutMae": 0.015035627368885666,
+    "rolloutRelativeL2": 0.04551206083289095
+  },
+  "artifacts": {
+    "rolloutAnalysis": "rollout-analysis.json",
+    "trainingHistory": "training-history.json"
+  }
+}

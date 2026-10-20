@@ -23,21 +23,39 @@
     return ids;
   }
 
-  async function loadSubmissions() {
-    const manifest = await readJson("/submissions/submissions.json");
-    const submissionsByBenchmark = manifest.submissionsByBenchmark;
-    if (!submissionsByBenchmark || typeof submissionsByBenchmark !== "object" || Array.isArray(submissionsByBenchmark)) {
-      throw new Error("The submission manifest must group submission IDs by benchmark.");
+  // submissions/submissions.json lists the benchmark folders; each folder has its own manifest,
+  // submissions/{benchmark}/submissions.json, listing the submission folders inside it, and each record lives at
+  // submissions/{benchmark}/{id}/submission.json next to its artifacts.
+  async function benchmarkSubmissionIds(benchmarkId) {
+    const manifest = await readJson(`/submissions/${encodeURIComponent(benchmarkId)}/submissions.json`);
+    return safeIds(manifest.submissionIds, `${benchmarkId} submission`);
+  }
+
+  // Fast path: update.py also writes one bundle with every lightweight record; the manifest chain is the fallback.
+  async function readBundle(path, key) {
+    try {
+      const bundle = await readJson(path);
+      if (!Array.isArray(bundle[key])) throw new Error(`${path} must contain a "${key}" list.`);
+      return bundle[key];
+    } catch (error) {
+      if (error.status === 404) return null;
+      throw error;
     }
-    const benchmarkIds = safeIds(Object.keys(submissionsByBenchmark), "benchmark");
-    const routes = benchmarkIds.flatMap((benchmarkId) => {
-      const submissionIds = safeIds(submissionsByBenchmark[benchmarkId], `${benchmarkId} submission`);
-      return submissionIds.map((id) => ({ benchmarkId, id }));
-    });
-    return Promise.all(routes.map(({ benchmarkId, id }) => readJson(`/submissions/${encodeURIComponent(benchmarkId)}/${encodeURIComponent(id)}.json`)));
+  }
+
+  async function loadSubmissions() {
+    const bundled = await readBundle("/submissions/bundle.json", "submissions");
+    if (bundled) return bundled;
+    const manifest = await readJson("/submissions/submissions.json");
+    const benchmarkIds = safeIds(manifest.benchmarkIds, "benchmark");
+    const idsByBenchmark = await Promise.all(benchmarkIds.map(benchmarkSubmissionIds));
+    const routes = benchmarkIds.flatMap((benchmarkId, index) => idsByBenchmark[index].map((id) => ({ benchmarkId, id })));
+    return Promise.all(routes.map(({ benchmarkId, id }) => readJson(`/submissions/${encodeURIComponent(benchmarkId)}/${encodeURIComponent(id)}/submission.json`)));
   }
 
   async function loadBenchmarks() {
+    const bundled = await readBundle("/benchmarks/bundle.json", "benchmarks");
+    if (bundled) return bundled;
     const manifest = await readJson("/benchmarks/benchmarks.json");
     const ids = safeIds(manifest.benchmarkIds, "benchmark");
     return Promise.all(ids.map((id) => readJson(`/benchmarks/${encodeURIComponent(id)}.json`)));

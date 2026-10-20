@@ -447,7 +447,11 @@
   }
 
   function modelPicker(submissions, leftId, benchmarkId, selectedId = "") {
-    const candidates = submissions.filter((submission) => submission.id !== leftId && submission.datasetId === benchmarkId);
+    // Same order as the leaderboard's default view: best test rollout RMSE first.
+    const score = (submission) => (Number.isFinite(Number(submission.metrics?.rolloutRmse)) ? Number(submission.metrics.rolloutRmse) : Infinity);
+    const candidates = submissions
+      .filter((submission) => submission.id !== leftId && submission.datasetId === benchmarkId)
+      .sort((a, b) => score(a) - score(b));
     const options = candidates.map((submission) => `<option value="${escapeHtml(submission.id)}"${submission.id === selectedId ? " selected" : ""}>${escapeHtml(submission.model)}</option>`).join("");
     const placeholder = candidates.length ? "Choose a model…" : "No other submissions yet";
     return `<label class="compare-model-select"><span>Compare against</span><select id="compare-model-select" aria-label="Choose a different model"${candidates.length ? "" : " disabled"}><option value=""${selectedId ? "" : " selected"}>${placeholder}</option>${options}</select></label>`;
@@ -582,7 +586,7 @@
     const rangeLabel = points.length
       ? (range.min === range.max ? `Epoch ${formatEpoch(range.min)}` : `Epoch ${formatEpoch(range.min)}–${formatEpoch(range.max)}`)
       : "No epoch data";
-    return `<div class="compare-panel-top"><div class="compare-model-title"><span class="compare-side-label">${side === "left" ? "Model A" : "Model B"}</span><h2>${escapeHtml(item.model)}</h2><p>${escapeHtml(item.authors)} · ${item.year}</p></div>${controls}</div>
+    return `<div class="compare-panel-top"><div class="compare-model-title"><span class="compare-side-label">${side === "left" ? "Model A" : "Model B"}</span><h2>${escapeHtml(item.model)}</h2><p>${escapeHtml(item.authors)} · ${item.year}</p>${item.description ? `<p class="compare-model-description">${escapeHtml(item.description)}</p>` : ""}</div>${controls}</div>
       <div class="compare-section"><h3>Submission details</h3>${modelFacts(item, other, dataset)}</div>
       <div class="compare-section"><div class="compare-section-title"><div><h3>Training loss</h3><p>${item.trainingHistory ? `Epoch versus ${escapeHtml(item.trainingHistory.lossName)}` : "Epoch versus training error"}</p></div><span class="chart-range">${rangeLabel} · log scale</span></div>${trainingChart(item, logScale)}${trainingSummary(item, other)}</div>
       ${rolloutAnalysisSection(item, other)}`;

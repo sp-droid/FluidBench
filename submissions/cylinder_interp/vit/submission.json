@@ -1,0 +1,78 @@
+{
+  "datasetId": "cylinder_interp",
+  "id": "vit",
+  "model": "ViT",
+  "description": "Vision transformer with global attention over 2x2 patches and adaLN conditioning on Re and dt.",
+  "authors": "temp",
+  "year": 2026,
+  "representation": "Grid",
+  "submittedAt": "2026-10-14",
+  "metrics": {
+    "rmse": 0.0011861029395253408,
+    "mae": 0.00043293910197970693,
+    "relativeL2": 0.001992986396676634,
+    "rollout": {
+      "step1": {
+        "rmse": 0.0028226668827765825,
+        "rolloutRmse": 0.0028226668827765825,
+        "mae": 0.0008589474975277218,
+        "rolloutMae": 0.0008589474975277218,
+        "relativeL2": 0.004854051146920781,
+        "rolloutRelativeL2": 0.004854051146920781
+      },
+      "step25": {
+        "rmse": 0.005198367876938622,
+        "rolloutRmse": 0.0036810493064519693,
+        "mae": 0.0032890623634367804,
+        "rolloutMae": 0.002126194500905846,
+        "relativeL2": 0.008784533412933547,
+        "rolloutRelativeL2": 0.00626089091000973
+      },
+      "step100": {
+        "rmse": null,
+        "rolloutRmse": 0.04852763340051626,
+        "mae": null,
+        "rolloutMae": 0.02664770332006661,
+        "relativeL2": null,
+        "rolloutRelativeL2": 0.08101217417281112
+      }
+    },
+    "efficiency": {
+      "inferenceMs": 5.754204646471389,
+      "memoryGb": 0.20998144,
+      "parameters": 5594691
+    },
+    "perVariable": {
+      "velocityRmse": 0.0012802750279707633,
+      "pressureRmse": 0.0009707276935170261
+    },
+    "rolloutAnalysis": {
+      "trajectoryCount": 10,
+      "snapshotCountByTrajectory": [
+        99,
+        99,
+        99,
+        99,
+        99,
+        99,
+        99,
+        99,
+        99,
+        99
+      ],
+      "errorMetricIds": [
+        "rmse",
+        "mae",
+        "relativeL2"
+      ],
+      "hasKineticEnergySpectrum": true
+    },
+    "rolloutRmse": 0.04852763340051626,
+    "rolloutMae": 0.02664770332006661,
+    "rolloutRelativeL2": 0.08101217417281112
+  },
+  "artifacts": {
+    "rolloutAnalysis": "rollout-analysis.json",
+    "trainingHistory": "training-history.json"
+  }
+}

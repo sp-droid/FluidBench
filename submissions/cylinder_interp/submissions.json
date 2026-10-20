@@ -1,0 +1,17 @@
+{
+  "submissionIds": [
+    "baseline-same",
+    "convnext-unet",
+    "dilated-resnet",
+    "f-fno",
+    "fno",
+    "latent-transformer",
+    "meshgraphnet",
+    "modern-unet",
+    "patch-projection",
+    "two-level-schwarz",
+    "unet-classic",
+    "uno",
+    "vit"
+  ]
+}

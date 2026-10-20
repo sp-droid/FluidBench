@@ -1,0 +1,7 @@
+{
+  "submissionIds": [
+    "baseline-same",
+    "baseline-zero",
+    "unet-classic"
+  ]
+}

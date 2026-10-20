@@ -1,0 +1,78 @@
+{
+  "datasetId": "cylinder_interp",
+  "id": "latent-transformer",
+  "model": "Latent Transformer",
+  "description": "Encodes each frame into coarse tokens and attends over the last 4 frames before decoding the next one (TF-Enc).",
+  "authors": "temp",
+  "year": 2026,
+  "representation": "Grid",
+  "submittedAt": "2026-10-14",
+  "metrics": {
+    "rmse": 0.0014856451645750633,
+    "mae": 0.0004917839911495116,
+    "relativeL2": 0.0024963015473778464,
+    "rollout": {
+      "step1": {
+        "rmse": 0.002723108923076375,
+        "rolloutRmse": 0.002723108923076375,
+        "mae": 0.0008005071011211648,
+        "rolloutMae": 0.0008005071011211648,
+        "relativeL2": 0.004683222331916506,
+        "rolloutRelativeL2": 0.004683222331916506
+      },
+      "step25": {
+        "rmse": 0.004606434172610979,
+        "rolloutRmse": 0.0035433979726270434,
+        "mae": 0.0027737869482746614,
+        "rolloutMae": 0.0018646680537653712,
+        "relativeL2": 0.007784836694713988,
+        "rolloutRelativeL2": 0.006028108415769772
+      },
+      "step100": {
+        "rmse": null,
+        "rolloutRmse": 0.01655374682900634,
+        "mae": null,
+        "rolloutMae": 0.009476375103167803,
+        "relativeL2": null,
+        "rolloutRelativeL2": 0.027647137915780298
+      }
+    },
+    "efficiency": {
+      "inferenceMs": 0.5596567676731884,
+      "memoryGb": 0.155626496,
+      "parameters": 2148835
+    },
+    "perVariable": {
+      "velocityRmse": 0.001613039082426751,
+      "pressureRmse": 0.001190644574255279
+    },
+    "rolloutAnalysis": {
+      "trajectoryCount": 10,
+      "snapshotCountByTrajectory": [
+        99,
+        99,
+        99,
+        99,
+        99,
+        99,
+        99,
+        99,
+        99,
+        99
+      ],
+      "errorMetricIds": [
+        "rmse",
+        "mae",
+        "relativeL2"
+      ],
+      "hasKineticEnergySpectrum": true
+    },
+    "rolloutRmse": 0.01655374682900634,
+    "rolloutMae": 0.009476375103167803,
+    "rolloutRelativeL2": 0.027647137915780298
+  },
+  "artifacts": {
+    "rolloutAnalysis": "rollout-analysis.json",
+    "trainingHistory": "training-history.json"
+  }
+}

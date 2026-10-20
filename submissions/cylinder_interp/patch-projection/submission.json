@@ -1,0 +1,78 @@
+{
+  "datasetId": "cylinder_interp",
+  "id": "patch-projection",
+  "model": "Patch Projection",
+  "description": "Local patch CNN fed the current and previous frame, blended across overlapping patches, then projected to be divergence-free.",
+  "authors": "temp",
+  "year": 2026,
+  "representation": "Patches",
+  "submittedAt": "2026-10-15",
+  "metrics": {
+    "rmse": 0.0032933931252058348,
+    "mae": 0.0013005456368856388,
+    "relativeL2": 0.005533826347374416,
+    "rollout": {
+      "step1": {
+        "rmse": 0.0025468319957795958,
+        "rolloutRmse": 0.0025468319957795958,
+        "mae": 0.0010532954267366277,
+        "rolloutMae": 0.0010532954267366277,
+        "relativeL2": 0.0043793587253166625,
+        "rolloutRelativeL2": 0.0043793587253166625
+      },
+      "step25": {
+        "rmse": 0.005077293357557201,
+        "rolloutRmse": 0.003834752329383065,
+        "mae": 0.0030924329483755036,
+        "rolloutMae": 0.0021653121779591955,
+        "relativeL2": 0.008580488090003262,
+        "rolloutRelativeL2": 0.006523148941973951
+      },
+      "step100": {
+        "rmse": null,
+        "rolloutRmse": 0.027055106902179285,
+        "mae": null,
+        "rolloutMae": 0.013836984294999854,
+        "relativeL2": null,
+        "rolloutRelativeL2": 0.04514986704578889
+      }
+    },
+    "efficiency": {
+      "inferenceMs": 2.747581818182494,
+      "memoryGb": 0.351427072,
+      "parameters": 1090404
+    },
+    "perVariable": {
+      "velocityRmse": 0.003700847933526593,
+      "pressureRmse": 0.0022686480505541293
+    },
+    "rolloutAnalysis": {
+      "trajectoryCount": 10,
+      "snapshotCountByTrajectory": [
+        99,
+        99,
+        99,
+        99,
+        99,
+        99,
+        99,
+        99,
+        99,
+        99
+      ],
+      "errorMetricIds": [
+        "rmse",
+        "mae",
+        "relativeL2"
+      ],
+      "hasKineticEnergySpectrum": true
+    },
+    "rolloutRmse": 0.027055106902179285,
+    "rolloutMae": 0.013836984294999854,
+    "rolloutRelativeL2": 0.04514986704578889
+  },
+  "artifacts": {
+    "rolloutAnalysis": "rollout-analysis.json",
+    "trainingHistory": "training-history.json"
+  }
+}

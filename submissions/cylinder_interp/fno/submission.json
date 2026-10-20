@@ -1,0 +1,78 @@
+{
+  "datasetId": "cylinder_interp",
+  "id": "fno",
+  "model": "FNO",
+  "description": "Fourier neural operator: global convolutions through learned filters on the lowest Fourier modes.",
+  "authors": "temp",
+  "year": 2026,
+  "representation": "Grid",
+  "submittedAt": "2026-10-14",
+  "metrics": {
+    "rmse": 0.0016762589724820013,
+    "mae": 0.0006652985236756629,
+    "relativeL2": 0.0028165863333925296,
+    "rollout": {
+      "step1": {
+        "rmse": 0.004682788691201226,
+        "rolloutRmse": 0.004682788691201226,
+        "mae": 0.0017002280250572061,
+        "rolloutMae": 0.0017002280250572061,
+        "relativeL2": 0.008052678158054527,
+        "rolloutRelativeL2": 0.008052678158054527
+      },
+      "step25": {
+        "rmse": 0.005186839919871481,
+        "rolloutRmse": 0.005168798439945523,
+        "mae": 0.0029245698856904,
+        "rolloutMae": 0.0026296808170769444,
+        "relativeL2": 0.008766340043809535,
+        "rolloutRelativeL2": 0.008805161938424526
+      },
+      "step100": {
+        "rmse": null,
+        "rolloutRmse": 0.03649841850503796,
+        "mae": null,
+        "rolloutMae": 0.019699932094017,
+        "relativeL2": null,
+        "rolloutRelativeL2": 0.0609100107043191
+      }
+    },
+    "efficiency": {
+      "inferenceMs": 3.4471706060676204,
+      "memoryGb": 0.31314944,
+      "parameters": 19823875
+    },
+    "perVariable": {
+      "velocityRmse": 0.0017935655208378802,
+      "pressureRmse": 0.0014127200265453628
+    },
+    "rolloutAnalysis": {
+      "trajectoryCount": 10,
+      "snapshotCountByTrajectory": [
+        99,
+        99,
+        99,
+        99,
+        99,
+        99,
+        99,
+        99,
+        99,
+        99
+      ],
+      "errorMetricIds": [
+        "rmse",
+        "mae",
+        "relativeL2"
+      ],
+      "hasKineticEnergySpectrum": true
+    },
+    "rolloutRmse": 0.03649841850503796,
+    "rolloutMae": 0.019699932094017,
+    "rolloutRelativeL2": 0.0609100107043191
+  },
+  "artifacts": {
+    "rolloutAnalysis": "rollout-analysis.json",
+    "trainingHistory": "training-history.json"
+  }
+}

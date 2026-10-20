@@ -99,11 +99,11 @@
     const direction = key === "representation"
       ? (state.sort.groupRepresentation ? state.sort.representationDirection : null)
       : (state.sort.key === key ? state.sort.direction : null);
-    const arrow = direction ? (direction === "asc" ? "↑" : "↓") : "↕";
+    const arrow = direction ? (direction === "asc" ? "↑" : "↓") : "";
     const ariaSort = direction ? ` aria-sort="${direction === "asc" ? "ascending" : "descending"}"` : "";
-    const sortIndicator = key === "representation" ? "" : `<span class="sort-arrow" aria-hidden="true">${arrow}</span>`;
+    const sortIndicator = key === "representation" || !arrow ? "" : `<span class="sort-arrow" aria-hidden="true">${arrow}</span>`;
     const ariaLabel = key === "representation"
-      ? `Representation filter: ${state.representationFilter === "all" ? "all submissions" : `${state.representationFilter} only`}. Click to cycle through all, Graph, and Grid.`
+      ? `Representation filter: ${state.representationFilter === "all" ? "all submissions" : `${state.representationFilter} only`}. Click to cycle through all, Graph, Grid, and Patches.`
       : `Sort by ${label}`;
     return `<th scope="col" class="sortable-heading"${ariaSort}><button type="button" class="sort-button${key === "representation" ? " representation-sort-button" : ""}" data-sort-key="${escapeHtml(key)}" aria-label="${escapeHtml(ariaLabel)}"><span>${escapeHtml(label)}</span>${sortIndicator}</button></th>`;
   }
@@ -111,7 +111,8 @@
   function scoreHeader() {
     const ariaSort = state.sort.key === "score" ? ` aria-sort="${state.sort.direction === "asc" ? "ascending" : "descending"}"` : "";
     const control = scoreControl();
-    return `<th scope="col" class="score-heading"${ariaSort}>${control || "Metric"}</th>`;
+    const hint = control ? '<span class="score-scale-hint" title="Bar length is log-scaled between the best and worst visible scores">log scale · lower is better</span>' : "";
+    return `<th scope="col" class="score-heading"${ariaSort}><div class="score-heading-inner">${control || "Metric"}${hint}</div></th>`;
   }
 
   function metricDefinitions() {
@@ -119,10 +120,9 @@
   }
 
   function columns() {
-    const common = ["<th scope=\"col\">#</th>", sortHeader("Model", "model"), sortHeader("Representation", "representation")];
+    const common = ["<th scope=\"col\">#</th>", sortHeader("Model", "model"), sortHeader("Type", "representation")];
     const metrics = metricDefinitions();
-    // The bar column has no heading so the score number and its bar never share a cell.
-    const content = [...common, scoreHeader(), '<th class="score-bar-heading" aria-hidden="true"></th>'];
+    const content = [...common, scoreHeader()];
     for (const metric of metrics) content.push(sortHeader(metric.label, metricSortKey(metric)));
     content.push(sortHeader("Submitted", "submitted"));
     return { html: content.join(""), count: content.length };
@@ -152,21 +152,22 @@
     return scores.length ? { min: Math.min(...scores), max: Math.max(...scores) } : null;
   }
 
-  function barWidth(score, range) {
-    const full = 58;
-    const minimum = 8;
-    if (!range || range.max <= range.min) return full;
-    const value = Math.max(Number(score), range.min);
+  // Fraction of the track (0-1) for a score; the best score keeps a short stub so it never looks empty.
+  function barFraction(score, range) {
+    const minimum = 0.08;
+    if (!range || range.max <= range.min) return 1;
+    const value = Math.min(Math.max(Number(score), range.min), range.max);
     const position = (Math.log10(value) - Math.log10(range.min)) / (Math.log10(range.max) - Math.log10(range.min));
-    return minimum + position * (full - minimum);
+    return minimum + position * (1 - minimum);
   }
 
   function errorCell(score, label, range) {
     if (score === null || score === undefined || !Number.isFinite(Number(score))) {
-      return `<td class="metric-value" title="${escapeHtml(label)}: unavailable">—</td><td class="score-bar-cell"></td>`;
+      return `<td class="score-cell" title="${escapeHtml(label)}: unavailable"><div class="score-meter"><span class="score-number">—</span><span class="metric-bar is-empty"></span></div></td>`;
     }
     const title = `${label}: ${formatError(score)}`;
-    return `<td class="metric-value" title="${escapeHtml(title)}">${formatError(score)}</td><td class="score-bar-cell"><span class="metric-bar" role="img" aria-label="${escapeHtml(`${title} (log scale)`)}" title="${escapeHtml(`${title} · log scale`)}"><span style="width:${barWidth(score, range).toFixed(1)}px"></span></span></td>`;
+    const fraction = barFraction(score, range);
+    return `<td class="score-cell" title="${escapeHtml(`${title} · log scale`)}"><div class="score-meter"><span class="score-number">${formatError(score)}</span><span class="metric-bar" role="img" aria-label="${escapeHtml(`${title} (log scale)`)}"><span class="metric-bar-fill${range && Number(score) <= range.min ? " is-best" : ""}" style="width:${(fraction * 100).toFixed(2)}%"></span></span></div></td>`;
   }
 
   function formattedValue(value, format) {
@@ -202,7 +203,11 @@
     const selected = currentError();
     metricCells += errorCell(errorValue(item), selected?.label || "Error", scoreRange(items));
     for (const metric of metricDefinitions()) metricCells += metricCell(item, metric, items);
-    return `<tr class="submission-row" data-href="${escapeHtml(compareHref)}" tabindex="0" aria-label="Open comparison for ${model}"><td class="rank-cell">${medal}</td>${modelCell}${representationCell}${metricCells}<td>${formatDate(item.submittedAt)}</td></tr>`;
+    // On hover/focus the row's cells are blanked and the one-phrase description is shown across the whole row.
+    const description = typeof item.description === "string" && item.description.trim() ? escapeHtml(item.description.trim()) : "";
+    const overlay = description ? `<span class="row-description" aria-hidden="true">${description}</span>` : "";
+    const ariaLabel = `Open comparison for ${model}${description ? `: ${description}` : ""}`;
+    return `<tr class="submission-row${description ? " has-description" : ""}" data-href="${escapeHtml(compareHref)}" tabindex="0" aria-label="${ariaLabel}"><td class="rank-cell">${medal}${overlay}</td>${modelCell}${representationCell}${metricCells}<td>${formatDate(item.submittedAt)}</td></tr>`;
   }
 
   function filteredSubmissions() {
@@ -230,9 +235,8 @@
 
   function setSort(key) {
     if (key === "representation") {
-      state.representationFilter = state.representationFilter === "all"
-        ? "Graph"
-        : state.representationFilter === "Graph" ? "Grid" : "all";
+      const cycle = ["all", "Graph", "Grid", "Patches"];
+      state.representationFilter = cycle[(cycle.indexOf(state.representationFilter) + 1) % cycle.length];
       state.sort.groupRepresentation = true;
       state.sort.representationDirection = "asc";
       render();

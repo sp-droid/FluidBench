@@ -1,0 +1,78 @@
+{
+  "datasetId": "cylinder_interp",
+  "id": "meshgraphnet",
+  "model": "MeshGraphNet",
+  "description": "Graph network passing messages between neighbouring grid nodes (the GraphCast family).",
+  "authors": "temp",
+  "year": 2026,
+  "representation": "Graph",
+  "submittedAt": "2026-10-14",
+  "metrics": {
+    "rmse": 0.005071211803829938,
+    "mae": 0.0019063373585179529,
+    "relativeL2": 0.008521061539349731,
+    "rollout": {
+      "step1": {
+        "rmse": 0.008442257151109139,
+        "rolloutRmse": 0.008442257151109139,
+        "mae": 0.0021343444637003843,
+        "rolloutMae": 0.0021343444637003843,
+        "relativeL2": 0.01451838986345807,
+        "rolloutRelativeL2": 0.01451838986345807
+      },
+      "step25": {
+        "rmse": 0.0842475334009514,
+        "rolloutRmse": 0.04445562029888002,
+        "mae": 0.03135408732560463,
+        "rolloutMae": 0.016137296400539406,
+        "relativeL2": 0.14233839311312702,
+        "rolloutRelativeL2": 0.0754839587936924
+      },
+      "step100": {
+        "rmse": null,
+        "rolloutRmse": 0.1176853429017103,
+        "mae": null,
+        "rolloutMae": 0.05904615070726208,
+        "relativeL2": null,
+        "rolloutRelativeL2": 0.19695348556384318
+      }
+    },
+    "efficiency": {
+      "inferenceMs": 10.212658181821226,
+      "memoryGb": 0.424963072,
+      "parameters": 896835
+    },
+    "perVariable": {
+      "velocityRmse": 0.005110044074934705,
+      "pressureRmse": 0.004992641243105869
+    },
+    "rolloutAnalysis": {
+      "trajectoryCount": 10,
+      "snapshotCountByTrajectory": [
+        99,
+        99,
+        99,
+        99,
+        99,
+        99,
+        99,
+        99,
+        99,
+        99
+      ],
+      "errorMetricIds": [
+        "rmse",
+        "mae",
+        "relativeL2"
+      ],
+      "hasKineticEnergySpectrum": true
+    },
+    "rolloutRmse": 0.1176853429017103,
+    "rolloutMae": 0.05904615070726208,
+    "rolloutRelativeL2": 0.19695348556384318
+  },
+  "artifacts": {
+    "rolloutAnalysis": "rollout-analysis.json",
+    "trainingHistory": "training-history.json"
+  }
+}

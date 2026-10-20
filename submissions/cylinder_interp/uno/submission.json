@@ -1,0 +1,78 @@
+{
+  "datasetId": "cylinder_interp",
+  "id": "uno",
+  "model": "UNO",
+  "description": "U-shaped neural operator: a U-Net whose layers are Fourier operators that change resolution between levels.",
+  "authors": "temp",
+  "year": 2026,
+  "representation": "Grid",
+  "submittedAt": "2026-10-14",
+  "metrics": {
+    "rmse": 0.00048630418812325033,
+    "mae": 0.00022948430092942302,
+    "relativeL2": 0.0008171277544968986,
+    "rollout": {
+      "step1": {
+        "rmse": 0.0004313633147415538,
+        "rolloutRmse": 0.0004313633147415538,
+        "mae": 0.0002899642669313277,
+        "rolloutMae": 0.0002899642669313277,
+        "relativeL2": 0.0007416982691870098,
+        "rolloutRelativeL2": 0.0007416982691870098
+      },
+      "step25": {
+        "rmse": 0.000962563485522107,
+        "rolloutRmse": 0.0007432635434890827,
+        "mae": 0.0006028414868786903,
+        "rolloutMae": 0.0004885181608228532,
+        "relativeL2": 0.001626716501896738,
+        "rolloutRelativeL2": 0.0012643480603487928
+      },
+      "step100": {
+        "rmse": null,
+        "rolloutRmse": 0.016469098843696274,
+        "mae": null,
+        "rolloutMae": 0.00817367170577763,
+        "relativeL2": null,
+        "rolloutRelativeL2": 0.027462865198456678
+      }
+    },
+    "efficiency": {
+      "inferenceMs": 1.3121049494877683,
+      "memoryGb": 0.518776832,
+      "parameters": 41801603
+    },
+    "perVariable": {
+      "velocityRmse": 0.0005166809198665321,
+      "pressureRmse": 0.0004189951601753764
+    },
+    "rolloutAnalysis": {
+      "trajectoryCount": 10,
+      "snapshotCountByTrajectory": [
+        99,
+        99,
+        99,
+        99,
+        99,
+        99,
+        99,
+        99,
+        99,
+        99
+      ],
+      "errorMetricIds": [
+        "rmse",
+        "mae",
+        "relativeL2"
+      ],
+      "hasKineticEnergySpectrum": true
+    },
+    "rolloutRmse": 0.016469098843696274,
+    "rolloutMae": 0.00817367170577763,
+    "rolloutRelativeL2": 0.027462865198456678
+  },
+  "artifacts": {
+    "rolloutAnalysis": "rollout-analysis.json",
+    "trainingHistory": "training-history.json"
+  }
+}

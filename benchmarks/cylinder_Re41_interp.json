@@ -12,7 +12,7 @@
   "problem": "Rollout",
   "compressibility": "Incompressible",
   "boundary": "Fixed",
-  "image": "assets/cylinder-flow-dataset.png",
+  "image": "assets/cylinder-flow-dataset.webp",
   "geometry": "assets/meshes/cylinder8000_uniform.geo",
   "description": "A canonical wake prediction task: use a sequence of velocity and pressure snapshots to predict the future incompressible flow around a cylinder.",
   "reynoldsNumbers": [
@@ -31,5 +31,6 @@
     "train": 0.5,
     "test": 0.5
   },
-  "sample_count": 200
+  "sample_count": 200,
+  "sizeGb": 0.0032
 }
