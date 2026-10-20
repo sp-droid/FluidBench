@@ -3,4 +3,5 @@ submission/
 downloads/
 weights/
 CLAUDE.md
+.claude/
 uv.lock
