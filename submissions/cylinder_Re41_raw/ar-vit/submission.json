@@ -1,0 +1,69 @@
+{
+  "datasetId": "cylinder_Re41_raw",
+  "id": "ar-vit",
+  "model": "AR ViT",
+  "description": "Autoregressive ViT over patches of 8 mesh cells with Fourier coordinate embedding and adaLN conditioning on Re, predicting the normalised increment.",
+  "authors": "David Ramos",
+  "year": 2026,
+  "representation": "Graph",
+  "submittedAt": "2026-10-30",
+  "metrics": {
+    "rmse": 0.006144145288618095,
+    "mae": 0.0013304136739704093,
+    "relativeL2": 0.011699858990687598,
+    "rollout": {
+      "step1": {
+        "rmse": 0.05005732364017847,
+        "rolloutRmse": 0.05005732364017847,
+        "mae": 0.022681524088682712,
+        "rolloutMae": 0.022681524088682712,
+        "relativeL2": 0.08879361693566283,
+        "rolloutRelativeL2": 0.08879361693566283
+      },
+      "step25": {
+        "rmse": 0.03783434565614331,
+        "rolloutRmse": 0.049467992827280004,
+        "mae": 0.026348207650982797,
+        "rolloutMae": 0.028484571910679324,
+        "relativeL2": 0.07194240530405228,
+        "rolloutRelativeL2": 0.0921210010927593
+      },
+      "step100": {
+        "rmse": null,
+        "rolloutRmse": 0.050579431478780815,
+        "mae": null,
+        "rolloutMae": 0.03312820062245018,
+        "relativeL2": null,
+        "rolloutRelativeL2": 0.09628176606514961
+      }
+    },
+    "efficiency": {
+      "inferenceMs": 63.61973453124966,
+      "memoryGb": 0.157869272,
+      "parameters": 38931304
+    },
+    "perVariable": {
+      "velocityRmse": 0.0068337692039404175,
+      "pressureRmse": 0.004455419275163108
+    },
+    "rolloutAnalysis": {
+      "trajectoryCount": 1,
+      "snapshotCountByTrajectory": [
+        99
+      ],
+      "errorMetricIds": [
+        "rmse",
+        "mae",
+        "relativeL2"
+      ],
+      "hasKineticEnergySpectrum": false
+    },
+    "rolloutRmse": 0.050579431478780815,
+    "rolloutMae": 0.03312820062245018,
+    "rolloutRelativeL2": 0.09628176606514961
+  },
+  "artifacts": {
+    "rolloutAnalysis": "rollout-analysis.json",
+    "trainingHistory": "training-history.json"
+  }
+}
