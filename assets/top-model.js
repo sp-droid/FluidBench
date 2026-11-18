@@ -15,8 +15,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.getElementById("top-model-params").textContent = (leader.metrics.efficiency.parameters / 1000000).toFixed(1) + "M";
     document.getElementById("top-model-count").textContent = leaders.length + (leaders.length === 1 ? " submission" : " submissions");
     document.getElementById("site-submission-count").textContent = `${leaders.length} submissions, ${new Set(leaders.map((item) => item.authors)).size} teams`;
-    const flowRegimeCount = new Set(data.datasets.map((item) => item.compressibility).filter(Boolean)).size;
-    document.getElementById("site-benchmark-stats").textContent = `${flowRegimeCount} flow regime${flowRegimeCount === 1 ? "" : "s"}, ${data.datasets.length} datasets, 6 metrics`;
     representation.textContent = leader.representation;
     representation.className = "badge " + ({ Graph: "badge-graph", Patches: "badge-patches" }[leader.representation] || "badge-grid");
   } catch {

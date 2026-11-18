@@ -478,6 +478,24 @@ h1, h2, h3 { font-family: Manrope, "Segoe UI", Arial, sans-serif; }
 .rollout-in-graph-legend .rollout-legend-reference-band { fill: #8493a8; opacity: .18; stroke: #8493a8; stroke-width: .5; }
 .rollout-in-graph-legend .rollout-legend-prediction-band { fill: var(--curve-color); opacity: .18; stroke: var(--curve-color); stroke-width: .5; }
 .rollout-chart-note { margin: 3px 1px 0; color: #8793a5; font-size: 7px; }
+.rollout-reference-level line { stroke: #9aa9bb; stroke-width: .9; stroke-dasharray: 3 3; }
+.rollout-reference-level text { fill: #8493a8; font-family: inherit; font-size: 6.5px; }
+.rollout-transient line { stroke: #c08a2d; stroke-width: 1; stroke-dasharray: 4 3; opacity: .75; }
+.rollout-transient text { fill: #a87822; font-family: inherit; font-size: 6.5px; }
+.murphy-area { stroke: #fff; stroke-width: .4; opacity: .85; }
+.murphy-bias { fill: #d76d52; }
+.murphy-amplitude { fill: #e3b341; }
+.murphy-phase { fill: var(--curve-color); }
+.modal-bar-reference { fill: #8493a8; opacity: .7; }
+.modal-bar-prediction { fill: var(--curve-color); opacity: .85; }
+.modal-bar-prediction.is-better { fill: #20a477; }
+.modal-bar-prediction.is-worse { fill: #d76d52; }
+.rollout-in-graph-legend rect.murphy-bias { fill: #d76d52; stroke: none; }
+.rollout-in-graph-legend rect.murphy-amplitude { fill: #e3b341; stroke: none; }
+.rollout-in-graph-legend rect.murphy-phase, .rollout-in-graph-legend rect.modal-bar-prediction { fill: var(--curve-color); stroke: none; }
+.rollout-in-graph-legend rect.modal-bar-reference { fill: #8493a8; stroke: none; }
+.evaluation-loss-table tr.evaluation-group th { padding: 6px 9px 4px; color: #8493a8; background: #f7f9fc; font-size: 7px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; text-align: left; }
+.evaluation-loss-table tbody td.is-empty { color: #b6c1cf; font-weight: 500; }
 .training-chart-wrap { width: 100%; overflow: hidden; position: relative; }
 .training-chart { width: 100%; height: auto; display: block; overflow: visible; }
 .chart-gridline line { stroke: #e8edf4; stroke-width: 1; }
@@ -513,7 +531,7 @@ h1, h2, h3 { font-family: Manrope, "Segoe UI", Arial, sans-serif; }
 .compare-loss-item.is-worse dd { color: #ad4b31; }
 .compare-loss-item.is-tied { border-color: #dce5f0; background: #f2f6fb; }
 .evaluation-loss-scroll { overflow-x: auto; margin-top: 9px; border: 1px solid #e7edf4; border-radius: 7px; }
-.evaluation-loss-table { width: 100%; min-width: 360px; border-collapse: collapse; background: #fff; font-size: 8px; }
+.evaluation-loss-table { width: 100%; min-width: 260px; border-collapse: collapse; background: #fff; font-size: 8px; }
 .evaluation-loss-table th, .evaluation-loss-table td { padding: 8px 9px; border-bottom: 1px solid #edf1f6; text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .evaluation-loss-table thead th { color: #526681; background: #f7f9fc; font-weight: 700; }
 .evaluation-loss-table thead th:first-child, .evaluation-loss-table tbody th { text-align: left; }
@@ -766,3 +784,41 @@ h1, h2, h3 { font-family: Manrope, "Segoe UI", Arial, sans-serif; }
   .geometry-card { padding: 14px; }
 }
 .symbol-label { text-transform: none !important; }
+
+/* Metrics page */
+.metrics-page { display: grid; gap: 14px; margin-bottom: 40px; }
+.metrics-toc { display: flex; flex-wrap: wrap; gap: 6px; }
+.metrics-toc a { padding: 5px 10px; border: 1px solid var(--line); border-radius: 999px; background: rgba(255,255,255,.7); color: var(--ink-soft); font-size: 11px; text-decoration: none; }
+.metrics-toc a:hover { border-color: var(--line-strong); color: var(--blue-dark); }
+.metrics-group { scroll-margin-top: 80px; padding: 18px 20px; border: 1px solid var(--line); border-radius: var(--radius); background: rgba(255,255,255,.88); box-shadow: var(--shadow); }
+.metrics-group > p, .metrics-group li { max-width: 78ch; color: var(--ink-soft); font-size: 13px; line-height: 1.6; }
+.metrics-group code { font-size: 12px; }
+.metrics-group-head h2 { margin: 0 0 4px; font-size: 18px; }
+.metrics-group-head p { margin: 0 0 12px; max-width: 78ch; color: var(--muted); font-size: 12px; line-height: 1.5; }
+.metrics-families { padding-left: 0; list-style: none; display: grid; gap: 6px; }
+.metric-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; }
+.metric-card { min-width: 0; padding: 12px 13px; border: 1px solid #e3eaf3; border-radius: 9px; background: #fbfcfe; }
+.metric-card header { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.metric-card h3 { margin: 0; font-size: 13px; }
+.metric-card p { margin: 6px 0 0; color: var(--ink-soft); font-size: 12px; line-height: 1.5; }
+.metric-card .metric-formula { padding: 6px 8px; border-radius: 6px; background: #eef3fa; color: var(--ink); font-family: "Cambria Math", Cambria, Georgia, serif; font-size: 12.5px; overflow-wrap: anywhere; }
+.metric-card dl { display: grid; gap: 3px; margin: 8px 0 0; font-size: 11px; }
+.metric-card dl div { display: grid; grid-template-columns: 62px 1fr; gap: 6px; }
+.metric-card dt { color: var(--muted); }
+.metric-card dd { margin: 0; color: var(--ink-soft); }
+.metric-family { flex: none; padding: 2px 7px; border-radius: 999px; font-size: 9.5px; font-weight: 650; }
+.metric-family-p { color: #1d4f9c; background: #e6effc; }
+.metric-family-u { color: #116f55; background: #e3f6ee; }
+.metric-family-r { color: #8a5a12; background: #fbf0dc; }
+@media (max-width: 600px) { .metrics-group { padding: 14px; } .metric-grid { grid-template-columns: 1fr; } }
+.metric-family[title] { cursor: help; }
+.metrics-legend { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 6px 18px; margin: 0; }
+.metrics-legend div { display: flex; gap: 10px; align-items: baseline; }
+.metrics-legend dt { min-width: 56px; }
+.metrics-legend dd { margin: 0; color: var(--ink-soft); font-size: 13px; }
+.evaluation-loss-table tbody td.is-better { background: color-mix(in srgb, #c4ecd9 calc(var(--tone, 1) * 100%), #fff); }
+.evaluation-loss-table tbody td.is-worse { background: color-mix(in srgb, #f7cdbf calc(var(--tone, 1) * 100%), #fff); }
+.evaluation-loss-table.is-collapsed tr.is-collapsible { display: none; }
+.summary-rank { float: left; margin-right: 8px; color: #8493a8; font-weight: 600; }
+.summary-collapse-toggle { margin-top: 6px; padding: 3px 9px; border: 1px solid var(--line); border-radius: 999px; background: #fff; color: var(--ink-soft); font-size: 10px; cursor: pointer; }
+.summary-collapse-toggle:hover { border-color: var(--line-strong); color: var(--blue-dark); }

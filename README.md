@@ -17,4 +17,4 @@ Serve the repository root with any static HTTP server and open its local URL. Th
 - /index.html — overview, featured benchmark, top-model preview, and benchmark summary.
 - /pages/leaderboard.html — searchable and filterable sample rankings.
 - /pages/compare.html — side-by-side model losses and efficiency details.
-- /pages/benchmarks.html, /pages/models.html, /pages/metrics.html, and /pages/docs.html — focused reference pages.
+- /pages/benchmarks.html and /pages/metrics.html — focused reference pages.

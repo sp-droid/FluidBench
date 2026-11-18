@@ -19,6 +19,36 @@ MANIFEST_NAME = "submissions.json"
 BUNDLE_NAME = "bundle.json"
 RECORD_NAME = "submission.json"
 VALID_ID = re.compile(r"[a-z0-9_-]+\Z", re.IGNORECASE)
+# Single-number metrics that are better when higher; every other ranked metric is better when lower.
+HIGHER_IS_BETTER = {"correlation", "anomalyCorrelation", "highCorrelationTime", "survivalFraction"}
+# Metric subtrees and keys that are not scores.
+NOT_RANKED = {"efficiency", "rolloutAnalysis", "caseCount", "trajectoryCount"}
+
+
+def metric_leaves(metrics, prefix=""):
+    """Dotted path -> value of every finite numeric score in a submission's metrics object."""
+    for key, value in (metrics or {}).items():
+        if key in NOT_RANKED:
+            continue
+        path = f"{prefix}{key}"
+        if isinstance(value, dict):
+            yield from metric_leaves(value, f"{path}.")
+        elif isinstance(value, (int, float)) and not isinstance(value, bool) and value == value and abs(value) != float("inf"):
+            yield path, float(value)
+
+
+def rank_records(records):
+    """Give each record `ranks` {metric path: rank within its benchmark} (1 = best, ties share a rank)."""
+    values = {}
+    for submission_id, record in records.items():
+        for path, value in metric_leaves(record.get("metrics")):
+            values.setdefault(path, []).append((value, submission_id))
+    ranks = {submission_id: {} for submission_id in records}
+    for path, entries in sorted(values.items()):
+        sign = -1 if path.rsplit(".", 1)[-1] in HIGHER_IS_BETTER else 1
+        for value, submission_id in entries:
+            ranks[submission_id][path] = 1 + sum(sign * other < sign * value for other, _ in entries)
+    return ranks
 
 
 def main():
@@ -45,6 +75,14 @@ def main():
                     f"(found {record.get('id')!r}, {record.get('datasetId')!r})."
                 )
             records[submission_id] = record
+
+        for submission_id, record_ranks in rank_records(records).items():
+            record = records[submission_id]
+            if record.get("ranks") != record_ranks:
+                record["ranks"] = record_ranks
+                (benchmark_dir / submission_id / RECORD_NAME).write_text(
+                    json.dumps(record, indent=2, allow_nan=False) + "\n", encoding="utf-8"
+                )
 
         submission_ids = sorted(records, key=str.casefold)
         (benchmark_dir / MANIFEST_NAME).write_text(

@@ -17,6 +17,7 @@ import numpy as np
 import torch
 from torch.utils.data import ConcatDataset, DataLoader, Subset
 
+from . import flowstats
 from .cfdataset import CFDataset
 from .downloader import download_dataset
 
@@ -102,6 +103,11 @@ def _thin_rollout_analysis(analysis: dict[str, Any]) -> dict[str, Any]:
             for key, values in trajectory["errors"].items()
         }
         trajectory["times"] = [trajectory["times"][i] for i in steps if i < len(trajectory["times"])]
+        if trajectory.get("statistics"):
+            trajectory["statistics"] = {
+                key: [values[i] for i in steps if i < len(values)]
+                for key, values in trajectory["statistics"].items()
+            }
         for spectrum in (trajectory.get("kineticEnergySpectrum") or {}).values():
             indices = _plot_indices(len(spectrum["wavenumbers"]))
             for key in ("wavenumbers", "mean", "standardDeviation"):
@@ -229,6 +235,20 @@ def _benchmark_scalar_names(benchmark_id: str) -> list[str]:
     return names
 
 
+PHASES = ("all", "transient", "settled")
+MODAL_KEYS = ("podEnergyError", "uncapturedEnergy", "subspaceAngle", "frequencyError", "growthRateError")
+
+
+def _benchmark_transient_times(benchmark_id: str, case_count: int) -> list[float | None]:
+    """Per test case transient cutoff in rollout time (benchmarks/transient.py); None = none / never settles."""
+    metadata_path = Path(__file__).resolve().parents[2] / "benchmarks" / f"{benchmark_id}.json"
+    with metadata_path.open(encoding="utf-8") as metadata_file:
+        values = json.load(metadata_file).get("transientTimes")
+    if not isinstance(values, list) or len(values) != case_count:
+        return [None] * case_count
+    return [float(value) if isinstance(value, (int, float)) and math.isfinite(value) else None for value in values]
+
+
 def _model_device(model: Any) -> torch.device:
     try:
         return next(model.parameters()).device
@@ -237,6 +257,8 @@ def _model_device(model: Any) -> torch.device:
 
 
 def _snapshot_metrics(prediction: torch.Tensor, target: torch.Tensor) -> dict[str, float | None]:
+    if not torch.isfinite(prediction).all():  # the rollout blew up: no score for this snapshot
+        return {"rmse": None, "mae": None, "relativeL2": None}
     error = prediction - target
     target_norm = torch.linalg.vector_norm(target)
     error_norm = torch.linalg.vector_norm(error)
@@ -386,10 +408,7 @@ def _as_trajectory(prediction: Any, target: torch.Tensor, case_index: int) -> to
             f"Rollout trajectory {case_index + 1} and its test snapshots must match; "
             f"got {tuple(prediction.shape)} and {tuple(target.shape)}."
         )
-    if not torch.isfinite(prediction).all():
-        raise ValueError(
-            f"model.predict_rollout() returned non-finite values in test case {case_index + 1}."
-        )
+    # Non-finite values are allowed: the rollout survival time is a metric, later snapshots get no score.
     return prediction
 
 
@@ -398,7 +417,9 @@ def _evaluate_test_split(
     cases: list[CFDataset],
     variables: list[str],
     scalar_names: list[str],
+    transient_times: list[float | None] | None = None,
 ) -> tuple[dict[str, Any], dict[str, Any]]:
+    transient_times = transient_times or [None] * len(cases)
     loader = DataLoader(ConcatDataset(cases), batch_size=_BATCH_SIZE, shuffle=False)
     device = _model_device(model)
     use_cuda = device.type == "cuda" and torch.cuda.is_available()
@@ -523,6 +544,13 @@ def _evaluate_test_split(
         return math.sqrt(float(channel_square_sums[selected].sum()) / count) if count else None
 
     rollout_snapshot_metrics_by_case: list[list[dict[str, float | None]]] = []
+    statistics_by_case: list[dict[str, list[float | None]]] = []
+    # Phases of each rollout: every snapshot, before each case's transient cutoff, and after it.
+    phase_masks: dict[str, list[np.ndarray]] = {phase: [] for phase in PHASES}
+    moments_by_phase: dict[str, list[dict[str, float | None]]] = {phase: [] for phase in PHASES}
+    modal_by_phase: dict[str, list[dict[str, Any] | None]] = {phase: [] for phase in PHASES}
+    high_correlation_times: list[float] = []
+    survival_steps: list[tuple[int, int]] = []
     trajectory_records = []
     common_wavenumbers: list[int] | None = None
     for case_index, (case, prediction) in enumerate(zip(cases, rollout_predictions)):
@@ -538,7 +566,46 @@ def _evaluate_test_split(
             for time_index in range(int(target.shape[0]))
         ]
         rollout_snapshot_metrics_by_case.append(snapshot_metrics)
-        prediction_spectrum = _trajectory_spectrum(prediction.numpy(), variables)
+
+        # Statistical / physical / modal metrics on the snapshots before any blow-up.
+        step_count_case = int(target.shape[0])
+        times = np.cumsum(_step_durations(case, scalar_names))
+        survived = flowstats.first_nonfinite_step(prediction.numpy())
+        survival_steps.append((survived, step_count_case))
+        pred_np, true_np = prediction.numpy()[:survived], target.numpy()[:survived]
+        statistics = {key: [None] * step_count_case for key in flowstats.STEP_KEYS}
+        transient = transient_times[case_index]
+        settled = np.zeros(step_count_case, dtype=bool) if transient is None else times >= transient - 1e-9
+        masks = {"all": np.ones(step_count_case, dtype=bool), "transient": ~settled, "settled": settled}
+        moments = {phase: {"skewnessError": None, "kurtosisError": None} for phase in PHASES}
+        modal = {phase: None for phase in PHASES}
+        durations = _step_durations(case, scalar_names)
+        if survived:
+            for key, values in flowstats.step_statistics(pred_np, true_np, variables).items():
+                statistics[key][:survived] = values
+            high_correlation_times.append(
+                flowstats.high_correlation_time(statistics["correlation"][:survived], times[:survived])
+            )
+            for phase, mask in masks.items():
+                kept = mask[:survived]
+                if kept.any():
+                    moments[phase] = flowstats.moment_errors(pred_np[kept], true_np[kept])
+                    if survived == step_count_case:  # modes need the whole phase
+                        modal[phase] = flowstats.modal_analysis(
+                            pred_np[mask], true_np[mask], float(durations[mask].mean())
+                        )
+        else:
+            high_correlation_times.append(0.0)
+        statistics_by_case.append(statistics)
+        for phase in PHASES:
+            phase_masks[phase].append(masks[phase])
+            moments_by_phase[phase].append(moments[phase])
+            modal_by_phase[phase].append(modal[phase])
+        modal = modal["settled"]  # the compare page plots the settled modes
+
+        prediction_spectrum = (
+            _trajectory_spectrum(prediction.numpy(), variables) if survived == step_count_case else None
+        )
         target_spectrum = _trajectory_spectrum(target.numpy(), variables)
         if prediction_spectrum is not None and target_spectrum is not None:
             if prediction_spectrum["wavenumbers"] != target_spectrum["wavenumbers"]:
@@ -567,6 +634,14 @@ def _evaluate_test_split(
                     else None
                 ),
                 "leadTime": lead_records[case_index],
+                "statistics": statistics,
+                "transientTime": transient,
+                "survivalSteps": survived,
+                "modal": (
+                    {key: modal[key] for key in ("modeCount", "modeEnergy", "dominantMode")}
+                    if modal is not None
+                    else None
+                ),
             }
         )
 
@@ -615,9 +690,54 @@ def _evaluate_test_split(
         "rolloutMae": _mean_metric(all_rollout_snapshots, "mae"),
         "rolloutRelativeL2": _mean_metric(all_rollout_snapshots, "relativeL2"),
     }
+    # Statistical metrics: pooled over every snapshot of every case, like the rollout errors above.
+    pooled_statistics = {
+        key: [value for case_statistics in statistics_by_case for value in case_statistics[key]]
+        for key in flowstats.STEP_KEYS
+    }
+
+    def moment_means(by_case: list[dict[str, float | None]]) -> dict[str, float | None]:
+        return {key: _mean_metric(by_case, key) for key in ("skewnessError", "kurtosisError")}
+
+    def modal_means(phase: str) -> dict[str, float | None]:
+        scalars = [modal["scalars"] for modal in modal_by_phase[phase] if modal is not None]
+        return {key: _mean_metric(scalars, key) for key in MODAL_KEYS}
+
+    def phase_metrics(phase: str) -> dict[str, Any] | None:
+        masks = phase_masks[phase]
+        pooled = np.concatenate(masks)
+        if not pooled.any():
+            return None
+        snapshots = [
+            snapshot
+            for case_metrics, mask in zip(rollout_snapshot_metrics_by_case, masks)
+            for snapshot, keep in zip(case_metrics, mask)
+            if keep
+        ]
+        return {
+            "caseCount": sum(bool(mask.any()) for mask in masks),
+            "rolloutRmse": _mean_metric(snapshots, "rmse"),
+            "rolloutMae": _mean_metric(snapshots, "mae"),
+            "rolloutRelativeL2": _mean_metric(snapshots, "relativeL2"),
+            **flowstats.summarize(pooled_statistics, pooled),
+            **moment_means([m for m, mask in zip(moments_by_phase[phase], masks) if mask.any()]),
+            "modal": modal_means(phase),
+        }
+
+    statistics_metrics = {
+        **flowstats.summarize(pooled_statistics),
+        **moment_means(moments_by_phase["all"]),
+        "highCorrelationTime": float(np.mean(high_correlation_times)),
+        "survivalFraction": sum(done for done, _ in survival_steps) / sum(total for _, total in survival_steps),
+    }
+    modal_metrics = modal_means("all")
+    transient_metrics = phase_metrics("transient")
+    settled_metrics = phase_metrics("settled")
+
     step_count = max(map(len, rollout_snapshot_metrics_by_case))
     rollout_analysis = {
-        "schemaVersion": 2,
+        "schemaVersion": 3,
+        "statisticIds": list(flowstats.STEP_KEYS),
         "trajectoryCount": len(trajectory_records),
         "timeSteps": list(range(1, step_count + 1)),
         # Mean snapshot time across cases at each step, for plotting all cases on one time axis.
@@ -652,6 +772,10 @@ def _evaluate_test_split(
             "hasKineticEnergySpectrum": bool(common_wavenumbers),
         },
         **rollout_average,
+        "statistics": statistics_metrics,
+        "modal": modal_metrics,
+        "transient": transient_metrics,
+        "settled": settled_metrics,
     }
     # Metrics above use every snapshot; only the stored plot series are thinned.
     return metrics, _thin_rollout_analysis(rollout_analysis)
@@ -688,6 +812,7 @@ def run(
         test_cases,
         _benchmark_variables(benchmark_id),
         _benchmark_scalar_names(benchmark_id),
+        _benchmark_transient_times(benchmark_id, len(test_cases)),
     )
     metrics["efficiency"]["parameters"] = int(sum(parameter.numel() for parameter in model.parameters()))
 

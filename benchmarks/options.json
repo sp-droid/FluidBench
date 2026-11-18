@@ -12,7 +12,18 @@
           "errors": [
             { "id": "rmse", "label": "RMSE", "path": "rolloutRmse" },
             { "id": "mae", "label": "MAE", "path": "rolloutMae" },
-            { "id": "relativeL2", "label": "Rel. L₂", "path": "rolloutRelativeL2" }
+            { "id": "relativeL2", "label": "Rel. L₂", "path": "rolloutRelativeL2" },
+            { "id": "vrmse", "label": "VRMSE", "path": "statistics.vrmse" },
+            { "id": "decorrelation", "label": "1 − ρ (correlation)", "path": "statistics.decorrelation" },
+            { "id": "anomalyDecorrelation", "label": "1 − ACC (anomaly corr.)", "path": "statistics.anomalyDecorrelation" },
+            { "id": "murphyPhase", "label": "MSE phase term", "path": "statistics.murphyPhase" },
+            { "id": "energyError", "label": "Energy error", "path": "statistics.energyError" },
+            { "id": "wasserstein", "label": "Wasserstein-1", "path": "statistics.wasserstein" },
+            { "id": "settledRmse", "label": "Settled RMSE", "path": "settled.rolloutRmse" },
+            { "id": "settledVrmse", "label": "Settled VRMSE", "path": "settled.vrmse" },
+            { "id": "settledWasserstein", "label": "Settled Wasserstein-1", "path": "settled.wasserstein" },
+            { "id": "podEnergyError", "label": "POD energy error", "path": "modal.podEnergyError" },
+            { "id": "frequencyError", "label": "Frequency error", "path": "modal.frequencyError" }
           ]
         }
       ],

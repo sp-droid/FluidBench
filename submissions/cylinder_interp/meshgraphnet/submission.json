@@ -74,5 +74,30 @@
   "artifacts": {
     "rolloutAnalysis": "rollout-analysis.json",
     "trainingHistory": "training-history.json"
+  },
+  "ranks": {
+    "mae": 12,
+    "perVariable.pressureRmse": 12,
+    "perVariable.velocityRmse": 12,
+    "relativeL2": 12,
+    "rmse": 12,
+    "rollout.step1.mae": 12,
+    "rollout.step1.relativeL2": 12,
+    "rollout.step1.rmse": 12,
+    "rollout.step1.rolloutMae": 12,
+    "rollout.step1.rolloutRelativeL2": 12,
+    "rollout.step1.rolloutRmse": 12,
+    "rollout.step100.rolloutMae": 13,
+    "rollout.step100.rolloutRelativeL2": 12,
+    "rollout.step100.rolloutRmse": 12,
+    "rollout.step25.mae": 12,
+    "rollout.step25.relativeL2": 12,
+    "rollout.step25.rmse": 12,
+    "rollout.step25.rolloutMae": 12,
+    "rollout.step25.rolloutRelativeL2": 12,
+    "rollout.step25.rolloutRmse": 12,
+    "rolloutMae": 13,
+    "rolloutRelativeL2": 12,
+    "rolloutRmse": 12
   }
 }

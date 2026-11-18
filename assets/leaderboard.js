@@ -196,7 +196,10 @@
     const model = escapeHtml(item.model);
     const authors = escapeHtml(item.authors);
     const compareHref = window.FluidBenchPaths.url(`/pages/compare.html?dataset=${encodeURIComponent(item.datasetId)}&model=${encodeURIComponent(item.id)}`);
-    const medal = index < 3 ? `<span class="medal" aria-label="Rank ${index + 1}">${["🥇", "🥈", "🥉"][index]}</span>` : index + 1;
+    // Submissions without the selected score (e.g. not re-run since a metric was added) get no rank.
+    const score = errorValue(item);
+    const unranked = state.sort.key === "score" && (score === null || score === undefined || !Number.isFinite(Number(score)));
+    const medal = unranked ? "—" : index < 3 ? `<span class="medal" aria-label="Rank ${index + 1}">${["🥇", "🥈", "🥉"][index]}</span>` : index + 1;
     const modelCell = `<td><span class="model-name">${model}</span><span class="model-author">${authors}</span></td>`;
     const representationCell = `<td><span class="representation-badge ${escapeHtml(String(item.representation || "").toLowerCase())}">${escapeHtml(item.representation)}</span></td>`;
     let metricCells = "";

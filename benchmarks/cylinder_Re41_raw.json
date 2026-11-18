@@ -32,5 +32,6 @@
     "test": 0.5
   },
   "sample_count": 200,
+  "transientTimes": [56.004628],
   "sizeGb": 0.0123
 }
