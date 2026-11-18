@@ -1,0 +1,179 @@
+{
+  "datasetId": "cylinder_raw",
+  "id": "baseline-zero",
+  "model": "Baseline Zero",
+  "description": "Zero baseline: every predicted snapshot is an all-zero field.",
+  "authors": "Pablo A.C.",
+  "year": 2026,
+  "representation": "Graph",
+  "submittedAt": "2026-11-18",
+  "metrics": {
+    "rmse": 0.5410066098668304,
+    "mae": 0.36524895612143776,
+    "relativeL2": 1.0,
+    "rollout": {
+      "step1": {
+        "rmse": 0.5825794350355824,
+        "rolloutRmse": 0.5825794350355824,
+        "mae": 0.3951586162936924,
+        "rolloutMae": 0.3951586162936924,
+        "relativeL2": 1.0,
+        "rolloutRelativeL2": 1.0
+      },
+      "step25": {
+        "rmse": 0.5382221117508811,
+        "rolloutRmse": 0.5508482995340103,
+        "mae": 0.36149563251809314,
+        "rolloutMae": 0.3725095351379851,
+        "relativeL2": 1.0,
+        "rolloutRelativeL2": 1.0
+      },
+      "step100": {
+        "rmse": null,
+        "rolloutRmse": 0.5408361901016653,
+        "mae": null,
+        "rolloutMae": 0.3652489561214377,
+        "relativeL2": null,
+        "rolloutRelativeL2": 1.0
+      }
+    },
+    "efficiency": {
+      "inferenceMs": 0.17140989898553474,
+      "memoryGb": 0.003074048,
+      "parameters": 1
+    },
+    "perVariable": {
+      "velocityRmse": 0.6364192465796011,
+      "pressureRmse": 0.26077872023021254
+    },
+    "rolloutAnalysis": {
+      "trajectoryCount": 10,
+      "snapshotCountByTrajectory": [
+        99,
+        99,
+        99,
+        99,
+        99,
+        99,
+        99,
+        99,
+        99,
+        99
+      ],
+      "errorMetricIds": [
+        "rmse",
+        "mae",
+        "relativeL2"
+      ],
+      "hasKineticEnergySpectrum": false
+    },
+    "rolloutRmse": 0.5408361901016653,
+    "rolloutMae": 0.3652489561214377,
+    "rolloutRelativeL2": 1.0,
+    "statistics": {
+      "vrmse": 1.3284046465726362,
+      "correlation": null,
+      "decorrelation": null,
+      "anomalyCorrelation": 0.03203971875214377,
+      "anomalyDecorrelation": 0.9679602812478563,
+      "murphyBias": 0.9458042021137213,
+      "murphyAmplitude": 1.0,
+      "murphyPhase": 0.0,
+      "energyError": null,
+      "wasserstein": 1.0467283401198326,
+      "skewnessError": null,
+      "kurtosisError": null,
+      "highCorrelationTime": 1.0017812073230743,
+      "survivalFraction": 1.0
+    },
+    "modal": {
+      "podEnergyError": 0.8729538723755823,
+      "uncapturedEnergy": 0.967532839725956,
+      "subspaceAngle": 90.0,
+      "frequencyError": 1.0,
+      "growthRateError": null
+    },
+    "transient": {
+      "caseCount": 10,
+      "rolloutRmse": 0.5408361901016653,
+      "rolloutMae": 0.3652489561214377,
+      "rolloutRelativeL2": 1.0,
+      "vrmse": 1.3284046465726362,
+      "correlation": null,
+      "decorrelation": null,
+      "anomalyCorrelation": 0.03203971875214377,
+      "anomalyDecorrelation": 0.9679602812478563,
+      "murphyBias": 0.9458042021137213,
+      "murphyAmplitude": 1.0,
+      "murphyPhase": 0.0,
+      "energyError": null,
+      "wasserstein": 1.0467283401198326,
+      "skewnessError": null,
+      "kurtosisError": null,
+      "modal": {
+        "podEnergyError": 0.8729538723755823,
+        "uncapturedEnergy": 0.967532839725956,
+        "subspaceAngle": 90.0,
+        "frequencyError": 1.0,
+        "growthRateError": null
+      }
+    },
+    "settled": null
+  },
+  "artifacts": {
+    "rolloutAnalysis": "rollout-analysis.json",
+    "trainingHistory": "training-history.json"
+  },
+  "ranks": {
+    "mae": 3,
+    "modal.frequencyError": 1,
+    "modal.podEnergyError": 2,
+    "modal.subspaceAngle": 2,
+    "modal.uncapturedEnergy": 3,
+    "perVariable.pressureRmse": 3,
+    "perVariable.velocityRmse": 3,
+    "relativeL2": 3,
+    "rmse": 3,
+    "rollout.step1.mae": 3,
+    "rollout.step1.relativeL2": 3,
+    "rollout.step1.rmse": 3,
+    "rollout.step1.rolloutMae": 3,
+    "rollout.step1.rolloutRelativeL2": 3,
+    "rollout.step1.rolloutRmse": 3,
+    "rollout.step100.rolloutMae": 3,
+    "rollout.step100.rolloutRelativeL2": 3,
+    "rollout.step100.rolloutRmse": 3,
+    "rollout.step25.mae": 3,
+    "rollout.step25.relativeL2": 3,
+    "rollout.step25.rmse": 3,
+    "rollout.step25.rolloutMae": 3,
+    "rollout.step25.rolloutRelativeL2": 3,
+    "rollout.step25.rolloutRmse": 3,
+    "rolloutMae": 3,
+    "rolloutRelativeL2": 3,
+    "rolloutRmse": 3,
+    "statistics.anomalyCorrelation": 2,
+    "statistics.anomalyDecorrelation": 2,
+    "statistics.highCorrelationTime": 3,
+    "statistics.murphyAmplitude": 3,
+    "statistics.murphyBias": 3,
+    "statistics.murphyPhase": 1,
+    "statistics.survivalFraction": 1,
+    "statistics.vrmse": 3,
+    "statistics.wasserstein": 3,
+    "transient.anomalyCorrelation": 2,
+    "transient.anomalyDecorrelation": 2,
+    "transient.modal.frequencyError": 1,
+    "transient.modal.podEnergyError": 2,
+    "transient.modal.subspaceAngle": 2,
+    "transient.modal.uncapturedEnergy": 3,
+    "transient.murphyAmplitude": 3,
+    "transient.murphyBias": 3,
+    "transient.murphyPhase": 1,
+    "transient.rolloutMae": 3,
+    "transient.rolloutRelativeL2": 3,
+    "transient.rolloutRmse": 3,
+    "transient.vrmse": 3,
+    "transient.wasserstein": 3
+  }
+}
