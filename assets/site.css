@@ -421,6 +421,9 @@ h1, h2, h3 { font-family: Manrope, "Segoe UI", Arial, sans-serif; }
 .compare-section h3 { margin: 0; color: #203957; font-size: 12px; letter-spacing: -.015em; }
 .compare-section-title { display: flex; align-items: start; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
 .compare-section-title p { margin: 3px 0 0; color: #7a89a0; font-size: 9px; }
+/* One line only, so long loss names never push the next section down on one side of the compare page */
+.compare-section-title > div { min-width: 0; }
+.compare-section-title p, .training-summary dd { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .chart-range { padding: 3px 7px; border-radius: 999px; color: #526986; background: #f0f4f9; font-size: 8px; white-space: nowrap; }
 .compare-facts { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 6px; margin: 9px 0 0; }
 .compare-facts div { min-width: 0; padding: 8px 9px; border: 1px solid #e8edf4; border-radius: 7px; background: #fafcff; }

@@ -673,7 +673,7 @@
     ];
     return `<dl class="compare-facts">${facts.map((fact) => {
       const tone = other && fact.metric != null ? ` ${comparisonTone(fact.metric, fact.other)}` : "";
-      return `<div class="compare-fact-item${tone}"><dt>${fact.label}</dt><dd>${fact.value}</dd></div>`;
+      return `<div class="compare-fact-item${tone}"><dt>${fact.label}</dt><dd title="${fact.value}">${fact.value}</dd></div>`;
     }).join("")}</dl>`;
   }
 
@@ -698,7 +698,7 @@
     ];
     return `<dl class="compare-facts training-summary">${facts.map((fact) => {
       const tone = fact.metric != null && fact.other != null ? ` ${comparisonTone(fact.metric, fact.other)}` : "";
-      return `<div class="compare-fact-item${tone}"><dt>${fact.label}</dt><dd>${fact.value}</dd></div>`;
+      return `<div class="compare-fact-item${tone}"><dt>${fact.label}</dt><dd title="${fact.value}">${fact.value}</dd></div>`;
     }).join("")}</dl>`;
   }
 
@@ -817,7 +817,7 @@
       : "No epoch data";
     return `<div class="compare-panel-top"><div class="compare-model-title"><span class="compare-side-label">${side === "left" ? "Model A" : "Model B"}</span><h2>${escapeHtml(item.model)}</h2><p>${escapeHtml(item.authors)} · ${item.year}</p>${item.description ? `<p class="compare-model-description">${escapeHtml(item.description)}</p>` : ""}</div>${controls}</div>
       <div class="compare-section"><h3>Submission details</h3>${modelFacts(item, other, dataset)}</div>
-      <div class="compare-section"><div class="compare-section-title"><div><h3>Training loss</h3><p>${item.trainingHistory ? `Epoch versus ${escapeHtml(item.trainingHistory.lossName)}` : "Epoch versus training error"}</p></div><span class="chart-range">${rangeLabel} · log scale</span></div>${trainingChart(item, logScale)}${trainingSummary(item, other)}</div>
+      <div class="compare-section"><div class="compare-section-title"><div><h3>Training loss</h3><p title="${item.trainingHistory ? escapeHtml(item.trainingHistory.lossName) : ""}">${item.trainingHistory ? `Epoch versus ${escapeHtml(item.trainingHistory.lossName)}` : "Epoch versus training error"}</p></div><span class="chart-range">${rangeLabel} · log scale</span></div>${trainingChart(item, logScale)}${trainingSummary(item, other)}</div>
       ${rolloutAnalysisSection(item, other)}`;
   }
 
